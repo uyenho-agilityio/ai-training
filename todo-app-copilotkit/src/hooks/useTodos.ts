@@ -1,17 +1,19 @@
+"use client";
+
 import { nanoid } from "nanoid";
 import { useCallback, useRef, useState } from "react";
 
 import { INITIAL_TODOS } from "@/constants";
-import { Todo } from "@/types";
+import type { Todo, TodoItem, UpdatedTodoItem } from "@/types";
 
 export const useTodos = () => {
   const [input, setInput] = useState("");
   const [todos, setTodos] = useState<Todo[]>(INITIAL_TODOS);
   const nextTaskNumber = useRef(INITIAL_TODOS.length + 1);
 
-  const addTodo = useCallback(() => {
-    const text = input.trim();
-    if (text === "") return;
+  const handleAddTodo = useCallback((text: string) => {
+    const trimmed = text.trim();
+    if (trimmed === "") return;
 
     const taskNumber = nextTaskNumber.current;
     nextTaskNumber.current += 1;
@@ -20,23 +22,67 @@ export const useTodos = () => {
       ...prev,
       {
         id: nanoid(),
-        text,
+        text: trimmed,
         isCompleted: false,
         taskNumber,
       },
     ]);
-    setInput("");
-  }, [input]);
+  }, []);
 
   const handleSubmit = useCallback(
     (e: React.SubmitEvent<HTMLFormElement>) => {
       e.preventDefault();
-      addTodo();
+      handleAddTodo(input);
+      setInput("");
     },
-    [addTodo]
+    [input, handleAddTodo]
   );
 
-  const handleToggleComplete = useCallback((id: string) => {
+  const handleUpdateTodo = useCallback(
+    (id: string, fields: Partial<TodoItem>) => {
+      setTodos((prev) =>
+        prev.map((todo) => (todo.id === id ? { ...todo, ...fields } : todo))
+      );
+    },
+    []
+  );
+
+  const handleUpdateTodos = useCallback((items: UpdatedTodoItem[]) => {
+    setTodos((prev) => {
+      const next = [...prev];
+
+      for (const item of items) {
+        const { id, ...fields } = item;
+        const existingIndex = next.findIndex((todo) => todo.id === id);
+
+        if (existingIndex !== -1) {
+          next[existingIndex] = {
+            ...next[existingIndex],
+            ...fields,
+            taskNumber: fields.taskNumber ?? next[existingIndex].taskNumber,
+          };
+        } else {
+          if (!fields.text?.trim()) continue;
+
+          const taskNumber = fields.taskNumber ?? nextTaskNumber.current;
+          nextTaskNumber.current = Math.max(
+            nextTaskNumber.current,
+            taskNumber + 1
+          );
+          next.push({
+            id,
+            text: fields.text,
+            isCompleted: fields.isCompleted ?? false,
+            taskNumber,
+          });
+        }
+      }
+
+      return next;
+    });
+  }, []);
+
+  const handleToggleTodo = useCallback((id: string) => {
     setTodos((prev) =>
       prev.map((todo) =>
         todo.id === id ? { ...todo, isCompleted: !todo.isCompleted } : todo
@@ -50,13 +96,14 @@ export const useTodos = () => {
 
   return {
     todos,
-    setTodos,
-    nextTaskNumber,
     input,
-    setInput,
     hasInput: input.trim().length > 0,
+    setInput,
     handleSubmit,
-    handleToggleComplete,
+    handleAddTodo,
+    handleUpdateTodo,
+    handleUpdateTodos,
+    handleToggleTodo,
     handleDeleteTodo,
   };
 };

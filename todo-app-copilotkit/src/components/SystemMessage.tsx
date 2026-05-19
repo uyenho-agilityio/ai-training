@@ -67,9 +67,7 @@ export const SystemMessage = ((props: CopilotChatAssistantMessageProps) => {
             <div className="rounded-2xl rounded-bl-sm border-2 border-green-300 bg-gradient-to-br from-emerald-50 to-green-100 px-4 py-3 text-sm leading-relaxed text-green-900 [&_li]:my-0.5 [&_li]:ml-4 [&_ol]:my-2 [&_ol]:list-decimal [&_p]:my-1.5 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5">
               {hasText && markdownRenderer}
               {hasTools && (
-                <div className="mt-2 text-sm text-green-800">
-                  {toolCallsView}
-                </div>
+                <div className="text-sm text-green-800">{toolCallsView}</div>
               )}
             </div>
             {toolbarVisible && hasText && (

@@ -1,20 +1,28 @@
-import { Todo } from "../types";
-import { useCallback } from "react";
+"use client";
 
-interface TodoItemProps {
+import { useCallback, useState } from "react";
+
+import type { Todo, TodoItem as TodoItemType } from "@/types";
+
+type TodoItemProps = {
   item: Todo;
-  onToggleComplete: (id: string) => void;
+  onToggle: (id: string) => void;
+  onUpdate: (id: string, fields: Partial<TodoItemType>) => void;
   onDelete: (id: string) => void;
-}
+};
 
 export const TodoItem = ({
   item,
-  onToggleComplete,
+  onToggle,
+  onUpdate,
   onDelete,
 }: TodoItemProps) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+
   const handleToggle = useCallback(() => {
-    onToggleComplete(item.id);
-  }, [onToggleComplete, item.id]);
+    onToggle(item.id);
+  }, [onToggle, item.id]);
 
   const handleDelete = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -22,6 +30,36 @@ export const TodoItem = ({
       onDelete(item.id);
     },
     [onDelete, item.id]
+  );
+
+  const handleEdit = useCallback(() => {
+    if (item.isCompleted) return;
+    setDraft(item.text);
+    setIsEditing(true);
+  }, [item.isCompleted, item.text]);
+
+  const handleCancelEdit = useCallback(() => {
+    setIsEditing(false);
+  }, []);
+
+  const handleSaveEdit = useCallback(() => {
+    const text = draft.trim();
+    if (text) onUpdate(item.id, { text });
+    setIsEditing(false);
+  }, [draft, item.id, onUpdate]);
+
+  const handleEditKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleSaveEdit();
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        handleCancelEdit();
+      }
+    },
+    [handleCancelEdit, handleSaveEdit]
   );
 
   return (
@@ -53,11 +91,47 @@ export const TodoItem = ({
         TASK-{item.taskNumber}
       </span>
 
-      <span
-        className={`todo-item__text${item.isCompleted ? " todo-item__text--done" : ""}`}
-      >
-        {item.text}
-      </span>
+      {isEditing ? (
+        <input
+          type="text"
+          className="todo-item__edit-input"
+          value={draft}
+          autoFocus
+          aria-label={`Edit TASK-${item.taskNumber}`}
+          onBlur={handleSaveEdit}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={handleEditKeyDown}
+        />
+      ) : (
+        <span
+          className={`todo-item__text${item.isCompleted ? " todo-item__text--done" : ""}`}
+        >
+          {item.text}
+        </span>
+      )}
+
+      {!item.isCompleted && !isEditing && (
+        <button
+          type="button"
+          className="todo-item__edit"
+          aria-label={`Edit TASK-${item.taskNumber}`}
+          onClick={handleEdit}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+            />
+          </svg>
+        </button>
+      )}
 
       <button
         type="button"

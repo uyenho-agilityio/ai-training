@@ -1,7 +1,9 @@
-export interface Todo {
-  id: string;
-  taskNumber: number;
+export type TodoItem = {
   text: string;
   isCompleted: boolean;
-  assignedTo?: string;
-}
+  taskNumber: number;
+};
+
+export type Todo = { id: string } & TodoItem;
+
+export type UpdatedTodoItem = { id: string } & Partial<TodoItem>;

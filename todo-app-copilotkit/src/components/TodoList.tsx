@@ -6,17 +6,17 @@ import { TodoItem } from "./TodoItem";
 export const TodoList = () => {
   const {
     todos,
-    setTodos,
-    nextTaskNumber,
     input,
-    setInput,
     hasInput,
+    setInput,
     handleSubmit,
-    handleToggleComplete,
+    handleUpdateTodo,
+    handleUpdateTodos,
+    handleToggleTodo,
     handleDeleteTodo,
   } = useTodos();
 
-  useTodoCopilot({ todos, setTodos, nextTaskNumber });
+  useTodoCopilot({ todos, handleUpdateTodos, handleDeleteTodo });
 
   return (
     <div>
@@ -41,7 +41,8 @@ export const TodoList = () => {
             <TodoItem
               key={todo.id}
               item={todo}
-              onToggleComplete={handleToggleComplete}
+              onToggle={handleToggleTodo}
+              onUpdate={handleUpdateTodo}
               onDelete={handleDeleteTodo}
             />
           ))}

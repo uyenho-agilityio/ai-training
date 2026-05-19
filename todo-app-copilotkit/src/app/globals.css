@@ -197,6 +197,46 @@ body {
   text-decoration: line-through;
 }
 
+.todo-item__edit-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--todo-text-secondary);
+  background: #ffffff;
+  border: 1px solid #1a1a1a;
+  border-radius: 4px;
+  outline: none;
+}
+
+.todo-item__edit-input:focus {
+  border-color: var(--todo-accent, #1a1a1a);
+}
+
+.todo-item__edit {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.125rem;
+  background: none;
+  border: none;
+  color: #1a1a1a;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: opacity 0.15s ease;
+}
+
+.todo-item__edit:hover {
+  opacity: 1;
+}
+
+.todo-item__edit svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
 .todo-item__delete {
   flex-shrink: 0;
   margin-left: auto;

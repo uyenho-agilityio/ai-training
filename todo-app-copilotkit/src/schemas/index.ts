@@ -1,14 +1,19 @@
 import { z } from "zod";
 
-const todoItemSchema = z.object({
-  id: z.string(),
+import type { TodoItem, UpdatedTodoItem } from "@/types";
+
+export const todoItemSchema = z.object({
   text: z.string(),
   isCompleted: z.boolean(),
-  taskNumber: z.number().optional(),
-});
+  taskNumber: z.number(),
+}) satisfies z.ZodType<TodoItem>;
 
-export const updateTodoListSchema = z.object({
-  items: z.array(todoItemSchema),
+export const updatedTodoItemSchema = z
+  .object({ id: z.string() })
+  .extend(todoItemSchema.partial().shape) satisfies z.ZodType<UpdatedTodoItem>;
+
+export const todosSchema = z.object({
+  items: z.array(updatedTodoItemSchema),
 });
 
 export const deleteTodoSchema = z.object({

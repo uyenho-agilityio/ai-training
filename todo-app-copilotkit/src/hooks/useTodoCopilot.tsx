@@ -1,21 +1,20 @@
 "use client";
 
 import { useAgentContext, useFrontendTool } from "@copilotkit/react-core/v2";
-import type { Dispatch, RefObject, SetStateAction } from "react";
 
-import { deleteTodoSchema, updateTodoListSchema } from "@/schemas";
-import { Todo } from "@/types";
+import { deleteTodoSchema, todosSchema } from "@/schemas";
+import type { Todo, UpdatedTodoItem } from "@/types";
 
 type UseTodoCopilotOptions = {
   todos: Todo[];
-  nextTaskNumber: RefObject<number>;
-  setTodos: Dispatch<SetStateAction<Todo[]>>;
+  handleUpdateTodos: (items: UpdatedTodoItem[]) => void;
+  handleDeleteTodo: (id: string) => void;
 };
 
 export const useTodoCopilot = ({
   todos,
-  setTodos,
-  nextTaskNumber,
+  handleUpdateTodos,
+  handleDeleteTodo,
 }: UseTodoCopilotOptions) => {
   useAgentContext({
     description: "The user's todo list.",
@@ -23,48 +22,21 @@ export const useTodoCopilot = ({
   });
 
   useFrontendTool({
-    name: "updateTodoList",
-    description: "Update the users todo list",
-    parameters: updateTodoListSchema,
+    name: "syncTodos",
+    description: "Add, update, or mark todos complete/incomplete",
+    parameters: todosSchema,
     handler: async ({ items }) => {
-      setTodos((prev) => {
-        const newTodos = [...prev];
-        for (const item of items) {
-          const existingIndex = newTodos.findIndex(
-            (todo) => todo.id === item.id
-          );
-          if (existingIndex !== -1) {
-            newTodos[existingIndex] = {
-              ...newTodos[existingIndex],
-              ...item,
-              taskNumber: item.taskNumber ?? newTodos[existingIndex].taskNumber,
-            };
-          } else {
-            const taskNumber = item.taskNumber ?? nextTaskNumber.current;
-            nextTaskNumber.current = Math.max(
-              nextTaskNumber.current,
-              taskNumber + 1
-            );
-            newTodos.push({
-              id: item.id,
-              text: item.text,
-              isCompleted: item.isCompleted ?? false,
-              taskNumber,
-            });
-          }
-        }
-        return newTodos;
-      });
+      handleUpdateTodos(items);
     },
-    render: () => <span>Updating the todo list...</span>,
+    render: () => <span>Syncing todos...</span>,
   });
 
   useFrontendTool({
     name: "deleteTodo",
-    description: "Delete a todo item",
+    description: "Delete a todo item by id",
     parameters: deleteTodoSchema,
     handler: async ({ id }) => {
-      setTodos((prev) => prev.filter((todo) => todo.id !== id));
+      handleDeleteTodo(id);
     },
     render: () => <span>Deleting a todo item...</span>,
   });
