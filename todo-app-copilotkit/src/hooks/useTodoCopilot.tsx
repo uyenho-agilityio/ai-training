@@ -2,8 +2,9 @@
 
 import { useAgentContext, useFrontendTool } from "@copilotkit/react-core/v2";
 
+import type { Todo, TodoToolRenderProps, UpdatedTodoItem } from "@/types";
 import { clearTodosSchema, deleteTodoSchema, todosSchema } from "@/schemas";
-import type { Todo, UpdatedTodoItem } from "@/types";
+import { TodoToolStatus } from "@/components/TodoToolStatus";
 
 type UseTodoCopilotOptions = {
   todos: Todo[];
@@ -35,7 +36,21 @@ export const useTodoCopilot = ({
       handleUpdateTodos(items);
       return `Synced ${items.length} todo(s).`;
     },
-    render: () => <span>Syncing todos...</span>,
+    render: (props) => (
+      <TodoToolStatus
+        {...(props as TodoToolRenderProps)}
+        labels={{
+          inProgress: "Preparing todo changes…",
+          executing: (args) => {
+            const items = args.items;
+            const count = Array.isArray(items) ? items.length : 0;
+            return count > 0
+              ? `Updating ${count} todo(s)…`
+              : "Applying todo changes…";
+          },
+        }}
+      />
+    ),
   });
 
   useFrontendTool({
@@ -44,9 +59,17 @@ export const useTodoCopilot = ({
     parameters: deleteTodoSchema,
     handler: async ({ id }) => {
       handleDeleteTodo(id);
-      return `Deleted todo ${id}.`;
+      return `Deleted todo.`;
     },
-    render: () => <span>Deleting a todo item...</span>,
+    render: (props) => (
+      <TodoToolStatus
+        {...(props as TodoToolRenderProps)}
+        labels={{
+          inProgress: "Preparing to delete…",
+          executing: () => "Deleting todo…",
+        }}
+      />
+    ),
   });
 
   useFrontendTool({
@@ -61,7 +84,15 @@ export const useTodoCopilot = ({
         ? `Cleared all ${count} todo(s). The list is now empty.`
         : "The todo list is already empty.";
     },
-    render: () => <span>Clearing todos...</span>,
+    render: (props) => (
+      <TodoToolStatus
+        {...(props as TodoToolRenderProps)}
+        labels={{
+          inProgress: "Preparing to clear list…",
+          executing: () => "Clearing all todos…",
+        }}
+      />
+    ),
   });
 
   useFrontendTool({
@@ -75,6 +106,14 @@ export const useTodoCopilot = ({
         ? `Removed ${completedCount} completed todo(s).`
         : "No completed todos to remove.";
     },
-    render: () => <span>Clearing completed todos...</span>,
+    render: (props) => (
+      <TodoToolStatus
+        {...(props as TodoToolRenderProps)}
+        labels={{
+          inProgress: "Preparing to clean up…",
+          executing: () => "Removing completed todos…",
+        }}
+      />
+    ),
   });
 };

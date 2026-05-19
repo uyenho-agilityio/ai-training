@@ -7,3 +7,24 @@ export type TodoItem = {
 export type Todo = { id: string } & TodoItem;
 
 export type UpdatedTodoItem = { id: string } & Partial<TodoItem>;
+
+type ToolStatus = "inProgress" | "executing" | "complete";
+
+export type TodoToolStatusLabels = {
+  inProgress: string;
+  executing: string | ((args: Record<string, unknown>) => string);
+  complete?: string | ((result: string) => string);
+};
+
+export type TodoToolStatusProps = {
+  status: ToolStatus;
+  args: Record<string, unknown>;
+  result?: string;
+  labels: TodoToolStatusLabels;
+};
+
+export type TodoToolRenderProps = {
+  status: ToolStatus;
+  args: Record<string, unknown>;
+  result?: string;
+};
