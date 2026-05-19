@@ -1,7 +1,14 @@
 "use client";
 
 import { CopilotSidebar } from "@copilotkit/react-core/v2";
-import { TodoList } from "@/components";
+import {
+  Input,
+  SystemMessage,
+  TodoList,
+  TypingIndicator,
+  UserMessage,
+  WelcomeScreen,
+} from "@/components";
 
 export default function Page() {
   return (
@@ -14,11 +21,19 @@ export default function Page() {
       </main>
 
       <CopilotSidebar
-        defaultOpen={false}
+        defaultOpen
+        attachments={{ enabled: true }}
+        welcomeScreen={WelcomeScreen}
+        input={Input}
+        messageView={{
+          userMessage: UserMessage,
+          assistantMessage: SystemMessage,
+          cursor: TypingIndicator,
+        }}
         labels={{
-          modalHeaderTitle: "CopilotKit Chat",
-          welcomeMessageText: "Hi you! I can help you manage your todo list.",
-          chatInputPlaceholder: "Type a message...",
+          modalHeaderTitle: "Todo Assistant",
+          welcomeMessageText: "Hi! I can help you manage your todo list.",
+          chatInputPlaceholder: "Ask about your todos...",
           chatDisclaimerText:
             "AI can make mistakes. Please verify important information.",
         }}

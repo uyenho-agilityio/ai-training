@@ -12,6 +12,14 @@
   --todo-text: #1a1a1a;
   --todo-text-secondary: #555555;
   --todo-text-done: #888888;
+
+  --copilot-kit-primary-color: #2563eb;
+  --copilot-kit-contrast-color: #ffffff;
+  --copilot-kit-background-color: #f8fafc;
+  --copilot-kit-secondary-color: #eff6ff;
+  --copilot-kit-secondary-contrast-color: #1e3a8a;
+  --copilot-kit-separator-color: #bfdbfe;
+  --copilot-kit-muted-color: #64748b;
 }
 
 body {
