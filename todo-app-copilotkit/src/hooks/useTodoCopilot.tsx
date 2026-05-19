@@ -8,8 +8,8 @@ import { Todo } from "@/types";
 
 type UseTodoCopilotOptions = {
   todos: Todo[];
-  setTodos: Dispatch<SetStateAction<Todo[]>>;
   nextTaskNumber: RefObject<number>;
+  setTodos: Dispatch<SetStateAction<Todo[]>>;
 };
 
 export const useTodoCopilot = ({
