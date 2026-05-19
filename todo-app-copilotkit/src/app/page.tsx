@@ -5,6 +5,7 @@ import {
   Input,
   SystemMessage,
   TodoList,
+  SuggestionView,
   TypingIndicator,
   UserMessage,
   WelcomeScreen,
@@ -24,6 +25,7 @@ export default function Page() {
         defaultOpen
         attachments={{ enabled: true }}
         welcomeScreen={WelcomeScreen}
+        suggestionView={SuggestionView}
         input={Input}
         messageView={{
           userMessage: UserMessage,

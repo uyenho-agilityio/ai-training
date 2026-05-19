@@ -1,6 +1,6 @@
 "use client";
 
-import { useTodoCopilot, useTodos } from "@/hooks";
+import { useTodoCopilot, useTodoSuggestions, useTodos } from "@/hooks";
 import { TodoItem } from "./TodoItem";
 
 export const TodoList = () => {
@@ -14,9 +14,18 @@ export const TodoList = () => {
     handleUpdateTodos,
     handleToggleTodo,
     handleDeleteTodo,
+    handleClearTodos,
+    handleClearCompletedTodos,
   } = useTodos();
 
-  useTodoCopilot({ todos, handleUpdateTodos, handleDeleteTodo });
+  useTodoCopilot({
+    todos,
+    handleUpdateTodos,
+    handleDeleteTodo,
+    handleClearTodos,
+    handleClearCompletedTodos,
+  });
+  useTodoSuggestions(todos);
 
   return (
     <div>

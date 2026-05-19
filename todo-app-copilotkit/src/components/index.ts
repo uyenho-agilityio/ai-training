@@ -5,3 +5,4 @@ export * from "./UserMessage";
 export * from "./TypingIndicator";
 export * from "./AddMenuButton";
 export * from "./WelcomeScreen";
+export * from "./SuggestionView";

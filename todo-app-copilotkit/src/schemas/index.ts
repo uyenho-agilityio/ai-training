@@ -19,3 +19,5 @@ export const todosSchema = z.object({
 export const deleteTodoSchema = z.object({
   id: z.string(),
 });
+
+export const clearTodosSchema = z.object({});

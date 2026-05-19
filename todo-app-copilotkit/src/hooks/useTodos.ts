@@ -94,6 +94,15 @@ export const useTodos = () => {
     setTodos((prev) => prev.filter((todo) => todo.id !== id));
   }, []);
 
+  const handleClearTodos = useCallback(() => {
+    setTodos([]);
+    nextTaskNumber.current = 1;
+  }, []);
+
+  const handleClearCompletedTodos = useCallback(() => {
+    setTodos((prev) => prev.filter((todo) => !todo.isCompleted));
+  }, []);
+
   return {
     todos,
     input,
@@ -105,5 +114,7 @@ export const useTodos = () => {
     handleUpdateTodos,
     handleToggleTodo,
     handleDeleteTodo,
+    handleClearTodos,
+    handleClearCompletedTodos,
   };
 };
