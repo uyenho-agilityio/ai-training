@@ -25,7 +25,7 @@ export const TodoList = () => {
     setInput,
     handleSubmit,
     handleUpdateTodo,
-    handleToggleTodo,
+    handleCycleStatus,
     handleDeleteTodo,
     handleClearCompletedTodos,
   } = useTodos({ onNewTasksFromSync: handleNotifyTaskAdded });
@@ -36,7 +36,7 @@ export const TodoList = () => {
     let active = 0;
     let completed = 0;
     for (const t of todos) {
-      if (t.isCompleted) completed += 1;
+      if (t.status === "done") completed += 1;
       else active += 1;
     }
     return { activeCount: active, completedCount: completed };
@@ -115,7 +115,7 @@ export const TodoList = () => {
             <TodoItem
               key={todo.id}
               item={todo}
-              onToggle={handleToggleTodo}
+              onCycleStatus={handleCycleStatus}
               onUpdate={handleUpdateTodo}
               onDelete={handleDeleteTodo}
             />

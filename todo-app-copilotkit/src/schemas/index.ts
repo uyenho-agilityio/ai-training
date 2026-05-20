@@ -2,9 +2,11 @@ import { z } from "zod";
 
 import type { TodoItem, UpdatedTodoItem } from "@/types";
 
+export const todoStatusSchema = z.enum(["todo", "in_progress", "done"]);
+
 export const todoItemSchema = z.object({
   text: z.string(),
-  isCompleted: z.boolean(),
+  status: todoStatusSchema,
   taskNumber: z.number(),
 }) satisfies z.ZodType<TodoItem>;
 

@@ -9,9 +9,13 @@ import { clearTodosSchema, deleteTodoSchema, todosSchema } from "@/schemas";
 import type {
   Todo,
   TodoItem,
+  TodoStatus,
   TodoToolRenderProps,
   UpdatedTodoItem,
 } from "@/types";
+
+const nextStatus: (s: TodoStatus) => TodoStatus = (s) =>
+  s === "todo" ? "in_progress" : s === "in_progress" ? "done" : "todo";
 
 export const useTodos = (options?: { onNewTasksFromSync?: () => void }) => {
   const onNewSyncRef = useRef(options?.onNewTasksFromSync);
@@ -36,7 +40,7 @@ export const useTodos = (options?: { onNewTasksFromSync?: () => void }) => {
       {
         id: nanoid(),
         text: trimmed,
-        isCompleted: false,
+        status: "todo",
         taskNumber,
       },
     ]);
@@ -73,6 +77,7 @@ export const useTodos = (options?: { onNewTasksFromSync?: () => void }) => {
             ...next[existingIndex],
             ...fields,
             taskNumber: fields.taskNumber ?? next[existingIndex].taskNumber,
+            status: fields.status ?? next[existingIndex].status,
           };
         } else {
           if (!fields.text?.trim()) continue;
@@ -85,7 +90,7 @@ export const useTodos = (options?: { onNewTasksFromSync?: () => void }) => {
           next.push({
             id,
             text: fields.text,
-            isCompleted: fields.isCompleted ?? false,
+            status: fields.status ?? "todo",
             taskNumber,
           });
         }
@@ -105,10 +110,10 @@ export const useTodos = (options?: { onNewTasksFromSync?: () => void }) => {
     [todos, applySyncItems]
   );
 
-  const handleToggleTodo = useCallback((id: string) => {
+  const handleCycleStatus = useCallback((id: string) => {
     setTodos((prev) =>
-      prev.map((todo) =>
-        todo.id === id ? { ...todo, isCompleted: !todo.isCompleted } : todo
+      prev.map((t) =>
+        t.id === id ? { ...t, status: nextStatus(t.status) } : t
       )
     );
   }, []);
@@ -123,19 +128,19 @@ export const useTodos = (options?: { onNewTasksFromSync?: () => void }) => {
   }, []);
 
   const handleClearCompletedTodos = useCallback(() => {
-    setTodos((prev) => prev.filter((todo) => !todo.isCompleted));
+    setTodos((prev) => prev.filter((todo) => todo.status !== "done"));
   }, []);
 
   useAgentContext({
     description:
-      "The user's todo list. Use clearTodos to remove every item, clearCompletedTodos for completed items only, deleteTodo for one item, and syncTodos to add or update.",
+      "The user's todo list. Each task has status: todo | in_progress | done. Use syncTodos to add/update, deleteTodo, clearCompletedTodos (removes done), or clearTodos.",
     value: JSON.stringify(todos),
   });
 
   useFrontendTool({
     name: "syncTodos",
     description:
-      "Add or update todos. Cannot delete items — use deleteTodo, clearCompletedTodos, or clearTodos instead.",
+      "Add or update todos. Set status to todo, in_progress, or done. Cannot delete — use deleteTodo, clearCompletedTodos, or clearTodos.",
     parameters: todosSchema,
     handler: async ({ items }) => {
       handleUpdateTodos(items);
@@ -200,14 +205,12 @@ export const useTodos = (options?: { onNewTasksFromSync?: () => void }) => {
   useFrontendTool(
     {
       name: "clearCompletedTodos",
-      description: "Remove all completed todos from the list",
+      description: "Remove all tasks with status done",
       parameters: clearTodosSchema,
       handler: async () => {
-        const completedCount = todos.filter((todo) => todo.isCompleted).length;
+        const n = todos.filter((t) => t.status === "done").length;
         handleClearCompletedTodos();
-        return completedCount > 0
-          ? `Removed ${completedCount} completed todo(s).`
-          : "No completed todos to remove.";
+        return n > 0 ? `Removed ${n} completed todo(s).` : "Nothing to remove.";
       },
       render: (props) => (
         <TodoToolStatus
@@ -231,7 +234,7 @@ export const useTodos = (options?: { onNewTasksFromSync?: () => void }) => {
     handleAddTodo,
     handleUpdateTodo,
     handleUpdateTodos,
-    handleToggleTodo,
+    handleCycleStatus,
     handleDeleteTodo,
     handleClearTodos,
     handleClearCompletedTodos,

@@ -1,30 +1,50 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
-import type { Todo, TodoItem as TodoItemType } from "@/types";
+import type { Todo, TodoItem as TodoItemType, TodoStatus } from "@/types";
 
 type TodoItemProps = {
   item: Todo;
-  onToggle: (id: string) => void;
+  onCycleStatus: (id: string) => void;
   onUpdate: (id: string, fields: Partial<TodoItemType>) => void;
   onDelete: (id: string) => void;
 };
 
+const label: Record<TodoStatus, string> = {
+  todo: "To Do",
+  in_progress: "In Progress",
+  done: "Done",
+};
+
+const badgeClass: Record<TodoStatus, string> = {
+  todo: "border-neutral-300 bg-neutral-100 text-neutral-700",
+  in_progress: "border-amber-300 bg-amber-50 text-amber-900",
+  done: "border-emerald-300 bg-emerald-50 text-emerald-900",
+};
+
 export const TodoItem = ({
   item,
-  onToggle,
   onUpdate,
   onDelete,
+  onCycleStatus,
 }: TodoItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState("");
+  const isDone = item.status === "done";
 
-  const handleToggle = useCallback(() => {
-    onToggle(item.id);
-  }, [onToggle, item.id]);
+  const shell = useMemo(
+    () =>
+      `inline-flex w-24 shrink-0 cursor-pointer items-center justify-center rounded border px-2 py-0.5 text-center text-xs font-medium transition-opacity hover:opacity-90 ${badgeClass[item.status]}`,
+    [item.status]
+  );
 
-  const handleDelete = useCallback(
+  const onCycle = useCallback(
+    () => onCycleStatus(item.id),
+    [onCycleStatus, item.id]
+  );
+
+  const onDeleteClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       onDelete(item.id);
@@ -32,90 +52,66 @@ export const TodoItem = ({
     [onDelete, item.id]
   );
 
-  const handleEdit = useCallback(() => {
-    if (item.isCompleted) return;
+  const onEdit = useCallback(() => {
+    if (isDone) return;
     setDraft(item.text);
     setIsEditing(true);
-  }, [item.isCompleted, item.text]);
+  }, [isDone, item.text]);
 
-  const handleCancelEdit = useCallback(() => {
-    setIsEditing(false);
-  }, []);
-
-  const handleSaveEdit = useCallback(() => {
+  const onSave = useCallback(() => {
     const text = draft.trim();
     if (text) onUpdate(item.id, { text });
     setIsEditing(false);
   }, [draft, item.id, onUpdate]);
 
-  const handleEditKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleSaveEdit();
-      }
-      if (e.key === "Escape") {
-        e.preventDefault();
-        handleCancelEdit();
-      }
-    },
-    [handleCancelEdit, handleSaveEdit]
-  );
-
   return (
     <li className="todo-item">
-      <label className="todo-item__checkbox-wrap">
-        <input
-          type="checkbox"
-          className="todo-item__checkbox"
-          checked={item.isCompleted}
-          onChange={handleToggle}
-        />
-        <span className="todo-item__checkbox-ui" aria-hidden="true">
-          <svg
-            viewBox="0 0 12 12"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M2 6l3 3 5-6" />
-          </svg>
-        </span>
-      </label>
-
-      <span
-        className={`todo-item__id${item.isCompleted ? " todo-item__id--done" : ""}`}
+      <button
+        type="button"
+        className={shell}
+        title="Change status"
+        onClick={onCycle}
       >
+        {label[item.status]}
+      </button>
+
+      <span className={`todo-item__id${isDone ? " todo-item__id--done" : ""}`}>
         TASK-{item.taskNumber}
       </span>
 
       {isEditing ? (
         <input
-          type="text"
           className="todo-item__edit-input"
           value={draft}
           autoFocus
           aria-label={`Edit TASK-${item.taskNumber}`}
-          onBlur={handleSaveEdit}
+          onBlur={onSave}
           onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={handleEditKeyDown}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              onSave();
+            }
+            if (e.key === "Escape") {
+              e.preventDefault();
+              setIsEditing(false);
+            }
+          }}
         />
       ) : (
         <span
-          className={`todo-item__text${item.isCompleted ? " todo-item__text--done" : ""}`}
+          className={`todo-item__text${isDone ? " todo-item__text--done" : ""}`}
         >
           {item.text}
         </span>
       )}
 
-      {!item.isCompleted && !isEditing && (
+      {!isDone && !isEditing && (
         <button
           type="button"
           className="todo-item__edit"
           aria-label={`Edit TASK-${item.taskNumber}`}
-          onClick={handleEdit}
+          onClick={onEdit}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -137,7 +133,7 @@ export const TodoItem = ({
         type="button"
         className="todo-item__delete"
         aria-label={`Delete TASK-${item.taskNumber}`}
-        onClick={handleDelete}
+        onClick={onDeleteClick}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

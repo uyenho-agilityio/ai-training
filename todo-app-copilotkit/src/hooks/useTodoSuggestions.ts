@@ -19,7 +19,7 @@ const buildWelcomeSuggestions = (todos: Todo[]) => {
     ];
   }
 
-  const incomplete = todos.filter((t) => !t.isCompleted);
+  const incomplete = todos.filter((t) => t.status !== "done");
 
   if (incomplete.length > 0) {
     return [
@@ -55,8 +55,8 @@ const buildWelcomeSuggestions = (todos: Todo[]) => {
 };
 
 const buildMessageSuggestions = (todos: Todo[]) => {
-  const completed = todos.filter((t) => t.isCompleted);
-  const incomplete = todos.filter((t) => !t.isCompleted);
+  const completed = todos.filter((t) => t.status === "done");
+  const incomplete = todos.filter((t) => t.status !== "done");
 
   const pool = [
     {

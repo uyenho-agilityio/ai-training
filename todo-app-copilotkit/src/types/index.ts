@@ -1,6 +1,8 @@
+export type TodoStatus = "todo" | "in_progress" | "done";
+
 export type TodoItem = {
   text: string;
-  isCompleted: boolean;
+  status: TodoStatus;
   taskNumber: number;
 };
 
