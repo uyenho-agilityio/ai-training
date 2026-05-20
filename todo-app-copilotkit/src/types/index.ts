@@ -12,8 +12,8 @@ type ToolStatus = "inProgress" | "executing" | "complete";
 
 export type TodoToolStatusLabels = {
   inProgress: string;
-  executing: string | ((args: Record<string, unknown>) => string);
-  complete?: string | ((result: string) => string);
+  executing: string;
+  complete?: string;
 };
 
 export type TodoToolStatusProps = {

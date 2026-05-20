@@ -41,13 +41,7 @@ export const useTodoCopilot = ({
         {...(props as TodoToolRenderProps)}
         labels={{
           inProgress: "Preparing todo changes…",
-          executing: (args) => {
-            const items = args.items;
-            const count = Array.isArray(items) ? items.length : 0;
-            return count > 0
-              ? `Updating ${count} todo(s)…`
-              : "Applying todo changes…";
-          },
+          executing: "Applying todo changes…",
         }}
       />
     ),
@@ -66,7 +60,7 @@ export const useTodoCopilot = ({
         {...(props as TodoToolRenderProps)}
         labels={{
           inProgress: "Preparing to delete…",
-          executing: () => "Deleting todo…",
+          executing: "Deleting todo…",
         }}
       />
     ),
@@ -89,7 +83,7 @@ export const useTodoCopilot = ({
         {...(props as TodoToolRenderProps)}
         labels={{
           inProgress: "Preparing to clear list…",
-          executing: () => "Clearing all todos…",
+          executing: "Clearing all todos…",
         }}
       />
     ),
@@ -111,7 +105,7 @@ export const useTodoCopilot = ({
         {...(props as TodoToolRenderProps)}
         labels={{
           inProgress: "Preparing to clean up…",
-          executing: () => "Removing completed todos…",
+          executing: "Removing completed todos…",
         }}
       />
     ),

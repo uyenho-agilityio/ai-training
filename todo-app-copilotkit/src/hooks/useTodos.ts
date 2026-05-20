@@ -3,13 +3,12 @@
 import { nanoid } from "nanoid";
 import { useCallback, useRef, useState } from "react";
 
-import { INITIAL_TODOS } from "@/constants";
 import type { Todo, TodoItem, UpdatedTodoItem } from "@/types";
 
 export const useTodos = () => {
   const [input, setInput] = useState("");
-  const [todos, setTodos] = useState<Todo[]>(INITIAL_TODOS);
-  const nextTaskNumber = useRef(INITIAL_TODOS.length + 1);
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const nextTaskNumber = useRef(1);
 
   const handleAddTodo = useCallback((text: string) => {
     const trimmed = text.trim();

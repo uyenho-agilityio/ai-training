@@ -54,19 +54,51 @@ const buildWelcomeSuggestions = (todos: Todo[]) => {
   ];
 };
 
-const buildDynamicInstructions = (todos: Todo[]) => {
-  const summary = JSON.stringify(todos);
-  const incompleteCount = todos.filter((t) => !t.isCompleted).length;
+const buildMessageSuggestions = (todos: Todo[]) => {
+  const completed = todos.filter((t) => t.isCompleted);
+  const incomplete = todos.filter((t) => !t.isCompleted);
 
-  return [
-    "You are helping a user manage their todo list in a todo app.",
-    `Current todos (${todos.length} total, ${incompleteCount} incomplete):`,
-    JSON.stringify(summary, null, 2),
-    "Suggest short, actionable prompts the user might send next.",
-    "Focus on adding, updating, completing, organizing, prioritizing, or cleaning up todos.",
-    "Keep each title under 40 characters.",
-    "Each message should be a full natural sentence the user would type in chat.",
-  ].join("\n");
+  const pool = [
+    {
+      title: "Add a task",
+      message: "Add a new todo: follow up with the team",
+    },
+    {
+      title: "Edit a task",
+      message: "Rename one of my todos to a clearer title",
+    },
+    {
+      title: "Delete a task",
+      message: "Delete one todo from my list",
+    },
+    {
+      title: "Mark done a task",
+      message: "Mark one of my incomplete todos as completed",
+    },
+  ];
+
+  if (completed.length > 0) {
+    pool.push({
+      title: "Clear all completed",
+      message: "Delete all todos that are completed",
+    });
+  }
+
+  if (incomplete.length > 0) {
+    pool.push({
+      title: "Clear all incomplete",
+      message: "Delete all todos that are not completed",
+    });
+  }
+
+  if (todos.length > 0) {
+    pool.push({
+      title: "Clear all",
+      message: "Clear my entire todo list",
+    });
+  }
+
+  return pool;
 };
 
 export const useTodoSuggestions = (todos: Todo[]) => {
@@ -78,29 +110,21 @@ export const useTodoSuggestions = (todos: Todo[]) => {
     [todos]
   );
 
-  const dynamicInstructions = useMemo(
-    () => buildDynamicInstructions(todos),
+  const messageSuggestions = useMemo(
+    () => buildMessageSuggestions(todos),
     [todos]
   );
 
   useConfigureSuggestions(
     hasMessages
-      ? null
-      : { suggestions: welcomeSuggestions, available: "before-first-message" },
-
-    [welcomeSuggestions, hasMessages]
-  );
-
-  useConfigureSuggestions(
-    hasMessages
       ? {
-          instructions: dynamicInstructions,
-          minSuggestions: 1,
-          maxSuggestions: 2,
+          suggestions: messageSuggestions,
           available: "after-first-message",
-          providerAgentId: "default",
         }
-      : null,
-    [dynamicInstructions, hasMessages]
+      : {
+          suggestions: welcomeSuggestions,
+          available: "before-first-message",
+        },
+    [hasMessages, welcomeSuggestions, messageSuggestions]
   );
 };
