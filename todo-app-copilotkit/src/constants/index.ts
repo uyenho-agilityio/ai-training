@@ -18,3 +18,11 @@ export const INITIAL_TODOS = [
     isCompleted: false,
   },
 ];
+
+export const COPILOT_SIDEBAR_LABELS = {
+  modalHeaderTitle: "Todo Assistant",
+  welcomeMessageText: "Hi! I can help you manage your todo list.",
+  chatInputPlaceholder: "Ask about your todos...",
+  chatDisclaimerText:
+    "AI can make mistakes. Please verify important information.",
+};

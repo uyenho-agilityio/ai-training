@@ -7,3 +7,5 @@ export * from "./AddMenuButton";
 export * from "./WelcomeScreen";
 export * from "./SuggestionView";
 export * from "./TodoToolStatus";
+export * from "./ChatWithPersistence";
+export * from "./CopilotProvider";

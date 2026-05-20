@@ -88,7 +88,7 @@ export const useAssistantMessageToolbar = () => {
       if (!agent || agent.isRunning) return;
 
       const messages = agent.messages ?? [];
-      if (messages.length === 0) return;
+      if (!messages.length) return;
 
       const historyCutoff = getHistoryCutoffForRegenerate(messages, message.id);
       if (!historyCutoff) return;

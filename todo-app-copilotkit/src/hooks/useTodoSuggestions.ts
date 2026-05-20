@@ -6,7 +6,7 @@ import { useConfigureSuggestions, useAgent } from "@copilotkit/react-core/v2";
 import type { Todo } from "@/types";
 
 const buildWelcomeSuggestions = (todos: Todo[]) => {
-  if (todos.length === 0) {
+  if (!todos.length) {
     return [
       {
         title: "Add sample todos",
@@ -63,7 +63,7 @@ const buildDynamicInstructions = (todos: Todo[]) => {
     `Current todos (${todos.length} total, ${incompleteCount} incomplete):`,
     JSON.stringify(summary, null, 2),
     "Suggest short, actionable prompts the user might send next.",
-    "Focus on adding, completing, organizing, prioritizing, or cleaning up todos.",
+    "Focus on adding, updating, completing, organizing, prioritizing, or cleaning up todos.",
     "Keep each title under 40 characters.",
     "Each message should be a full natural sentence the user would type in chat.",
   ].join("\n");
@@ -101,6 +101,6 @@ export const useTodoSuggestions = (todos: Todo[]) => {
           providerAgentId: "default",
         }
       : null,
-    [dynamicInstructions]
+    [dynamicInstructions, hasMessages]
   );
 };

@@ -61,7 +61,7 @@ export const SystemMessage = ((props: CopilotChatAssistantMessageProps) => {
         );
 
         return (
-          <div className="group flex max-w-[90%] flex-col items-start gap-1.5">
+          <div className="group flex max-w-[90%] flex-col items-start gap-1.5 py-1">
             <span className="inline-block rounded-full bg-green-200 px-2 py-0.5 text-[0.6875rem] font-bold tracking-wider text-green-800 uppercase">
               Todo AI
             </span>

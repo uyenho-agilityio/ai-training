@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { CopilotKitProvider } from "@copilotkit/react-core/v2";
 import "@copilotkit/react-core/v2/styles.css";
 import "./globals.css";
+
+import { CopilotProvider } from "@/components";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,9 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
-        <CopilotKitProvider runtimeUrl="/api/copilotkit">
-          {children}
-        </CopilotKitProvider>
+        <CopilotProvider>{children}</CopilotProvider>
       </body>
     </html>
   );
