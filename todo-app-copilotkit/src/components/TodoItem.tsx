@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 
 import type { Todo, TodoItem as TodoItemType, TodoStatus } from "@/types";
+import { ConfirmationModal } from "./ConfirmationModal";
 
 type TodoItemProps = {
   item: Todo;
@@ -31,6 +32,7 @@ export const TodoItem = ({
 }: TodoItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState("");
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const isDone = item.status === "done";
 
   const shell = useMemo(
@@ -47,10 +49,19 @@ export const TodoItem = ({
   const onDeleteClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
-      onDelete(item.id);
+      setConfirmDeleteOpen(true);
     },
-    [onDelete, item.id]
+    []
   );
+
+  const onConfirmDelete = useCallback(() => {
+    onDelete(item.id);
+    setConfirmDeleteOpen(false);
+  }, [onDelete, item.id]);
+
+  const onCancelDelete = useCallback(() => {
+    setConfirmDeleteOpen(false);
+  }, []);
 
   const onEdit = useCallback(() => {
     if (isDone) return;
@@ -149,6 +160,15 @@ export const TodoItem = ({
           />
         </svg>
       </button>
+
+      <ConfirmationModal
+        open={confirmDeleteOpen}
+        title="Delete this task?"
+        message={`Remove TASK-${item.taskNumber} (“${item.text}”)? This cannot be undone.`}
+        confirmLabel="Delete task"
+        onConfirm={onConfirmDelete}
+        onCancel={onCancelDelete}
+      />
     </li>
   );
 };

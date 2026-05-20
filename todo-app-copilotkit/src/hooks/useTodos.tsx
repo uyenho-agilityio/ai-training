@@ -1,10 +1,14 @@
 "use client";
 
-import { useAgentContext, useFrontendTool } from "@copilotkit/react-core/v2";
+import {
+  useAgentContext,
+  useFrontendTool,
+  useHumanInTheLoop,
+} from "@copilotkit/react-core/v2";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { TodoToolStatus } from "@/components/TodoToolStatus";
+import { TodoToolStatus, DeleteConfirmation } from "@/components";
 import { clearTodosSchema, deleteTodoSchema, todosSchema } from "@/schemas";
 import type {
   Todo,
@@ -133,7 +137,7 @@ export const useTodos = (options?: { onNewTasksFromSync?: () => void }) => {
 
   useAgentContext({
     description:
-      "The user's todo list. Each task has status: todo | in_progress | done. Use syncTodos to add/update, deleteTodo, clearCompletedTodos (removes done), or clearTodos.",
+      "The user's todo list. Each task has status: todo | in_progress | done. Use syncTodos to add/update, deleteTodo (requires user confirmation), clearCompletedTodos (removes done), or clearTodos.",
     value: JSON.stringify(todos),
   });
 
@@ -152,25 +156,6 @@ export const useTodos = (options?: { onNewTasksFromSync?: () => void }) => {
         labels={{
           inProgress: "Preparing todo changes…",
           executing: "Applying todo changes…",
-        }}
-      />
-    ),
-  });
-
-  useFrontendTool({
-    name: "deleteTodo",
-    description: "Delete a single todo by id",
-    parameters: deleteTodoSchema,
-    handler: async ({ id }) => {
-      handleDeleteTodo(id);
-      return `Deleted todo.`;
-    },
-    render: (props) => (
-      <TodoToolStatus
-        {...(props as TodoToolRenderProps)}
-        labels={{
-          inProgress: "Preparing to delete…",
-          executing: "Deleting todo…",
         }}
       />
     ),
@@ -223,6 +208,26 @@ export const useTodos = (options?: { onNewTasksFromSync?: () => void }) => {
       ),
     },
     [todos]
+  );
+
+  useHumanInTheLoop(
+    {
+      name: "deleteTodo",
+      description:
+        "Request deletion of a single todo by id. The user must confirm before it is removed.",
+      parameters: deleteTodoSchema,
+      render: (props) => (
+        <DeleteConfirmation
+          status={props.status}
+          todoId={props.args.id ?? ""}
+          todos={todos}
+          result={props.result}
+          respond={props.respond}
+          onConfirmDelete={handleDeleteTodo}
+        />
+      ),
+    },
+    [todos, handleDeleteTodo]
   );
 
   return {
