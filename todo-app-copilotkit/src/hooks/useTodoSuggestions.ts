@@ -68,6 +68,10 @@ const buildMessageSuggestions = (todos: Todo[]) => {
       message: "Rename one of my todos to a clearer title",
     },
     {
+      title: "Set a due date",
+      message: "Set a due date on one specific incomplete todo when I tell you which task",
+    },
+    {
       title: "Delete a task",
       message: "Delete one todo from my list",
     },

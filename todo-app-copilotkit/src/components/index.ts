@@ -11,3 +11,4 @@ export * from "./ChatWithPersistence";
 export * from "./CopilotProvider";
 export * from "./ConfirmationModal";
 export * from "./DeleteConfirmation";
+export * from "./CalendarModal";

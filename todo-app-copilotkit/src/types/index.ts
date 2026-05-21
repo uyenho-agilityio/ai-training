@@ -4,6 +4,8 @@ export type TodoItem = {
   text: string;
   status: TodoStatus;
   taskNumber: number;
+  startDate?: string;
+  dueDate?: string;
 };
 
 export type Todo = { id: string } & TodoItem;
