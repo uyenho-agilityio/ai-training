@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 import { cloneMessages } from "@/utils";
 
@@ -42,6 +42,8 @@ export const useMessagesStore = create<MessagesStoreState>()(
     }),
     {
       name: "messages_storage",
+      storage: createJSONStorage(() => localStorage),
+      skipHydration: true,
       partialize: (state) => ({
         threadId: state.threadId,
         messagesByThread: state.messagesByThread,

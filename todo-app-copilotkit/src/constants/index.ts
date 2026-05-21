@@ -32,3 +32,5 @@ export const COPILOT_SIDEBAR_LABELS = {
   chatDisclaimerText:
     "AI can make mistakes. Please verify important information.",
 };
+
+export const OPENAI_API_KEY_HEADER = "x-openai-api-key";

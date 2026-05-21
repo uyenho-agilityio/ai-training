@@ -4,7 +4,10 @@ import dynamic from "next/dynamic";
 import { type ReactNode, useEffect } from "react";
 import { CopilotKit } from "@copilotkit/react-core";
 
-import { useMessagesStore } from "@/stores";
+import { useApiKey } from "@/hooks";
+import { useApiKeyStore, useMessagesStore } from "@/stores";
+import { readPersistedApiKey } from "@/utils/apiKeyStorage";
+import { OPENAI_API_KEY_HEADER } from "@/constants";
 
 const ChatWithPersistence = dynamic(
   () =>
@@ -14,7 +17,13 @@ const ChatWithPersistence = dynamic(
   { ssr: false }
 );
 
+const getOpenAiHeaders = (): Record<string, string> => {
+  const key = useApiKeyStore.getState().apiKey.trim() || readPersistedApiKey();
+  return key ? { [OPENAI_API_KEY_HEADER]: key } : {};
+};
+
 export const CopilotProvider = ({ children }: { children: ReactNode }) => {
+  const { hasApiKey } = useApiKey();
   const threadId = useMessagesStore((s) => s.threadId);
   const ensureThreadId = useMessagesStore((s) => s.ensureThreadId);
 
@@ -25,9 +34,9 @@ export const CopilotProvider = ({ children }: { children: ReactNode }) => {
   }, [threadId, ensureThreadId]);
 
   return (
-    <CopilotKit runtimeUrl="/api/copilotkit">
+    <CopilotKit runtimeUrl="/api/copilotkit" headers={getOpenAiHeaders}>
       {children}
-      <ChatWithPersistence />
+      {hasApiKey ? <ChatWithPersistence /> : null}
     </CopilotKit>
   );
 };

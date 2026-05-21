@@ -5,7 +5,6 @@ import {
   useFrontendTool,
   useHumanInTheLoop,
 } from "@copilotkit/react-core/v2";
-import { nanoid } from "nanoid";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { TodoToolStatus, DeleteConfirmation } from "@/components";
@@ -18,6 +17,7 @@ import type {
   TodoToolRenderProps,
   UpdatedTodoItem,
 } from "@/types";
+import { useTodosStore } from "@/stores";
 
 const nextStatus: (s: TodoStatus) => TodoStatus = (s) =>
   s === "todo" ? "in_progress" : s === "in_progress" ? "done" : "todo";
@@ -76,27 +76,39 @@ export const useTodos = (options?: { onNewTasksFromSync?: () => void }) => {
   }, [options?.onNewTasksFromSync]);
 
   const [input, setInput] = useState("");
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const nextTaskNumber = useRef(1);
+  const todos = useTodosStore((s) => s.todos);
+  const setTodos = useTodosStore((s) => s.setTodos);
+  const nextTaskNumber = useRef(useTodosStore.getState().nextTaskNumber);
 
-  const handleAddTodo = useCallback((text: string) => {
-    const trimmed = text.trim();
-    if (trimmed === "") return;
+  useEffect(() => {
+    const maxTask = todos.reduce((max, t) => Math.max(max, t.taskNumber), 0);
+    const next = todos.length === 0 ? 1 : Math.max(maxTask + 1, 1);
+    nextTaskNumber.current = next;
+    useTodosStore.getState().setNextTaskNumber(next);
+  }, [todos]);
 
-    const taskNumber = nextTaskNumber.current;
-    nextTaskNumber.current += 1;
+  const handleAddTodo = useCallback(
+    (text: string) => {
+      const trimmed = text.trim();
+      if (trimmed === "") return;
 
-    setTodos((prev) => [
-      ...prev,
-      {
-        id: nanoid(),
-        text: trimmed,
-        status: "todo",
-        taskNumber,
-        startDate: todayIsoDate(),
-      },
-    ]);
-  }, []);
+      const taskNumber = nextTaskNumber.current;
+      nextTaskNumber.current += 1;
+
+      setTodos((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          text: trimmed,
+          status: "todo",
+          taskNumber,
+          startDate: todayIsoDate(),
+        },
+      ]);
+      useTodosStore.getState().setNextTaskNumber(nextTaskNumber.current);
+    },
+    [setTodos]
+  );
 
   const handleSubmit = useCallback(
     (e: React.SubmitEvent<HTMLFormElement>) => {
@@ -135,56 +147,70 @@ export const useTodos = (options?: { onNewTasksFromSync?: () => void }) => {
         })
       );
     },
-    []
+    [setTodos]
   );
 
-  const handleUpdateTodos = useCallback((items: UpdatedTodoItem[]) => {
-    setTodos((prev) => {
-      const prevIds = new Set(prev.map((t) => t.id));
-      const next = mergeSyncItems(prev, items, nextTaskNumber);
-      const addedCount = next.filter((t) => !prevIds.has(t.id)).length;
-      if (addedCount > 0) {
-        queueMicrotask(() => onNewSyncRef.current?.());
-      }
-      return next;
-    });
-  }, []);
+  const handleUpdateTodos = useCallback(
+    (items: UpdatedTodoItem[], replaceAll?: boolean) => {
+      setTodos((prev) => {
+        const base = replaceAll ? [] : prev;
+        const prevIds = new Set(base.map((t) => t.id));
+        const counter = { current: nextTaskNumber.current };
+        const next = mergeSyncItems(base, items, counter);
+        nextTaskNumber.current = counter.current;
+        useTodosStore.getState().setNextTaskNumber(counter.current);
 
-  const handleCycleStatus = useCallback((id: string) => {
-    setTodos((prev) =>
-      prev.map((t) =>
-        t.id === id ? { ...t, status: nextStatus(t.status) } : t
-      )
-    );
-  }, []);
+        const addedCount = next.filter((t) => !prevIds.has(t.id)).length;
+        if (addedCount > 0) {
+          queueMicrotask(() => onNewSyncRef.current?.());
+        }
+        return next;
+      });
+    },
+    [setTodos]
+  );
 
-  const handleDeleteTodo = useCallback((id: string) => {
-    setTodos((prev) => prev.filter((todo) => todo.id !== id));
-  }, []);
+  const handleCycleStatus = useCallback(
+    (id: string) => {
+      setTodos((prev) =>
+        prev.map((t) =>
+          t.id === id ? { ...t, status: nextStatus(t.status) } : t
+        )
+      );
+    },
+    [setTodos]
+  );
+
+  const handleDeleteTodo = useCallback(
+    (id: string) => {
+      setTodos((prev) => prev.filter((todo) => todo.id !== id));
+    },
+    [setTodos]
+  );
 
   const handleClearTodos = useCallback(() => {
-    setTodos([]);
+    useTodosStore.getState().resetTodos();
     nextTaskNumber.current = 1;
   }, []);
 
   const handleClearCompletedTodos = useCallback(() => {
     setTodos((prev) => prev.filter((todo) => todo.status !== "done"));
-  }, []);
+  }, [setTodos]);
 
   useAgentContext({
-    description:
-      "The user's todo list. Each task has id, status (todo | in_progress | done), optional startDate and dueDate (YYYY-MM-DD). When updating, reuse the exact id from this list. Use syncTodos to add/update, deleteTodo (requires user confirmation), clearCompletedTodos (removes done), or clearTodos.",
+    description: `ONLY source of truth for the todo UI (${todos.length} task(s)). The left panel shows exactly this JSON — not chat history. When listing todos, read only this data. To add or change tasks you MUST call syncTodos (each new task needs a unique id and non-empty text). Reuse existing ids when updating. Tools: syncTodos, deleteTodo (confirmation), clearCompletedTodos, clearTodos.`,
     value: JSON.stringify(todos),
   });
 
   useFrontendTool({
     name: "syncTodos",
     description:
-      "Add or update todos by id from context. Set status to todo, in_progress, or done. Optional startDate (YYYY-MM-DD). Only set dueDate when the user explicitly asks; use strict YYYY-MM-DD (e.g. 2026-05-25). When updating one task, send only that item with its existing id — do not invent ids. Omit dueDate on tasks you are not changing. Cannot delete — use deleteTodo, clearCompletedTodos, or clearTodos.",
+      "Add or update todos in the UI. Each item needs id + text for new tasks (unique ids). Set status: todo | in_progress | done. Optional startDate (YYYY-MM-DD). Only set dueDate when the user asks (YYYY-MM-DD). When updating one task, send only that item with its existing id from context. To add multiple tasks at once, include every task in items[]. Set replaceAll: true only when replacing the entire list from context. Cannot delete — use deleteTodo, clearCompletedTodos, or clearTodos.",
     parameters: todosSchema,
-    handler: async ({ items }) => {
-      handleUpdateTodos(items);
-      return "Done.";
+    handler: async ({ items, replaceAll }) => {
+      handleUpdateTodos(items, replaceAll);
+      const count = useTodosStore.getState().todos.length;
+      return `Total now: ${count} todo(s).`;
     },
     render: (props) => (
       <TodoToolStatus
@@ -217,7 +243,7 @@ export const useTodos = (options?: { onNewTasksFromSync?: () => void }) => {
         />
       ),
     },
-    [todos]
+    [handleClearTodos, handleUpdateTodos]
   );
 
   useFrontendTool(
@@ -239,7 +265,7 @@ export const useTodos = (options?: { onNewTasksFromSync?: () => void }) => {
         />
       ),
     },
-    [todos]
+    [handleClearCompletedTodos]
   );
 
   useHumanInTheLoop(

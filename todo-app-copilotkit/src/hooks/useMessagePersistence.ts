@@ -3,6 +3,7 @@
 import { useAgent } from "@copilotkit/react-core/v2";
 import { useEffect, useRef } from "react";
 
+import { useApiKey } from "@/hooks/useApiKey";
 import { useMessagesStore } from "@/stores";
 
 /**
@@ -10,18 +11,19 @@ import { useMessagesStore } from "@/stores";
  */
 export const useMessagePersistence = () => {
   const { agent } = useAgent();
+  const { hasApiKey } = useApiKey();
   const threadId = useMessagesStore((s) => s.threadId);
   const saveMessages = useMessagesStore((s) => s.saveMessages);
   const loadMessages = useMessagesStore((s) => s.loadMessages);
   const savedCount = useMessagesStore((s) =>
     threadId ? (s.messagesByThread[threadId]?.length ?? 0) : 0
   );
-  const isEmpty = Boolean(threadId) && savedCount === 0;
+  const isNewChat = savedCount === 0;
 
   const restoredThreadRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!agent || !threadId) return;
+    if (!hasApiKey || !agent || !threadId) return;
     if (restoredThreadRef.current === threadId) return;
     if (agent.isRunning) return;
 
@@ -40,7 +42,7 @@ export const useMessagePersistence = () => {
 
     restoredThreadRef.current = threadId;
     agent.setMessages(savedMessages);
-  }, [agent, loadMessages, threadId]);
+  }, [agent, loadMessages, hasApiKey, threadId]);
 
   useEffect(() => {
     if (!agent || !threadId) return;
@@ -57,6 +59,6 @@ export const useMessagePersistence = () => {
   }, [agent, saveMessages, threadId]);
 
   return {
-    isNewChat: isEmpty,
+    isNewChat,
   };
 };

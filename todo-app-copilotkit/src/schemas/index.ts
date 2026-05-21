@@ -22,6 +22,7 @@ export const updatedTodoItemSchema = z
 
 export const todosSchema = z.object({
   items: z.array(updatedTodoItemSchema),
+  replaceAll: z.boolean().optional(),
 });
 
 export const deleteTodoSchema = z.object({

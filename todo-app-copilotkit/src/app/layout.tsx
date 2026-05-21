@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import "@copilotkit/react-core/v2/styles.css";
 import "./globals.css";
 
-import { CopilotProvider } from "@/components";
+import { CopilotProvider, StoresHydrationProvider } from "@/components";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,7 +20,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
-        <CopilotProvider>{children}</CopilotProvider>
+        <StoresHydrationProvider>
+          <CopilotProvider>{children}</CopilotProvider>
+        </StoresHydrationProvider>
       </body>
     </html>
   );
