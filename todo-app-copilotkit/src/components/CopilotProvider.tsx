@@ -6,7 +6,7 @@ import { CopilotKit } from "@copilotkit/react-core";
 
 import { useApiKey } from "@/hooks";
 import { useApiKeyStore, useMessagesStore } from "@/stores";
-import { readPersistedApiKey } from "@/utils/apiKeyStorage";
+import { readPersistedApiKey } from "@/utils";
 import { OPENAI_API_KEY_HEADER } from "@/constants";
 
 const ChatWithPersistence = dynamic(
@@ -36,7 +36,7 @@ export const CopilotProvider = ({ children }: { children: ReactNode }) => {
   return (
     <CopilotKit runtimeUrl="/api/copilotkit" headers={getOpenAiHeaders}>
       {children}
-      {hasApiKey ? <ChatWithPersistence /> : null}
+      {hasApiKey && <ChatWithPersistence />}
     </CopilotKit>
   );
 };
