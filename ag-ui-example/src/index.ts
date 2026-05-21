@@ -7,13 +7,13 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-async function chatLoop() {
+const chatLoop = async () => {
   console.log("🤖 AG-UI Assistant started!");
   console.log("Type your messages and press Enter. Press Ctrl+D to quit.\n");
 
   return new Promise<void>((resolve) => {
     const promptUser = () => {
-      rl.question("> ", async (input) => {
+      rl.question("> ", async (input: string) => {
         if (input.trim() === "") {
           promptUser();
           return;
@@ -78,7 +78,7 @@ async function chatLoop() {
 
     promptUser();
   });
-}
+};
 
 async function main() {
   await chatLoop();
