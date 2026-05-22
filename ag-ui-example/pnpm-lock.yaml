@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  rxjs: 7.8.1
+
 importers:
 
   .:
@@ -35,6 +38,9 @@ importers:
       open:
         specifier: ^11.0.0
         version: 11.0.0
+      rxjs:
+        specifier: 7.8.1
+        version: 7.8.1
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -1767,7 +1773,7 @@ packages:
     resolution: {integrity: sha512-qSHeUYcUs8oG61gYVomRie+7CEf/WFjpxHthK/K9S0vNcFx0jzzeywTtKF6ScxsRW1sLXt0wYdxNPsni7Y6Q+A==}
     engines: {node: ^20.20.0 || >=22.22.0}
     peerDependencies:
-      rxjs: ^7.0.0
+      rxjs: 7.8.1
     peerDependenciesMeta:
       rxjs:
         optional: true

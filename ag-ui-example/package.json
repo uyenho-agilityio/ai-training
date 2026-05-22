@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "tsx src/index.ts",
+    "practice": "tsx src/practice-index.ts",
     "dev": "tsx --watch src/index.ts",
     "build": "tsc",
     "clean": "rm -rf dist",
@@ -29,9 +30,15 @@
     "@mastra/memory": "^1.19.0",
     "mathjs": "^15.2.0",
     "open": "^11.0.0",
+    "rxjs": "7.8.1",
     "zod": "^4.4.3"
   },
   "bin": {
     "weather-assistant": "./dist/index.js"
+  },
+  "pnpm": {
+    "overrides": {
+      "rxjs": "7.8.1"
+    }
   }
 }
