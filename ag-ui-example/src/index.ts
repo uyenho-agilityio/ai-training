@@ -35,6 +35,33 @@ const chatLoop = async () => {
           await agent.runAgent(
             {}, // No additional configuration needed
             {
+              onRunStartedEvent() {
+                console.log("[EVENT] RUN_STARTED");
+              },
+              onRunFinishedEvent() {
+                console.log("[EVENT] RUN_FINISHED");
+              },
+
+              // TOOL_CALL_START
+              onToolCallStartEvent({ event }) {
+                console.log("🔧 Tool call:", event.toolCallName);
+              },
+              // TOOL_CALL_ARGS
+              onToolCallArgsEvent({ event }) {
+                process.stdout.write(event.delta);
+              },
+              // TOOL_CALL_END
+              onToolCallEndEvent() {
+                console.log("");
+              },
+              // TOOL_CALL_RESULT
+              onToolCallResultEvent({ event }) {
+                if (event.content) {
+                  console.log("🔍 Tool call result:", event.content);
+                }
+              },
+
+              // TEXT_MESSAGE_START + CONTENT + END
               onTextMessageStartEvent() {
                 process.stdout.write("🤖 Assistant: ");
               },
@@ -43,20 +70,6 @@ const chatLoop = async () => {
               },
               onTextMessageEndEvent() {
                 console.log("\n");
-              },
-              onToolCallStartEvent({ event }) {
-                console.log("🔧 Tool call:", event.toolCallName);
-              },
-              onToolCallArgsEvent({ event }) {
-                process.stdout.write(event.delta);
-              },
-              onToolCallEndEvent() {
-                console.log("");
-              },
-              onToolCallResultEvent({ event }) {
-                if (event.content) {
-                  console.log("🔍 Tool call result:", event.content);
-                }
               },
             }
           );
