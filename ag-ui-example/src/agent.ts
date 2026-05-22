@@ -5,6 +5,7 @@ import { LibSQLStore } from "@mastra/libsql";
 
 import { weatherTool } from "./tools/weather.tool";
 import { browserTool } from "./tools/browser.tool";
+import { calculatorTool } from "./tools/calculator.tool";
 
 export const agent = new MastraAgent({
   resourceId: "cliExample",
@@ -23,10 +24,13 @@ export const agent = new MastraAgent({
       - "weather website", "weather web", "show weather site" → https://www.accuweather.com/ only (not weather.com)
       - Do NOT call get-weather when the user only wants to open a website
 
+      Calculator (tool id: calculator):
+      - Math questions → pass expression (e.g. "25*4")
+
       Be friendly and helpful in all interactions!
     `,
-    model: "openai/gpt-4o",
-    tools: { weatherTool, browserTool },
+    model: "openai/gpt-4o-mini",
+    tools: { weatherTool, browserTool, calculatorTool },
     memory: new Memory({
       storage: new LibSQLStore({
         id: "storage-memory",
