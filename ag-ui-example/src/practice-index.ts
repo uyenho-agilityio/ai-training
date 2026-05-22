@@ -1,9 +1,10 @@
 import * as readline from "readline";
 import { randomUUID } from "@ag-ui/client";
 
-import { CustomAgent } from "./custom-agent";
+// import { CustomAgent } from "./custom-agent";
+import { CustomWeatherAgent } from "./custom-weather-agent";
 
-const agent = new CustomAgent({
+const agent = new CustomWeatherAgent({
   threadId: "practice-conversation",
 });
 
@@ -41,6 +42,19 @@ const chatLoop = async () => {
               },
               onRunFinishedEvent() {
                 console.log("[EVENT] RUN_FINISHED");
+              },
+              onToolCallStartEvent({ event }) {
+                console.log("🔧 Tool call:", event.toolCallName);
+              },
+              onToolCallArgsEvent({ event }) {
+                process.stdout.write(event.delta);
+              },
+              onToolCallEndEvent() {
+                console.log("");
+              },
+              onToolCallResultEvent({ event }) {
+                if (event.content)
+                  console.log("🔍 Tool call result:", event.content);
               },
               onTextMessageStartEvent() {
                 process.stdout.write("🤖 Assistant: ");

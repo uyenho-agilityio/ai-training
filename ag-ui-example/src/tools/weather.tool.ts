@@ -41,7 +41,7 @@ export const weatherTool = createTool({
   },
 });
 
-const getWeather = async (location: string) => {
+export const getWeather = async (location: string) => {
   const geocodingUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
     location
   )}&count=1`;
