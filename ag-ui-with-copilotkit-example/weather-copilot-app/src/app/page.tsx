@@ -2,16 +2,18 @@ import { CopilotSidebar } from "@copilotkit/react-ui";
 import { CopilotKit } from "@copilotkit/react-core";
 import "@copilotkit/react-ui/styles.css";
 
-import { WeatherCard, WeatherInfo } from "../components";
+import { MASTRA_CHAT_URL } from "../constants";
+import { WeatherCard, WeatherConfirmation, WeatherInfo } from "../components";
 
 export default function Home() {
   return (
     <CopilotKit
-      runtimeUrl="http://localhost:4111/chat"
+      runtimeUrl={MASTRA_CHAT_URL}
       agent="weatherAgent"
       enableInspector
     >
       <WeatherCard />
+      <WeatherConfirmation />
       <div className="flex min-h-screen bg-white">
         <section className="flex flex-1 justify-center items-start bg-white p-8 pt-10">
           <WeatherInfo />
