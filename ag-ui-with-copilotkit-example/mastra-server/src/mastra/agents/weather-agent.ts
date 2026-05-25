@@ -1,7 +1,9 @@
 import { Agent } from '@mastra/core/agent';
+import { LibSQLStore } from '@mastra/libsql';
 import { Memory } from '@mastra/memory';
 import { weatherTool } from '../tools/weather-tool';
 import { scorers } from '../scorers/weather-scorer';
+import { WeatherAgentStateSchema } from '../types';
 
 export const weatherAgent = new Agent({
   id: 'weather-agent',
@@ -17,7 +19,12 @@ Your primary function is to help users get weather details for specific location
 - If the user asks for activities and provides the weather forecast, suggest activities based on the weather forecast.
 - If the user asks for activities, respond in the format they request.
 
-Use the weatherTool to fetch current weather data.`,
+Use the weatherTool to fetch current weather data.
+
+Keep working memory in sync with the weather workflow:
+- Before fetching weather: set status to "fetching", location, and processingStage.
+- After a successful weatherTool call: set weatherReport from the tool result and status to "done".
+- On errors: set status to "error".`,
   model: 'openai/gpt-5-mini',
   tools: { weatherTool },
   scorers: {
@@ -43,5 +50,16 @@ Use the weatherTool to fetch current weather data.`,
       },
     },
   },
-  memory: new Memory(),
+  memory: new Memory({
+    storage: new LibSQLStore({
+      id: 'weather-agent-memory',
+      url: 'file:./mastra.db',
+    }),
+    options: {
+      workingMemory: {
+        enabled: true,
+        schema: WeatherAgentStateSchema,
+      },
+    },
+  }),
 });
