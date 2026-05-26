@@ -11,6 +11,7 @@
   "dependencies": {
     "@copilotkit/react-core": "^1.57.4",
     "@copilotkit/react-ui": "^1.57.4",
+    "@copilotkit/runtime-client-gql": "^1.57.4",
     "next": "16.2.6",
     "react": "19.2.4",
     "react-dom": "19.2.4",

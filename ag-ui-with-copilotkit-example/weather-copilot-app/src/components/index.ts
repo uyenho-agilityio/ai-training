@@ -3,3 +3,8 @@ export * from "./WeatherCard";
 export * from "./ConfirmationModal";
 export * from "./WeatherConfirmation";
 export * from "./HideInternalToolCalls";
+export * from "./CopilotSidebarHeader";
+export * from "./SyncCopilotHistory";
+export * from "./ChatThreadProvider";
+export * from "./Spinner";
+export * from "./WeatherApp";
