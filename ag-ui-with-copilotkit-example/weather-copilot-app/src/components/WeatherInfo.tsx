@@ -40,7 +40,7 @@ export const WeatherInfo = () => {
         />
       </div>
 
-      {(state.status === "fetching" || state.processingStage !== "idle") && (
+      {state.status && (
         <p className="text-sm font-medium text-gradient-muted text-center">
           {getStatusText(state)}
         </p>

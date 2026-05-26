@@ -65,3 +65,7 @@ export type MetricConfig = {
   value: string;
   gradient: string;
 };
+
+export type WeatherFetchApprovalArgs = {
+  location: string;
+};
