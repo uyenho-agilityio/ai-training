@@ -2,16 +2,23 @@ import { CopilotSidebar } from "@copilotkit/react-ui";
 import { CopilotKit } from "@copilotkit/react-core";
 import "@copilotkit/react-ui/styles.css";
 
-import { MASTRA_CHAT_URL } from "../constants";
-import { WeatherCard, WeatherConfirmation, WeatherInfo } from "../components";
+import {
+  HideInternalToolCalls,
+  WeatherCard,
+  WeatherConfirmation,
+  WeatherInfo,
+} from "../components";
 
 export default function Home() {
   return (
     <CopilotKit
-      runtimeUrl={MASTRA_CHAT_URL}
+      runtimeUrl={
+        process.env.NEXT_PUBLIC_MASTRA_CHAT_URL ?? "http://localhost:4111/chat"
+      }
       agent="weatherAgent"
-      enableInspector
+      enableInspector={process.env.NODE_ENV === "development"}
     >
+      <HideInternalToolCalls />
       <WeatherCard />
       <WeatherConfirmation />
       <div className="flex min-h-screen bg-white">
