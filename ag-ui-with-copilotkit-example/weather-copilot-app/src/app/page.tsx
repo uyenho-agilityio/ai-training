@@ -21,21 +21,17 @@ export default function Home() {
       <HideInternalToolCalls />
       <WeatherCard />
       <WeatherConfirmation />
-      <div className="flex min-h-screen bg-white">
-        <section className="flex flex-1 justify-center items-start bg-white p-8 pt-10">
+      <CopilotSidebar
+        defaultOpen
+        labels={{
+          title: "Weather Agent",
+          initial: "Hi! 👋 Ask me about the weather, forecasts, and climate.",
+        }}
+      >
+        <main className="flex min-h-screen w-full justify-center bg-white py-8">
           <WeatherInfo />
-        </section>
-        <main className="min-w-0 flex-1">
-          <CopilotSidebar
-            defaultOpen
-            labels={{
-              title: "Weather Agent",
-              initial:
-                "Hi! 👋 Ask me about the weather, forecasts, and climate.",
-            }}
-          />
         </main>
-      </div>
+      </CopilotSidebar>
     </CopilotKit>
   );
 }
