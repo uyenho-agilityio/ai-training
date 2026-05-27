@@ -1,6 +1,6 @@
 "use client";
 
-import { useChatContext } from "@copilotkit/react-ui";
+import { CopilotDevConsole, useChatContext } from "@copilotkit/react-ui";
 
 import { useChatThread } from "../hooks";
 
@@ -19,7 +19,7 @@ export const CopilotSidebarHeader = () => {
         >
           New chat
         </button>
-        {/* <CopilotDevConsole /> */}
+        {process.env.NODE_ENV === "development" && <CopilotDevConsole />}
         <button
           type="button"
           aria-label="Close"

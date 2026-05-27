@@ -1,5 +1,4 @@
-export const MASTRA_CHAT_URL =
-  process.env.NEXT_PUBLIC_MASTRA_CHAT_URL ?? "http://localhost:4111/chat";
+export { COPILOT_OBSERVABILITY_HOOKS } from "./copilot-observability";
 
 export const METRIC_GRADIENTS = {
   temperature: "from-sky-500 via-blue-600 to-indigo-600",
