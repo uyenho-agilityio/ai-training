@@ -41,11 +41,9 @@ export const WeatherInfo = () => {
         />
       </div>
 
-      {state.status !== "idle" && (
-        <p className="text-sm font-medium text-gradient-muted text-center">
-          {getStatusText(state)}
-        </p>
-      )}
+      <p className="text-sm font-medium text-gradient-muted text-center">
+        {getStatusText(state)}
+      </p>
 
       {state.weatherReport && (
         <div className="w-full text-left">

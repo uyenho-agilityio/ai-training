@@ -19,6 +19,7 @@ export const WeatherAgentStateSchema = z.object({
       feelsLike: z.number(),
       humidity: z.number(),
       windSpeed: z.number(),
+      windGust: z.number().optional(),
       conditions: z.string(),
       location: z.string(),
     })

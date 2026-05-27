@@ -65,7 +65,7 @@ export const getMetricConfig = (
 export const getStatusText = (state: WeatherAgentState) => {
   switch (state?.processingStage) {
     case "idle":
-      return "Initializing weather request...";
+      return "";
     case "analyzing_request":
       return "Analyzing your request...";
     case "fetching_weather":
@@ -77,7 +77,7 @@ export const getStatusText = (state: WeatherAgentState) => {
     case "error":
       return "Error occurred while getting weather";
     default:
-      return "Processing weather request...";
+      return "";
   }
 };
 
