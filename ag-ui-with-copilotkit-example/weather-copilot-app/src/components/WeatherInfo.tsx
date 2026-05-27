@@ -33,14 +33,15 @@ export const WeatherInfo = () => {
           Location
         </label>
         <input
-          placeholder="e.g. Ho Chi Minh City"
+          disabled
+          placeholder="e.g. What's the weather like in Ho Chi Minh City?"
           className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 shadow-sm outline-none ring-sky-200 transition focus:ring-2"
           value={state.location ?? ""}
           onChange={handleLocationChange}
         />
       </div>
 
-      {state.status && (
+      {state.status !== "idle" && (
         <p className="text-sm font-medium text-gradient-muted text-center">
           {getStatusText(state)}
         </p>

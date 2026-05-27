@@ -14,6 +14,9 @@ importers:
       '@copilotkit/react-ui':
         specifier: ^1.57.4
         version: 1.57.4(@ag-ui/core@0.0.53)(@types/mdast@4.0.4)(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(graphql@16.14.0)(micromark-util-types@2.0.2)(micromark@4.0.2)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(zod@4.4.3)
+      '@copilotkit/runtime-client-gql':
+        specifier: ^1.57.4
+        version: 1.57.4(@ag-ui/core@0.0.53)(graphql@16.14.0)(react@19.2.4)
       next:
         specifier: 16.2.6
         version: 16.2.6(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -23,6 +26,9 @@ importers:
       react-dom:
         specifier: 19.2.4
         version: 19.2.4(react@19.2.4)
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       '@tailwindcss/postcss':
         specifier: ^4

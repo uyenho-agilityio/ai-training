@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "mastra dev",
     "build": "mastra build",
-    "start": "mastra start"
+    "start": "mastra start",
+    "deploy": "mastra server deploy -y --env-file .env --skip-preflight"
   },
   "keywords": [],
   "author": "",
@@ -24,7 +24,6 @@
     "@copilotkit/runtime": "^1.57.4",
     "@mastra/client-js": "^1.20.0",
     "@mastra/core": "^1.36.0",
-    "@mastra/duckdb": "^1.4.0",
     "@mastra/evals": "^1.2.2",
     "@mastra/libsql": "^1.11.1",
     "@mastra/loggers": "^1.1.1",

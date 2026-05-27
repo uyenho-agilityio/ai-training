@@ -1,34 +1,28 @@
 "use client";
 
-import { useCopilotAction } from "@copilotkit/react-core";
-import type { WeatherFetchApprovalArgs } from "../types";
+import { useHumanInTheLoop } from "@copilotkit/react-core/v2";
+import { z } from "zod";
+
 import { ConfirmationModal } from "./ConfirmationModal";
 
-const APPROVE_WEATHER_FETCH = "approveWeatherFetch";
-
 export const WeatherConfirmation = () => {
-  useCopilotAction({
-    name: APPROVE_WEATHER_FETCH,
+  useHumanInTheLoop({
+    name: "approveWeatherFetch",
     description:
       "Request user approval before fetching weather with weatherTool. Call this with the target city whenever the user asks for current weather. Do not call weatherTool until the user approves.",
-    parameters: [
-      {
-        name: "location",
-        type: "string",
-        description: "City or place to fetch weather for",
-        required: true,
-      },
-    ],
-    renderAndWaitForResponse: ({ args, respond, status }) => {
-      const { location } = args as WeatherFetchApprovalArgs;
-      const isResolved = status === "complete";
+    parameters: z.object({
+      location: z.string().describe("City or place to fetch weather for"),
+    }),
+    render: ({ args, respond }) => {
+      if (!respond) return null;
+      const location = args.location ?? "";
 
       const handleApprove = () => {
-        respond?.("approved");
+        respond("approved");
       };
 
       const handleCancel = () => {
-        respond?.("rejected");
+        respond("rejected");
       };
 
       return (
@@ -36,8 +30,6 @@ export const WeatherConfirmation = () => {
           title="Confirmation"
           message="The agent wants to fetch live weather data for this location. Approve to continue and stream the result."
           location={location}
-          isResolved={isResolved}
-          resolvedLabel="Continuing…"
           onApprove={handleApprove}
           onCancel={handleCancel}
         />

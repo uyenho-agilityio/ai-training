@@ -6,5 +6,9 @@ dist
 .env
 *.db
 *.db-*
+*.duckdb
+*.duckdb.wal
+src/mastra/public/*
+!src/mastra/public/.gitkeep
 .netlify
 .vercel
