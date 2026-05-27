@@ -1,8 +1,6 @@
 import { Mastra } from "@mastra/core/mastra";
 import { registerCopilotKit } from "@ag-ui/mastra/copilotkit";
 import { PinoLogger } from "@mastra/loggers";
-import { LibSQLStore } from "@mastra/libsql";
-import { DuckDBStore } from "@mastra/duckdb";
 import { MastraCompositeStore } from "@mastra/core/storage";
 import {
   Observability,
@@ -17,6 +15,11 @@ import {
   completenessScorer,
   translationScorer,
 } from "./scorers/weather-scorer";
+import { getDBStore } from "../mastra/utils";
+
+const corsOrigins = (process.env.CORS_ORIGINS ?? "http://localhost:3000")
+  .split(",")
+  .map((origin) => origin.trim());
 
 export const mastra = new Mastra({
   workflows: { weatherWorkflow },
@@ -28,13 +31,7 @@ export const mastra = new Mastra({
   },
   storage: new MastraCompositeStore({
     id: "composite-storage",
-    default: new LibSQLStore({
-      id: "mastra-storage",
-      url: "file:./mastra.db",
-    }),
-    domains: {
-      observability: await new DuckDBStore().getStore("observability"),
-    },
+    default: getDBStore("mastra-storage"),
   }),
   logger: new PinoLogger({
     name: "Mastra",
@@ -56,7 +53,7 @@ export const mastra = new Mastra({
   }),
   server: {
     cors: {
-      origin: "*",
+      origin: corsOrigins,
       allowMethods: ["*"],
       allowHeaders: ["*"],
     },
@@ -67,8 +64,13 @@ export const mastra = new Mastra({
       }),
     ],
   },
-  // For deployment
   bundler: {
-    externals: ["@copilotkit/runtime"],
+    externals: [
+      "@copilotkit",
+      "@copilotkit/runtime",
+      "@ag-ui/mastra",
+      "@mastra/libsql",
+      "@libsql",
+    ],
   },
 });

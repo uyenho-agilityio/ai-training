@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "deploy": "pnpm dlx vercel --prod"
   },
   "dependencies": {
     "@copilotkit/react-core": "^1.57.4",

@@ -1,13 +1,14 @@
-import { Agent } from '@mastra/core/agent';
-import { LibSQLStore } from '@mastra/libsql';
-import { Memory } from '@mastra/memory';
-import { weatherTool } from '../tools/weather-tool';
-import { scorers } from '../scorers/weather-scorer';
-import { WeatherAgentStateSchema } from '../types';
+import { Agent } from "@mastra/core/agent";
+import { Memory } from "@mastra/memory";
+
+import { weatherTool } from "../tools/weather-tool";
+import { scorers } from "../scorers/weather-scorer";
+import { WeatherAgentStateSchema } from "../types";
+import { getDBStore } from "../utils";
 
 export const weatherAgent = new Agent({
-  id: 'weather-agent',
-  name: 'Weather Agent',
+  id: "weather-agent",
+  name: "Weather Agent",
   instructions: `You are a helpful weather assistant that provides accurate weather information and can help planning activities based on the weather.
 
 Your primary function is to help users get weather details for specific locations. When responding:
@@ -29,36 +30,33 @@ Keep working memory in sync with the weather workflow:
 - Before fetching weather: set status to "fetching", location, and processingStage.
 - After a successful weatherTool call: set weatherReport from the tool result and status to "done".
 - On errors: set status to "error".`,
-  model: 'openai/gpt-5-mini',
+  model: "openai/gpt-5-mini",
   tools: { weatherTool },
   scorers: {
     toolCallAppropriateness: {
       scorer: scorers.toolCallAppropriatenessScorer,
       sampling: {
-        type: 'ratio',
+        type: "ratio",
         rate: 1,
       },
     },
     completeness: {
       scorer: scorers.completenessScorer,
       sampling: {
-        type: 'ratio',
+        type: "ratio",
         rate: 1,
       },
     },
     translation: {
       scorer: scorers.translationScorer,
       sampling: {
-        type: 'ratio',
+        type: "ratio",
         rate: 1,
       },
     },
   },
   memory: new Memory({
-    storage: new LibSQLStore({
-      id: 'weather-agent-memory',
-      url: 'file:./mastra.db',
-    }),
+    storage: getDBStore("weather-agent-memory"),
     options: {
       workingMemory: {
         enabled: true,
