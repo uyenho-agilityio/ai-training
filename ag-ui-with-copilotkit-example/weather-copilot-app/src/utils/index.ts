@@ -63,15 +63,11 @@ export const getMetricConfig = (
 };
 
 export const getStatusText = (state: WeatherAgentState) => {
-  switch (state?.processingStage) {
+  switch (state?.status) {
     case "idle":
-      return "";
-    case "analyzing_request":
-      return "Analyzing your request...";
-    case "fetching_weather":
+      return "Initializing weather request...";
+    case "fetching":
       return "Fetching current weather data...";
-    case "formatting_response":
-      return "Formatting weather information...";
     case "done":
       return "Weather information ready";
     case "error":

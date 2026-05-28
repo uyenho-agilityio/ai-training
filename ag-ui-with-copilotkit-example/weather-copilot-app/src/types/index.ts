@@ -11,13 +11,7 @@ export type WeatherReport = {
 export type WeatherAgentState = {
   status: "idle" | "fetching" | "done" | "error";
   location: string | null;
-  processingStage:
-    | "idle"
-    | "analyzing_request"
-    | "fetching_weather"
-    | "formatting_response"
-    | "done"
-    | "error";
+  processingStage: "idle" | "fetching" | "done" | "error";
   weatherReport: WeatherReport | null;
 };
 

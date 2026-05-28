@@ -8,6 +8,7 @@ import {
   COPILOT_CHAT_INITIAL,
   COPILOT_OBSERVABILITY_HOOKS,
   MASTRA_CHAT_URL,
+  MASTRA_MEMORY_RESOURCE_ID,
 } from "../constants";
 import { useChatThread } from "../hooks";
 import { ChatThreadProvider } from "./ChatThreadProvider";
@@ -15,7 +16,6 @@ import { CopilotSidebarHeader } from "./CopilotSidebarHeader";
 import { HideInternalToolCalls } from "./HideInternalToolCalls";
 import { Spinner } from "./Spinner";
 import { SyncCopilotHistory } from "./SyncCopilotHistory";
-import { WeatherCard } from "./WeatherCard";
 import { WeatherConfirmation } from "./WeatherConfirmation";
 import { WeatherInfo } from "./WeatherInfo";
 
@@ -38,7 +38,7 @@ const WeatherAppContent = () => {
     <CopilotKit
       key={threadId}
       runtimeUrl={MASTRA_CHAT_URL}
-      agent="weatherAgent"
+      agent={MASTRA_MEMORY_RESOURCE_ID}
       threadId={threadId}
       publicLicenseKey={process.env.NEXT_PUBLIC_COPILOTKIT_LICENSE_KEY}
       enableInspector={process.env.NODE_ENV === "development"}
@@ -71,7 +71,6 @@ const WeatherAppContent = () => {
       }}
     >
       <HideInternalToolCalls />
-      <WeatherCard />
       <WeatherConfirmation />
       <CopilotSidebar
         defaultOpen
