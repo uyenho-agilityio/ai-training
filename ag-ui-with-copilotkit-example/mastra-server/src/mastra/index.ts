@@ -15,7 +15,7 @@ import {
   completenessScorer,
   translationScorer,
 } from "./scorers/weather-scorer";
-import { getDBStore } from "../mastra/utils";
+import { applyUserLocationFromHeaders, getDBStore } from "../mastra/utils";
 
 const corsOrigins = (process.env.CORS_ORIGINS ?? "http://localhost:3000")
   .split(",")
@@ -61,6 +61,10 @@ export const mastra = new Mastra({
       registerCopilotKit({
         path: "/chat",
         resourceId: "weatherAgent",
+        // Extract user location from headers and set in requestContext for agent instructions
+        setContext: async (c, requestContext) => {
+          applyUserLocationFromHeaders(c, requestContext, "chat/setContext");
+        },
       }),
     ],
   },

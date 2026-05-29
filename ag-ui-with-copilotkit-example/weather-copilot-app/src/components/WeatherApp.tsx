@@ -36,6 +36,9 @@ const WeatherAppContent = () => {
 
   return (
     <CopilotKit
+      headers={{
+        "x-user-location": "Da Nang, Vietnam",
+      }}
       key={threadId}
       runtimeUrl={MASTRA_CHAT_URL}
       agent={MASTRA_MEMORY_RESOURCE_ID}

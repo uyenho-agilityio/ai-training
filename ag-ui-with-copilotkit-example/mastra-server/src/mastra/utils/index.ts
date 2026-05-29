@@ -12,3 +12,5 @@ export const getDBStore = (id: string) => {
     ...(authToken ? { authToken } : {}),
   });
 };
+
+export { applyUserLocationFromHeaders } from "./client-headers";
