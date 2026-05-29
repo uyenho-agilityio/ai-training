@@ -4,14 +4,7 @@ export const WeatherAgentStateSchema = z.object({
   status: z.enum(["idle", "fetching", "done", "error"]).default("idle"),
   location: z.string().nullable().default(null),
   processingStage: z
-    .enum([
-      "idle",
-      "analyzing_request",
-      "fetching_weather",
-      "formatting_response",
-      "done",
-      "error",
-    ])
+    .enum(["idle", "fetching", "done", "error"])
     .default("idle"),
   weatherReport: z
     .object({
