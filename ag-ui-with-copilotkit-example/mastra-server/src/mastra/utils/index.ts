@@ -14,3 +14,7 @@ export const getDBStore = (id: string) => {
 };
 
 export { applyUserLocationFromHeaders } from "./client-headers";
+export {
+  buildWeatherAgentInstructions,
+  type BuildWeatherAgentInstructionsOptions,
+} from "./instructions";

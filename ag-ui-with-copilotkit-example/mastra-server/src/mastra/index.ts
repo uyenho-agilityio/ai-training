@@ -1,5 +1,4 @@
 import { Mastra } from "@mastra/core/mastra";
-import { registerCopilotKit } from "@ag-ui/mastra/copilotkit";
 import { PinoLogger } from "@mastra/loggers";
 import { MastraCompositeStore } from "@mastra/core/storage";
 import {
@@ -9,6 +8,9 @@ import {
   SensitiveDataFilter,
 } from "@mastra/observability";
 import { weatherWorkflow } from "./workflows/weather-workflow";
+import { registerCopilotKit } from "@ag-ui/mastra/copilotkit";
+
+import { registerCustomCopilotKit } from "./copilotkit-custom";
 import { weatherAgent } from "./agents/weather-agent";
 import {
   toolCallAppropriatenessScorer,
@@ -58,14 +60,28 @@ export const mastra = new Mastra({
       allowHeaders: ["*"],
     },
     apiRoutes: [
-      registerCopilotKit({
-        path: "/chat",
-        resourceId: "weatherAgent",
-        // Extract user location from headers and set in requestContext for agent instructions
-        setContext: async (c, requestContext) => {
-          applyUserLocationFromHeaders(c, requestContext, "chat/setContext");
-        },
-      }),
+      process.env.USE_CUSTOM_WEATHER_AGENT === "true"
+        ? registerCustomCopilotKit({
+            path: "/chat",
+            setContext: async (c, requestContext) => {
+              applyUserLocationFromHeaders(
+                c,
+                requestContext,
+                "chat/setContext"
+              );
+            },
+          })
+        : registerCopilotKit({
+            path: "/chat",
+            resourceId: "weatherAgent",
+            setContext: async (c, requestContext) => {
+              applyUserLocationFromHeaders(
+                c,
+                requestContext,
+                "chat/setContext"
+              );
+            },
+          }),
     ],
   },
   bundler: {

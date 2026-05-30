@@ -14,9 +14,15 @@ importers:
       '@ag-ui/core':
         specifier: ^0.0.53
         version: 0.0.53
+      '@ag-ui/encoder':
+        specifier: ^0.0.53
+        version: 0.0.53
       '@ag-ui/mastra':
         specifier: ^1.0.2
         version: 1.0.2(dd4b0063ee3f9e9f2872655ffd2c37d8)
+      '@ag-ui/proto':
+        specifier: ^0.0.53
+        version: 0.0.53
       '@copilotkit/runtime':
         specifier: ^1.57.4
         version: 1.57.4(@cfworker/json-schema@4.1.1)(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(openai@6.39.0(ws@8.21.0)(zod@4.4.3))(ws@8.21.0))(@langchain/langgraph-sdk@1.9.5(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(openai@6.39.0(ws@8.21.0)(zod@4.4.3))(ws@8.21.0)))(@opentelemetry/api@1.9.1)(langchain@1.4.2(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(openai@6.39.0(ws@8.21.0)(zod@4.4.3))(ws@8.21.0))(@opentelemetry/api@1.9.1)(openai@6.39.0(ws@8.21.0)(zod@4.4.3))(ws@8.21.0)(zod-to-json-schema@3.25.2(zod@4.4.3)))(openai@6.39.0(ws@8.21.0)(zod@4.4.3))(zod-to-json-schema@3.25.2(zod@4.4.3))
@@ -44,6 +50,9 @@ importers:
       openai:
         specifier: ^6.39.0
         version: 6.39.0(ws@8.21.0)(zod@4.4.3)
+      rxjs:
+        specifier: ^7.8.1
+        version: 7.8.1
       zod:
         specifier: ^4.4.3
         version: 4.4.3
