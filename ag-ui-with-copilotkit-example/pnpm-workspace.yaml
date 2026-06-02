@@ -1,0 +1,8 @@
+packages:
+  - "mastra-server"
+  - "weather-copilot-app"
+
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver
+

@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "deploy": "pnpm dlx vercel --prod"
+    "deploy": "pnpm dlx vercel --prod",
+    "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "@copilotkit/core": "^1.57.0",

@@ -7,7 +7,8 @@
     "dev": "mastra dev",
     "build": "mastra build",
     "start": "mastra start",
-    "deploy": "mastra server deploy -y --env-file .env --skip-preflight"
+    "deploy": "mastra server deploy -y --env-file .env --skip-preflight",
+    "check-types": "tsc -p tsconfig.json --noEmit"
   },
   "keywords": [],
   "author": "",
