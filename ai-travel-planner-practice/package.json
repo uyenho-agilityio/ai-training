@@ -10,9 +10,15 @@
     "dev:web": "turbo run dev --filter=web",
     "dev:agent": "turbo run dev --filter=agent",
     "build:web": "turbo run build --filter=web",
-    "build:agent": "turbo run build --filter=agent"
+    "build:agent": "turbo run build --filter=agent",
+    "prepare": "cd .. && husky ai-travel-planner-practice/.husky"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.0.2",
+    "@commitlint/config-conventional": "^21.0.2",
+    "eslint": "^9.39.4",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.7",
     "prettier": "^3.8.3",
     "turbo": "^2.9.16",
     "typescript": "5.9.2"
@@ -20,5 +26,20 @@
   "packageManager": "pnpm@10.33.2",
   "engines": {
     "node": ">=22"
+  },
+  "lint-staged": {
+    "apps/agent/src/**/*.{ts,tsx,js,mjs}": [
+      "eslint --fix --config apps/agent/eslint.config.mjs",
+      "prettier --write"
+    ],
+    "apps/web/**/*.{ts,tsx,js,mjs}": [
+      "eslint --fix --config apps/web/eslint.config.mjs",
+      "prettier --write"
+    ],
+    "packages/ui/**/*.{ts,tsx}": [
+      "eslint --fix --config packages/ui/eslint.config.mjs",
+      "prettier --write"
+    ],
+    "*.{json,md,css,yml,yaml}": "prettier --write"
   }
 }
