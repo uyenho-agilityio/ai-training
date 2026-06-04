@@ -1,7 +1,9 @@
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
-import { weatherTool } from "../tools/weather-tool";
+
 import { scorers } from "../scorers/weather-scorer";
+import { weatherTool } from "../tools";
+import { chatModel } from "../configs";
 
 export const weatherAgent = new Agent({
   id: "weather-agent",
@@ -18,7 +20,7 @@ Your primary function is to help users get weather details for specific location
 - If the user asks for activities, respond in the format they request.
 
 Use the weatherTool to fetch current weather data.`,
-  model: "openai/gpt-4o-mini",
+  model: chatModel,
   tools: { weatherTool },
   scorers: {
     toolCallAppropriateness: {
