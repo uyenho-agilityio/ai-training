@@ -8,6 +8,8 @@ import {
 import { createScorer } from "@mastra/core/evals";
 import { judgeModel } from "../config/models";
 
+import { judgeModel } from "../configs";
+
 export const toolCallAppropriatenessScorer = createToolCallAccuracyScorerCode({
   expectedTool: "weatherTool",
   strictMode: false,
