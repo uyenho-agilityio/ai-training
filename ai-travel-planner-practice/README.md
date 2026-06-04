@@ -1,159 +1,191 @@
-# Turborepo starter
+# CopilotKit Practice — AI Travel Planner
 
-This Turborepo starter is maintained by the Turborepo core team.
+A practice that simulates autonomous travel research and logistics orchestration through a single conversational viewport. The app synthesizes user preferences into structured itineraries, flight/hotel cards, step-by-step route recommendations (no map), and text-based local tips.
 
-## Using this example
+## Overview
 
-Run the following command:
+| App / package                                          | Role                                                                                                        |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| `apps/agent`                                           | Mastra agents, tools, CopilotKit runtime (`/chat`), [Mastra Studio](https://mastra.ai/docs/studio/overview) |
+| `apps/web`                                             | Next.js + CopilotKit UI (chat, Generative UI, tabs)                                                         |
+| `packages/ui`                                          | Shared React components (design system)                                                                     |
+| `packages/eslint-config`, `packages/typescript-config` | Shared lint and TypeScript config                                                                           |
 
-```sh
-npx create-turbo@latest
+**Flow:** User chats in `web` → CopilotKit + AG-UI stream → `agent` (Mastra) → LLM + tools → UI updates across **Places**, **Itinerary**, and **Book** tabs.
+
+## Learning objectives
+
+- Build an AI-powered app with **CopilotKit** and a **Mastra** agent
+- Use **AG-UI streaming events** between frontend and backend
+- Implement a conversational chat UI with **real-time streaming**
+- Add **human-in-the-loop (HITL)** confirmation before costly API calls
+- Persist and restore conversations with **Mastra Memory** and storage
+- Render **Generative UI** from agent execution state
+- Integrate **external tools** (Open-Meteo, SerpAPI, etc.) into an AI workflow
+
+## Tech stack
+
+| Layer               | Technology                                                                                                                                                                                                |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Runtime             | [Node.js](https://nodejs.org/) 24.3.0                                                                                                                                                                     |
+| Monorepo            | [Turborepo](https://turborepo.dev/docs)                                                                                                                                                                   |
+| Language            | [TypeScript](https://www.typescriptlang.org/docs/)                                                                                                                                                        |
+| Agent               | [Mastra](https://mastra.ai/docs)                                                                                                                                                                          |
+| Copilot UI          | [CopilotKit](https://docs.copilotkit.ai/)                                                                                                                                                                 |
+| Agent ↔ UI protocol | [AG-UI](https://docs.ag-ui.com/)                                                                                                                                                                          |
+| Web app             | [Next.js](https://nextjs.org/docs)                                                                                                                                                                        |
+| Styling             | [Tailwind CSS](https://tailwindcss.com/docs)                                                                                                                                                              |
+| LLM                 | [gpt-4o-mini](https://openrouter.ai/openai/gpt-4o-mini) via [OpenRouter](https://openrouter.ai/docs)                                                                                                      |
+| Memory / threads    | [Postgres](https://www.postgresql.org/) ([Neon](https://neon.com/guides/mastra-neon)) + [`@mastra/pg`](https://mastra.ai/reference/storage/postgresql), or local [LibSQL](https://docs.turso.tech/libsql) |
+| Deploy & traces     | [Mastra Platform](https://mastra.ai/docs/mastra-platform/overview)                                                                                                                                        |
+
+## Developer tools
+
+Versions from root `package.json` (`packageManager` / `devDependencies`).
+
+| Tool                                                      | Version |
+| --------------------------------------------------------- | ------- |
+| [pnpm](https://pnpm.io/)                                  | 10.33.2 |
+| [Turborepo](https://turborepo.dev/docs)                   | 2.9.16  |
+| [TypeScript](https://www.typescriptlang.org/docs/)        | 6.0.3   |
+| [ESLint](https://eslint.org/docs/latest/)                 | 9.39.4  |
+| [Prettier](https://prettier.io/docs/en/)                  | 3.8.3   |
+| [Husky](https://typicode.github.io/husky/)                | 9.1.7   |
+| [lint-staged](https://github.com/lint-staged/lint-staged) | 17.0.7  |
+| [commitlint](https://commitlint.js.org/)                  | 21.0.2  |
+
+## Features
+
+- Ask in chat for **today’s weather** at a destination and see it in the UI
+- Get **destination ideas** as browseable place cards
+- See a **day-by-day route** (text steps only, no map) in the itinerary
+- Read **local tips** (warnings and cultural notes) alongside the plan
+- **Search flights and hotels**, pick options from cards, and book from the Book tab
+- Plan a **full trip in one flow**—places, flights, hotels, summary, daily schedule, and a morning / afternoon / evening timeline—after confirming searches in chat when prompted
+
+## Prerequisites
+
+- **Node.js** ≥ 22 (24.16.0 recommended)
+- **pnpm** 10.33.2
+- API keys listed below
+
+## Environment variables
+
+Copy the template and edit locally (do not commit `.env`):
+
+```bash
+cp apps/agent/.env.example apps/agent/.env
 ```
 
-## What's inside?
+### Core
 
-This Turborepo includes the following packages/apps:
+| Variable             | Purpose                                    | Where to get it                                                                |
+| -------------------- | ------------------------------------------ | ------------------------------------------------------------------------------ |
+| `OPENROUTER_API_KEY` | LLM chat and eval judge                    | [openrouter.ai/keys](https://openrouter.ai/keys)                               |
+| `DATABASE_URL`       | Threads and message memory (Neon Postgres) | [Neon](https://neon.com) or any Postgres — omit for local LibSQL file fallback |
 
-### Apps and Packages
+Recommended model setup:
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+```env
+OPENROUTER_API_KEY=sk-or-v1-...
+LLM_MODEL=openrouter/openai/gpt-4o-mini
+JUDGE_MODEL=openrouter/google/gemini-2.5-flash-lite
+```
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+Use `openrouter/openai/gpt-4o-mini`, not `openai/gpt-4o-mini`, when you only configure `OPENROUTER_API_KEY`.
 
-### Utilities
+### Mastra Platform observability (optional)
 
-This Turborepo has some additional tools already setup for you:
+| Variable                       | Purpose                                                                                                                                      |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MASTRA_PLATFORM_ACCESS_TOKEN` | Export traces/logs — CLI `mastra auth tokens create exporter-token` or **Observability** on [projects.mastra.ai](https://projects.mastra.ai) |
+| `MASTRA_PROJECT_ID`            | Project UUID from `.mastra-project.json` or the dashboard                                                                                    |
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+### SerpAPI (flights / hotels)
+
+| Variable          | Purpose                           |
+| ----------------- | --------------------------------- |
+| `SERPAPI_API_KEY` | `search-flights`, `search-hotels` |
+
+## Getting started
+
+### Clone and install
+
+```bash
+git clone git@gitlab.asoft-python.com:uyen.ho/ai-training.git
+cd ai-training/ai-travel-planner-practice
+pnpm install
+```
+
+### Development
+
+Run both apps (recommended — two terminals):
+
+```bash
+pnpm dev:agent   # Mastra Studio + /chat → http://localhost:4111
+pnpm dev:web     # Next.js UI → http://localhost:3000
+```
+
+Or run everything via Turborepo:
+
+```bash
+pnpm dev
+```
+
+The web app points at `http://localhost:4111/chat` and the registered agent name (e.g. `weatherAgent` until you switch to the travel planner agent).
 
 ### Build
 
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+```bash
+pnpm build          # all apps
+pnpm build:agent    # Mastra production bundle
+pnpm build:web      # Next.js production
 ```
 
-Without global `turbo`, use your package manager:
+If `build:agent` fails bundling CopilotKit, add these **externals** in `apps/agent/src/mastra/index.ts`:
 
-```sh
-cd my-turborepo
-npx turbo build
-pnpm dlx turbo build
-pnpm exec turbo build
+```ts
+bundler: {
+  externals: [
+    "@ag-ui/mastra",
+    "@ag-ui/mastra/copilotkit",
+    "@copilotkit",
+    "@copilotkit/runtime",
+  ],
+},
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+### Lint and format
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo build --filter=docs
+```bash
+pnpm lint
+pnpm format
+pnpm check-types
 ```
 
-Without global `turbo`:
+## How it works
 
-```sh
-npx turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+Two apps run locally. The **web** app is what you see; the **agent** app is the brain and API.
+
+| Port   | App          | What it does                                             |
+| ------ | ------------ | -------------------------------------------------------- |
+| `3000` | `apps/web`   | Chat UI, tabs (Places / Itinerary / Book), cards         |
+| `4111` | `apps/agent` | Mastra agent, tools, CopilotKit endpoint `/chat`, Studio |
+
+**When you send a chat message:**
+
+1. **Web** sends the message to `http://localhost:4111/chat` (CopilotKit + AG-UI)
+2. **Agent** runs the Mastra travel agent: reads chat history from the database, calls the LLM on OpenRouter
+3. If needed, the agent calls **tools** (weather, flights, hotels) and may ask you to **confirm** first (HITL)
+4. Replies and tool results **stream back** to the web app; the UI updates cards and tabs
+5. Optional: traces go to [Mastra Platform](https://projects.mastra.ai) if observability env vars are set
+
+```text
+Browser (web :3000)
+    │  chat + UI updates
+    ▼
+Mastra agent (:4111 /chat)
+    ├── OpenRouter (LLM)
+    ├── Tools → Open-Meteo, SerpAPI
+    └── Database → chat threads & memory
 ```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-pnpm exec turbo dev
-pnpm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-pnpm exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-pnpm exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
