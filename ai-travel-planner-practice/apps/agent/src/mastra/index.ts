@@ -1,8 +1,5 @@
 import { Mastra } from "@mastra/core/mastra";
 import { PinoLogger } from "@mastra/loggers";
-import { LibSQLStore } from "@mastra/libsql";
-import { DuckDBStore } from "@mastra/duckdb";
-import { MastraCompositeStore } from "@mastra/core/storage";
 import {
   Observability,
   MastraStorageExporter,
@@ -18,6 +15,7 @@ import {
   completenessScorer,
   translationScorer,
 } from "./scorers/weather-scorer";
+import { createStorage } from "./configs";
 
 export const mastra = new Mastra({
   workflows: { weatherWorkflow },
@@ -27,16 +25,7 @@ export const mastra = new Mastra({
     completenessScorer,
     translationScorer,
   },
-  storage: new MastraCompositeStore({
-    id: "composite-storage",
-    default: new LibSQLStore({
-      id: "mastra-storage",
-      url: "file:./mastra.db",
-    }),
-    domains: {
-      observability: await new DuckDBStore().getStore("observability"),
-    },
-  }),
+  storage: createStorage(),
   logger: new PinoLogger({
     name: "Mastra",
     level: "info",
@@ -69,6 +58,11 @@ export const mastra = new Mastra({
     ],
   },
   bundler: {
-    externals: ["@copilotkit/runtime"],
+    externals: [
+      "@ag-ui/mastra",
+      "@ag-ui/mastra/copilotkit",
+      "@copilotkit",
+      "@copilotkit/runtime",
+    ],
   },
 });
