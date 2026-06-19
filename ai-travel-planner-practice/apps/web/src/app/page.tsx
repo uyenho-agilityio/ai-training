@@ -8,8 +8,8 @@ export default function Home() {
       <CopilotSidebar
         defaultOpen
         labels={{
-          title: "Weather Agent",
-          initial: "Hi! 👋 Ask me about the weather, forecasts, and climate.",
+          title: "AI Travel Planner",
+          initial: "Hi! 👋 How can I help you with your travel plans?",
         }}
       />
     </CopilotKit>
