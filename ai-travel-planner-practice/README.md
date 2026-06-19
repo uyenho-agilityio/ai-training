@@ -75,9 +75,19 @@ Copy the template and edit locally (do not commit `.env`):
 
 ```bash
 cp apps/agent/.env.example apps/agent/.env
+cp apps/web/.env.example apps/web/.env.local
 ```
 
-### Core
+### Web (`apps/web`)
+
+| Variable                          | Purpose                                                                                              |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_COPILOT_RUNTIME_URL` | CopilotKit `/chat` URL — local: `http://localhost:4111/chat`; prod: deployed Mastra Server + `/chat` |
+| `NEXT_PUBLIC_COPILOT_AGENT`       | Agent id registered in `apps/agent` (default: `weatherAgent`)                                        |
+
+Set production values on your web host (e.g. Vercel → Environment Variables). Restart `pnpm dev:web` after changing `.env.local`.
+
+### Agent (`apps/agent`) — core
 
 | Variable             | Purpose                                    | Where to get it                                                                |
 | -------------------- | ------------------------------------------ | ------------------------------------------------------------------------------ |

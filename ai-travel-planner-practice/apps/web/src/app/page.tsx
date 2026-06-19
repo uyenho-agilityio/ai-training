@@ -1,10 +1,14 @@
+"use client";
+
 import { CopilotSidebar } from "@copilotkit/react-ui";
 import { CopilotKit } from "@copilotkit/react-core";
 import "@copilotkit/react-ui/styles.css";
 
+import { copilotAgent, copilotRuntimeUrl } from "@/constants";
+
 export default function Home() {
   return (
-    <CopilotKit runtimeUrl="http://localhost:4111/chat" agent="weatherAgent">
+    <CopilotKit runtimeUrl={copilotRuntimeUrl} agent={copilotAgent}>
       <div className="flex min-h-screen w-full flex-col sm:flex-row">
         <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
           <main className="flex min-h-screen w-full min-w-0 flex-col gap-4 overflow-y-auto bg-white p-4 sm:gap-5 sm:p-10">
