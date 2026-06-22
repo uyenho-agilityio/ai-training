@@ -1,9 +1,10 @@
 import type { FontWeight, LetterSpacing, Size } from "@/types";
 
+/** Tailwind weights: normal = 500, semibold = 600, bold = 800. */
 export const fontWeightClasses: Record<FontWeight, string> = {
-  normal: "font-normal",
+  normal: "font-medium",
   semibold: "font-semibold",
-  bold: "font-bold",
+  bold: "font-extrabold",
 };
 
 /** Font size scale for controls (Button, Badge). */
