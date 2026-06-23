@@ -2,7 +2,12 @@ export type Size = "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
 export type PaddingSize = "none" | Size;
 
 export type BadgeVariant = "primary" | "outline";
-export type ButtonVariant = "primary" | "secondary" | "ghost" | "outline";
+export type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "ghost"
+  | "outline"
+  | "soft";
 export type CardVariant = "primary" | "outline" | "secondary";
 export type HeadingVariant = "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
 

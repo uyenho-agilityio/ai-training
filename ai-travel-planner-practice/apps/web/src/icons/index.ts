@@ -9,6 +9,7 @@ export * from "./PlaneIcon";
 export * from "./StarFilledIcon";
 export * from "./StarIcon";
 export * from "./StarOutlineIcon";
+export * from "./SendArrowIcon";
 export * from "./types";
 export * from "./weather/CloudIcon";
 export * from "./weather/CloudSunIcon";

@@ -1,4 +1,6 @@
 export * from "./commons";
+export * from "./chat";
+
 export * from "./BookingCard";
 export * from "./Confirmation";
 export * from "./Modal";

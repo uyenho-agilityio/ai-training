@@ -24,6 +24,9 @@ export const buttonVariantClasses: Record<ButtonVariant, string> = {
   outline: cnVariant(
     "rounded-xl bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-orange-50 hover:ring-orange-200 disabled:cursor-wait disabled:opacity-70",
   ),
+  soft: cnVariant(
+    "rounded-full bg-orange-100 text-slate-800 shadow-none hover:bg-orange-200 disabled:opacity-40",
+  ),
 };
 
 export const buttonSizeClasses: Record<Size, string> = {
