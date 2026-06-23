@@ -10,7 +10,7 @@ const forecastSchema = z.object({
   location: z.string(),
 });
 
-function getWeatherCondition(code: number): string {
+const getWeatherCondition = (code: number): string => {
   const conditions: Record<number, string> = {
     0: "Clear sky",
     1: "Mainly clear",
@@ -30,7 +30,7 @@ function getWeatherCondition(code: number): string {
     95: "Thunderstorm",
   };
   return conditions[code] || "Unknown";
-}
+};
 
 const fetchWeather = createStep({
   id: "fetch-weather",
@@ -100,9 +100,9 @@ const planActivities = createStep({
       throw new Error("Forecast data not found");
     }
 
-    const agent = mastra?.getAgent("weatherAgent");
+    const agent = mastra?.getAgent("travelAgent");
     if (!agent) {
-      throw new Error("Weather agent not found");
+      throw new Error("Travel agent not found");
     }
 
     const prompt = `Based on the following weather forecast for ${forecast.location}, suggest appropriate activities:

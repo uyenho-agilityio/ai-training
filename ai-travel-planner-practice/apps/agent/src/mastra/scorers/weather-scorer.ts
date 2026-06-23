@@ -46,7 +46,7 @@ export const translationScorer = createScorer({
       explanation: z.string().default(""),
     }),
     createPrompt: ({ results }) => `
-            You are evaluating if a weather assistant correctly handled translation of a non-English location.
+            You are evaluating if a travel planner correctly handled translation of a non-English location.
             User text:
             """
             ${results.preprocessStepResult.userText}

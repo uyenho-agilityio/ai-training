@@ -8,18 +8,18 @@ import {
 } from "@mastra/observability";
 import { registerCopilotKit } from "@ag-ui/mastra/copilotkit";
 
-import { weatherWorkflow } from "./workflows/weather-workflow";
-import { weatherAgent } from "./agents/weather-agent";
+import { weatherWorkflow } from "./workflows";
+import { travelAgent } from "./agents";
 import {
   toolCallAppropriatenessScorer,
   completenessScorer,
   translationScorer,
-} from "./scorers/weather-scorer";
+} from "./scorers";
 import { createStorage } from "./configs";
 
 export const mastra = new Mastra({
   workflows: { weatherWorkflow },
-  agents: { weatherAgent },
+  agents: { travelAgent },
   scorers: {
     toolCallAppropriatenessScorer,
     completenessScorer,
@@ -53,7 +53,7 @@ export const mastra = new Mastra({
     apiRoutes: [
       registerCopilotKit({
         path: "/chat",
-        resourceId: "weatherAgent",
+        resourceId: "travelAgent",
       }),
     ],
   },
