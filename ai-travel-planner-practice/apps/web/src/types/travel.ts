@@ -44,7 +44,22 @@ export type TemperatureUnit = "C" | "F";
 
 export interface WeatherData {
   temp: number;
+  feelsLike: number;
+  humidity: number;
+  windSpeed: number;
+  windGust: number;
   condition: WeatherCondition;
+  location: string;
+}
+
+/** Shape returned by the agent `weatherTool` (CopilotKit `data-result`). */
+export interface WeatherToolResult {
+  temperature: number;
+  feelsLike: number;
+  humidity: number;
+  windSpeed: number;
+  windGust: number;
+  conditions: string;
   location: string;
 }
 
@@ -115,3 +130,9 @@ export type BookingCardProps =
       type: "hotel";
       item: HotelData;
     });
+
+export type WeatherDetailItem = {
+  id: string;
+  label: string;
+  value: string;
+};

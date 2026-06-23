@@ -1,6 +1,11 @@
 import type { ComponentType } from "react";
 
 import type { TemperatureUnit, WeatherCondition } from "@/types";
+import type {
+  WeatherData,
+  WeatherDetailItem,
+  WeatherToolResult,
+} from "@/types";
 import {
   CloudIcon,
   CloudSunIcon,
@@ -23,6 +28,24 @@ export const formatTemperature = (
 
   return `${value}°${unit}`;
 };
+
+/** Map agent weather tool output to canvas/chat `WeatherData`. */
+export const mapWeatherToolResult = (
+  result: WeatherToolResult,
+): WeatherData => ({
+  temp: result.temperature,
+  feelsLike: result.feelsLike,
+  humidity: result.humidity,
+  windSpeed: result.windSpeed,
+  windGust: result.windGust,
+  condition: result.conditions as WeatherData["condition"],
+  location: result.location,
+});
+
+export const formatHumidity = (humidity: number): string => `${humidity}%`;
+
+export const formatWindSpeed = (speedKmh: number): string =>
+  `${Math.round(speedKmh)} km/h`;
 
 /** Map weather agent condition labels to SVG icon components. */
 export const getWeatherIcon = (
@@ -70,3 +93,29 @@ export const getWeatherIcon = (
       return CloudSunIcon;
   }
 };
+
+export const getWeatherDetailItems = (
+  weather: WeatherData,
+  unit: TemperatureUnit,
+): WeatherDetailItem[] => [
+  {
+    id: "feels-like",
+    label: "Feels like",
+    value: formatTemperature(weather.feelsLike, unit),
+  },
+  {
+    id: "humidity",
+    label: "Humidity",
+    value: formatHumidity(weather.humidity),
+  },
+  {
+    id: "wind",
+    label: "Wind",
+    value: formatWindSpeed(weather.windSpeed),
+  },
+  {
+    id: "gust",
+    label: "Gust",
+    value: formatWindSpeed(weather.windGust),
+  },
+];
