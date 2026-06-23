@@ -9,12 +9,14 @@ import {
   SystemMessage,
   UserMessage,
   HideWeatherTool,
+  HideBookingTools,
   TravelCanvas,
 } from "@/components";
 
 const Home = () => (
   <CopilotKit runtimeUrl={copilotRuntimeUrl} agent={copilotAgent}>
     <HideWeatherTool />
+    <HideBookingTools />
     <div className="flex min-h-screen w-full flex-col sm:flex-row">
       <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
         <TravelCanvas />

@@ -10,3 +10,10 @@ export const HIDDEN_WEATHER_TOOL_NAMES = {
   weatherTool: "weatherTool",
   getWeather: "get-weather",
 } as const;
+
+export const HIDDEN_BOOKING_TOOL_NAMES = {
+  searchFlightsTool: "searchFlightsTool",
+  searchFlights: "search-flights",
+  searchHotelsTool: "searchHotelsTool",
+  searchHotels: "search-hotels",
+} as const;

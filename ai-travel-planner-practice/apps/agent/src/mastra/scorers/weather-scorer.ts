@@ -6,7 +6,7 @@ import {
   getUserMessageFromRunInput,
 } from "@mastra/evals/scorers/utils";
 import { createScorer } from "@mastra/core/evals";
-import { judgeModel } from "../configs";
+import { judgeModel } from "../config";
 
 export const toolCallAppropriatenessScorer = createToolCallAccuracyScorerCode({
   expectedTool: "weatherTool",

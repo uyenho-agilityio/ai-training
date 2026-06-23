@@ -15,7 +15,7 @@ import {
   completenessScorer,
   translationScorer,
 } from "./scorers";
-import { createStorage } from "./configs";
+import { createStorage } from "./config";
 
 export const mastra = new Mastra({
   workflows: { weatherWorkflow },

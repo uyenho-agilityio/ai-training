@@ -3,7 +3,7 @@ import { Memory } from "@mastra/memory";
 
 import { scorers } from "../scorers/weather-scorer";
 import { weatherTool } from "../tools";
-import { chatModel } from "../configs";
+import { chatModel } from "../config";
 
 export const weatherAgent = new Agent({
   id: "weather-agent",
