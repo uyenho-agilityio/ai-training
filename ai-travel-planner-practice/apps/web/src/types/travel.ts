@@ -91,16 +91,18 @@ export interface TripSketch {
   isStale: boolean;
 }
 
-export interface FlightData {
+export interface BookingItem {
   id: string;
+}
+
+export interface FlightData extends BookingItem {
   airline: string;
   route: string;
   price: string;
   time: string;
 }
 
-export interface HotelData {
-  id: string;
+export interface HotelData extends BookingItem {
   name: string;
   rating: number;
   price: string;

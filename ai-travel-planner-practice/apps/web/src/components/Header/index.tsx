@@ -7,14 +7,14 @@ import { Badge, Card, Heading, Text } from "../commons";
 type HeaderProps = {
   label?: string;
   title: string;
-  chips: string[];
+  chips?: string[];
   className?: string;
 };
 
 const HeaderComponent = ({
   label = "AI TRAVEL PLANNER",
   title,
-  chips,
+  chips = [],
   className,
 }: HeaderProps): ReactElement => (
   <Card className={className ?? "shrink-0 space-y-3 sm:p-5"}>
