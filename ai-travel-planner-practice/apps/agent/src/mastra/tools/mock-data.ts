@@ -3,63 +3,61 @@ import type { FlightSearchResult, HotelSearchResult } from "../config/types";
 export const MOCK_FLIGHT_SEARCH_RESULTS: FlightSearchResult[] = [
   {
     id: "flight-1",
-    airline: "Vietjet",
-    route: "DAD ➔ SGN",
-    price: "₫2,225,200",
-    time: "21:50 - 23:15",
+    airline: "SkyJet Airways",
+    route: "ORG ➔ DST",
+    price: "$320",
+    time: "08:10 - 11:40",
   },
   {
     id: "flight-2",
-    airline: "Bamboo Airways",
-    route: "DAD ➔ SGN",
-    price: "₫2,376,000",
-    time: "08:10 - 09:40",
+    airline: "Pacific Wings",
+    route: "ORG ➔ DST",
+    price: "$285",
+    time: "14:25 - 18:05",
   },
   {
     id: "flight-3",
-    airline: "Vietnam Airlines",
-    route: "DAD ➔ SGN",
-    price: "₫2,454,000",
-    time: "05:45 - 07:20",
+    airline: "Global Air",
+    route: "ORG ➔ DST",
+    price: "$410",
+    time: "06:45 - 10:20",
   },
   {
     id: "flight-4",
-    airline: "Vietjet",
-    route: "DAD ➔ SGN",
-    price: "₫2,225,200",
-    time: "05:35 - 07:00",
+    airline: "SkyJet Airways",
+    route: "ORG ➔ DST",
+    price: "$298",
+    time: "19:50 - 23:15",
   },
 ];
 
-/** Frozen SerpAPI-shaped hotel results (HCMC) for offline / quota fallback. */
 export const MOCK_HOTEL_SEARCH_RESULTS: HotelSearchResult[] = [
   {
     id: "hotel-1",
-    name: "La Siesta Premium Saigon",
-    rating: 4.9,
-    price: "₫4,265,106 / night",
+    name: "The Grand Metropolitan",
+    rating: 4.7,
+    price: "$220 / night",
   },
   {
     id: "hotel-2",
-    name: "La Vela Saigon Hotel",
-    rating: 4.2,
-    price: "₫2,576,985 / night",
+    name: "City Center Boutique Hotel",
+    rating: 4.4,
+    price: "$165 / night",
   },
   {
     id: "hotel-3",
-    name: "Oakwood Hotel & Apartments Saigon",
+    name: "Harbor View Inn",
     rating: 4.5,
-    price: "₫2,008,971 / night",
+    price: "$189 / night",
   },
   {
     id: "hotel-4",
-    name: "Mai House Saigon Hotel",
-    rating: 4.8,
-    price: "₫3,850,001 / night",
+    name: "Skyline Suites",
+    rating: 4.6,
+    price: "$245 / night",
   },
 ];
 
-/** Build a flight tool response using mock rows but caller-supplied search metadata. */
 export const buildMockFlightsResult = (input: {
   origin: string;
   destination: string;
@@ -76,7 +74,6 @@ export const buildMockFlightsResult = (input: {
   returnDate: input.returnDate,
 });
 
-/** Build a hotel tool response using mock rows but caller-supplied stay metadata. */
 export const buildMockHotelsResult = (input: {
   location: string;
   checkIn: string;

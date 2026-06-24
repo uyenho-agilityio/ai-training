@@ -42,6 +42,7 @@ export type SerpApiHotelProperty = {
 
 export type SerpApiHotelsResponse = {
   properties?: SerpApiHotelProperty[];
+  property?: SerpApiHotelProperty;
   search_parameters?: {
     currency?: string;
   };

@@ -10,7 +10,6 @@ export const getSerpApiKey = (): string => {
   return apiKey;
 };
 
-/** True when SerpAPI can be called (key present in env). */
 export const hasSerpApiKey = (): boolean =>
   Boolean(process.env.SERPAPI_API_KEY?.trim());
 

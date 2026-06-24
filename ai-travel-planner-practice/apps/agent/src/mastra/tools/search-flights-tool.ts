@@ -39,7 +39,6 @@ const getFlightAirlineLabel = (option: SerpApiFlightOption): string => {
   return `${airlines[0]} +${airlines.length - 1}`;
 };
 
-/** Normalize one SerpAPI flight option into canvas-friendly card data. */
 const mapFlightOption = (
   option: SerpApiFlightOption,
   index: number,
@@ -93,10 +92,17 @@ const searchFlights = async (input: {
     return await searchFlightsViaSerpApi(normalizedInput);
   } catch (error) {
     console.warn(
-      "[search-flights] SerpAPI failed — returning mock data",
+      "[search-flights] SerpAPI failed — returning empty results",
       error,
     );
-    return buildMockFlightsResult(normalizedInput);
+
+    return {
+      flights: [],
+      origin: normalizedInput.origin.toUpperCase(),
+      destination: normalizedInput.destination.toUpperCase(),
+      departureDate: normalizedInput.departureDate,
+      returnDate: normalizedInput.returnDate,
+    };
   }
 };
 
@@ -145,7 +151,7 @@ const searchFlightsViaSerpApi = async (input: {
     .map((option, index) => mapFlightOption(option, index, responseCurrency))
     .filter((flight): flight is FlightSearchResult => flight !== null);
 
-  if (flights.length === 0) {
+  if (!flights?.length) {
     throw new Error(
       `No flights found for ${input.origin} to ${input.destination} on ${input.departureDate}`,
     );
@@ -163,7 +169,7 @@ const searchFlightsViaSerpApi = async (input: {
 export const searchFlightsTool = createTool({
   id: "search-flights",
   description:
-    "REQUIRED for live flight searches. Call this tool whenever the user wants real flight options. Never list airlines, times, or prices without calling this tool first. Uses Google Flights via SerpAPI.",
+    "ONLY for flights-only requests. Call when the user wants flights/airfare/tickets and does NOT also ask for hotels. Never use for hotels-only or combined flights+hotels requests. Uses Google Flights via SerpAPI.",
   inputSchema: z.object({
     origin: z
       .string()
@@ -177,7 +183,9 @@ export const searchFlightsTool = createTool({
       ),
     departureDate: z
       .string()
-      .describe("Outbound travel date in YYYY-MM-DD format"),
+      .describe(
+        "Outbound travel date in YYYY-MM-DD (infer year from current date when user omits it)",
+      ),
     returnDate: z
       .string()
       .nullish()
@@ -192,7 +200,9 @@ export const searchFlightsTool = createTool({
     currency: z
       .string()
       .nullish()
-      .describe("ISO currency code for prices (default USD)"),
+      .describe(
+        "ISO 4217 currency for prices. Infer from origin/destination countries; default USD if unsure.",
+      ),
   }),
   outputSchema: z.object({
     flights: z.array(flightResultSchema),
@@ -205,3 +215,5 @@ export const searchFlightsTool = createTool({
     return await searchFlights(inputData);
   },
 });
+
+export { searchFlights as runFlightSearch };
