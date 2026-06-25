@@ -5,7 +5,14 @@ import { memo, useCallback, type ReactElement } from "react";
 import { cn } from "@/utils";
 import { Button, Heading, Text } from "../commons";
 import type { Size } from "@/types";
-import { confirmationActionsClasses, confirmationClasses } from "./styles";
+import {
+  confirmationActionsClasses,
+  confirmationClasses,
+  confirmationInlineActionsClasses,
+  confirmationInlineModalClasses,
+} from "./styles";
+
+type ConfirmationVariant = "modal" | "inline";
 
 type ConfirmationProps = {
   message: string;
@@ -13,7 +20,7 @@ type ConfirmationProps = {
   confirmLabel?: string;
   cancelLabel?: string;
   size?: Size;
-  isDialog?: boolean;
+  variant?: ConfirmationVariant;
   className?: string;
   onConfirm: () => void;
   onCancel: () => void;
@@ -25,11 +32,13 @@ const ConfirmationComponent = ({
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
   size = "md",
-  isDialog = false,
+  variant = "modal",
   className,
   onConfirm,
   onCancel,
 }: ConfirmationProps): ReactElement => {
+  const isInline = variant === "inline";
+
   const handleConfirm = useCallback((): void => {
     onConfirm();
   }, [onConfirm]);
@@ -38,29 +47,42 @@ const ConfirmationComponent = ({
     onCancel();
   }, [onCancel]);
 
+  const resolvedSize: Size = isInline ? "sm" : size;
+  const containerClasses = isInline
+    ? confirmationInlineModalClasses
+    : confirmationClasses;
+  const actionsClasses = isInline
+    ? confirmationInlineActionsClasses
+    : confirmationActionsClasses;
+
   return (
     <div
-      className={cn(confirmationClasses, className)}
-      {...(isDialog && {
+      className={cn(containerClasses, className)}
+      {...(isInline && {
         role: "dialog",
         "aria-modal": true,
-        "aria-label": title,
+        "aria-label": message,
       })}
     >
-      <Heading variant="h3" size="sm" color="primary">
-        {title}
-      </Heading>
+      {!isInline && title && (
+        <Heading variant="h3" size="sm" color="primary">
+          {title}
+        </Heading>
+      )}
 
-      <Text size="sm" className="font-medium leading-relaxed">
+      <Text
+        size={isInline ? "xs" : "sm"}
+        className={cn("font-medium leading-relaxed")}
+      >
         {message}
       </Text>
 
-      <div className={confirmationActionsClasses}>
-        <Button variant="secondary" size={size} onClick={handleCancel}>
+      <div className={actionsClasses}>
+        <Button variant="secondary" size={resolvedSize} onClick={handleCancel}>
           {cancelLabel}
         </Button>
 
-        <Button size={size} onClick={handleConfirm}>
+        <Button size={resolvedSize} onClick={handleConfirm}>
           {confirmLabel}
         </Button>
       </div>

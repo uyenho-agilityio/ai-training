@@ -12,19 +12,18 @@ export const userMessageRowClasses: string = `${chatMessageRowClasses} justify-e
 
 export const systemMessageRowClasses: string = `${chatMessageRowClasses} justify-start`;
 
-/** Shared message typography — middle size between text-sm and markdown default. */
-export const chatMessageFontClasses: string =
-  "text-[15px] font-medium leading-relaxed";
-
-/** Normalizes CopilotKit markdown font size inside assistant bubbles. */
+/**
+ * CopilotKit markdown resets — inherit bubble typography instead of duplicating sizes.
+ * Also removes extra gap between a place title and its bullet list.
+ */
 export const chatMessageMarkdownClasses: string =
-  "[&_.copilotKitParagraph]:!text-[15px] [&_.copilotKitParagraph]:!leading-relaxed [&_.copilotKitMarkdown]:!text-[15px] [&_.copilotKitMarkdownElement]:!text-[15px]";
+  "[&_.copilotKitParagraph]:![font-size:inherit] [&_.copilotKitParagraph]:![line-height:inherit] [&_.copilotKitMarkdownElement:has(+_ul.copilotKitMarkdownElement)]:!mb-0";
 
 /** User bubble — orange gradient aligned with app primary actions. */
-export const userMessageBubbleClasses: string = `max-w-[85%] rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 px-5 py-3 text-white shadow-sm shadow-orange-100 ${chatMessageFontClasses}`;
+export const userMessageBubbleClasses: string = `max-w-[85%] rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 px-5 py-3 text-white shadow-sm shadow-orange-100`;
 
 /** Assistant bubble — warm off-white using app orange tint. */
-export const systemMessageBubbleClasses: string = `max-w-[85%] rounded-2xl border border-orange-100 bg-orange-50 px-5 py-3 text-slate-800 ${chatMessageFontClasses} ${chatMessageMarkdownClasses}`;
+export const systemMessageBubbleClasses: string = `max-w-[85%] rounded-2xl border border-orange-100 bg-orange-50 px-5 py-3 text-slate-800 ${chatMessageMarkdownClasses}`;
 
 /** Typing indicator bubble — matches assistant message styling. */
 export const typingIndicatorBubbleClasses: string =

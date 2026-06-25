@@ -9,6 +9,7 @@ import {
   SystemMessage,
   UserMessage,
   TravelCanvas,
+  ToolConfirmation,
 } from "@/components";
 
 const Home = () => (
@@ -31,6 +32,7 @@ const Home = () => (
         AssistantMessage={SystemMessage}
         Input={ChatInput}
       />
+      <ToolConfirmation />
     </div>
   </CopilotKit>
 );

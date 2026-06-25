@@ -4,9 +4,16 @@ import { memo, useCallback, useMemo, useState, type ReactElement } from "react";
 
 import { useCoAgent } from "@copilotkit/react-core";
 
-import { TabNav, Header, SyncTripToolResults } from "@/components";
+import {
+  Confirmation,
+  Header,
+  Modal,
+  SyncTripToolResults,
+  TabNav,
+} from "@/components";
 import {
   copilotAgent,
+  GENERATE_ITINERARY_CONFIRM_MESSAGE,
   INITIAL_TRIP_STATE,
   MOCK_FULL_ITINERARY,
 } from "@/constants";
@@ -38,6 +45,7 @@ const TravelCanvasComponent = (): ReactElement => {
   });
 
   const [toolPatch, setToolPatch] = useState<ToolDrivenCanvasPatch>({});
+  const [isConfirmOpen, setIsConfirmOpen] = useState<boolean>(false);
 
   const canvasState = useMemo(
     () => ({
@@ -196,7 +204,12 @@ const TravelCanvasComponent = (): ReactElement => {
     navigateToTab("itinerary");
   }, [navigateToTab]);
 
-  const handleGenerateItinerary = useCallback(() => {
+  const handleOpenGenerateItineraryConfirm = useCallback((): void => {
+    setIsConfirmOpen(true);
+  }, []);
+
+  const handleConfirmGenerateItinerary = useCallback((): void => {
+    setIsConfirmOpen(false);
     patchState({ itineraryPhase: "generating" });
 
     window.setTimeout(() => {
@@ -206,10 +219,25 @@ const TravelCanvasComponent = (): ReactElement => {
         expandedDays: [1, 2, 3],
       }));
     }, 1400);
-  }, [setState]);
+  }, [patchState, setState]);
+
+  const handleCancelGenerateItinerary = useCallback((): void => {
+    setIsConfirmOpen(false);
+  }, []);
 
   return (
     <>
+      {isConfirmOpen && (
+        <Modal onClose={handleCancelGenerateItinerary}>
+          <Confirmation
+            variant="modal"
+            message={GENERATE_ITINERARY_CONFIRM_MESSAGE}
+            onConfirm={handleConfirmGenerateItinerary}
+            onCancel={handleCancelGenerateItinerary}
+          />
+        </Modal>
+      )}
+
       <SyncTripToolResults setState={setState} setToolPatch={setToolPatch} />
 
       <main className="flex min-h-screen w-full min-w-0 flex-col gap-4 overflow-y-auto bg-white p-4 sm:gap-5 sm:p-10">
@@ -256,8 +284,8 @@ const TravelCanvasComponent = (): ReactElement => {
               selectedHotel={selectedHotel}
               onToggleDay={handleToggleDay}
               onRefreshSketch={handleRefreshSketch}
-              onGenerateItinerary={handleGenerateItinerary}
               onEditBookings={handleEditBookings}
+              onGenerateItinerary={handleOpenGenerateItineraryConfirm}
             />
           )}
         </div>

@@ -1,5 +1,6 @@
 export * from "./commons";
 export * from "./chat";
+export * from "./sections";
 
 export * from "./BookingCard";
 export * from "./Confirmation";
@@ -12,4 +13,4 @@ export * from "./SummaryCard";
 export * from "./TabNav";
 export * from "./TripAccordion";
 export * from "./WeatherCard";
-export * from "./sections";
+export * from "./ToolConfirmation";
