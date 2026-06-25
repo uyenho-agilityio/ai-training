@@ -28,13 +28,13 @@ const PlacesSectionComponent = ({
   <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
     <PlacesFilters data={PLACE_FILTERS} onFilterChange={onFilterChange} />
 
-    {places.length === 0 ? (
+    {!places?.length ? (
       <p className="rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm font-medium text-slate-500">
         No places in this filter. Ask in chat to research destinations.
       </p>
     ) : (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {places.map((place: PlaceBrief) => (
+        {places?.map((place: PlaceBrief) => (
           <PlaceCard
             key={place.id}
             place={place}

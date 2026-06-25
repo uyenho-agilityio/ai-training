@@ -18,18 +18,31 @@ import {
   type IconProps,
 } from "@/icons";
 
-/** Convert stored Celsius temperature to the display unit. */
 export const formatTemperature = (
   celsius: number,
   unit: TemperatureUnit,
 ): string => {
-  const value: number =
-    unit === "F" ? Math.round((celsius * 9) / 5 + 32) : Math.round(celsius);
+  const value: number = unit === "F" ? (celsius * 9) / 5 + 32 : celsius;
 
-  return `${value}°${unit}`;
+  return `${value.toFixed(1)}°${unit}`;
 };
 
-/** Map agent weather tool output to canvas/chat `WeatherData`. */
+export const isWeatherToolResult = (
+  value: unknown,
+): value is WeatherToolResult => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+
+  return (
+    typeof record.temperature === "number" &&
+    typeof record.location === "string" &&
+    typeof record.conditions === "string"
+  );
+};
+
 export const mapWeatherToolResult = (
   result: WeatherToolResult,
 ): WeatherData => ({
@@ -45,9 +58,8 @@ export const mapWeatherToolResult = (
 export const formatHumidity = (humidity: number): string => `${humidity}%`;
 
 export const formatWindSpeed = (speedKmh: number): string =>
-  `${Math.round(speedKmh)} km/h`;
+  `${speedKmh.toFixed(1)} km/h`;
 
-/** Map weather agent condition labels to SVG icon components. */
 export const getWeatherIcon = (
   condition: WeatherCondition,
 ): ComponentType<IconProps> => {

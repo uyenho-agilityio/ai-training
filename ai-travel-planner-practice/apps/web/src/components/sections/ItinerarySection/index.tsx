@@ -43,7 +43,7 @@ const ItinerarySectionComponent = ({
   <section className="space-y-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
     <div>
       <h2 className="text-base font-black text-slate-800 sm:text-lg">
-        {sketch.title}
+        {sketch?.title}
       </h2>
 
       <p className="mt-1 text-xs font-medium text-slate-500">
@@ -51,7 +51,7 @@ const ItinerarySectionComponent = ({
       </p>
     </div>
 
-    {sketch.isStale && (
+    {sketch?.isStale && (
       <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs font-semibold text-amber-900">
           Things changed — new briefs or chat since this sketch. Want a fresh
@@ -80,7 +80,7 @@ const ItinerarySectionComponent = ({
       </h3>
 
       <p className="mt-2 text-sm font-medium leading-relaxed text-slate-700">
-        {sketch.atAGlance}
+        {sketch?.atAGlance}
       </p>
     </div>
 
@@ -89,7 +89,7 @@ const ItinerarySectionComponent = ({
         Day by day
       </h3>
 
-      {sketch.days.map((day: SketchDay) => (
+      {sketch?.days.map((day: SketchDay) => (
         <SketchDayBlock
           key={day.day}
           day={day}
@@ -101,11 +101,11 @@ const ItinerarySectionComponent = ({
 
     <div>
       <h3 className="text-xs font-black uppercase tracking-wider text-orange-600">
-        Local tips ({sketch.localTips.length})
+        Local tips ({sketch?.localTips.length})
       </h3>
 
       <ul className="mt-2 space-y-1.5">
-        {sketch.localTips.map((tip: string, index: number) => (
+        {sketch?.localTips.map((tip: string, index: number) => (
           <li
             key={index}
             className="flex gap-2 text-xs font-semibold text-slate-700"

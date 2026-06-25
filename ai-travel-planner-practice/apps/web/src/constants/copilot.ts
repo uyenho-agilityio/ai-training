@@ -12,6 +12,8 @@ export const HIDDEN_WEATHER_TOOL_NAMES = {
 } as const;
 
 export const HIDDEN_BOOKING_TOOL_NAMES = {
+  searchTripBookingsTool: "searchTripBookingsTool",
+  searchTripBookings: "search-trip-bookings",
   searchFlightsTool: "searchFlightsTool",
   searchFlights: "search-flights",
   searchHotelsTool: "searchHotelsTool",

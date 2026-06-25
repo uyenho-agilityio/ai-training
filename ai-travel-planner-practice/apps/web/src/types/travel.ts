@@ -52,7 +52,6 @@ export interface WeatherData {
   location: string;
 }
 
-/** Shape returned by the agent `weatherTool` (CopilotKit `data-result`). */
 export interface WeatherToolResult {
   temperature: number;
   feelsLike: number;
@@ -108,6 +107,23 @@ export interface HotelData extends BookingItem {
   price: string;
 }
 
+export interface FlightsToolResult {
+  flights: FlightData[];
+  origin: string;
+  destination: string;
+  departureDate: string;
+  returnDate?: string;
+}
+
+export interface HotelsToolResult {
+  hotels: HotelData[];
+  location: string;
+  checkIn: string;
+  checkOut: string;
+}
+
+export type TripBookingsToolResult = FlightsToolResult & HotelsToolResult;
+
 export interface FullItineraryDay {
   day: number;
   morning: string;
@@ -137,4 +153,39 @@ export type WeatherDetailItem = {
   id: string;
   label: string;
   value: string;
+};
+
+export type TripCanvasState = {
+  activeTab: CanvasTab;
+  placeFilter: PlaceFilter;
+  places: PlaceBrief[];
+  sketch: TripSketch;
+  flights: FlightData[];
+  hotels: HotelData[];
+  selectedFlightId: string | null;
+  selectedHotelId: string | null;
+  weather: WeatherData | null;
+  itineraryPhase: ItineraryPhase;
+  expandedDays: number[];
+};
+
+export type ToolDrivenCanvasPatch = Partial<
+  Pick<TripCanvasState, "weather" | "flights" | "hotels" | "activeTab">
+>;
+
+export type ToolSyncKind = "tripBookings" | "flights" | "hotels" | "weather";
+
+export type CopilotMessage = {
+  role?: string;
+  toolCallId?: string;
+  content?: unknown;
+  toolCalls?: Array<{
+    id: string;
+    function?: { name?: string };
+  }>;
+};
+
+export type ToolRenderPayloadSource = {
+  result?: unknown;
+  output?: unknown;
 };
