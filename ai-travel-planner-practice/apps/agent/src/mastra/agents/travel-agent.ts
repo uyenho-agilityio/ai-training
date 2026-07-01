@@ -8,6 +8,8 @@ import {
   searchHotelsTool,
   searchTripBookingsTool,
   weatherTool,
+  checkPlacesTool,
+  tripSketchTool,
 } from "../tools";
 import { buildTravelAgentInstructions } from "./travel-agent-instructions";
 
@@ -24,6 +26,8 @@ export const travelAgent = new Agent({
     searchTripBookingsTool,
     searchFlightsTool,
     searchHotelsTool,
+    checkPlacesTool,
+    tripSketchTool,
   },
   scorers: {
     toolCallAppropriateness: {

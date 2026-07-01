@@ -1,3 +1,5 @@
+import type { PlaceBrief, TripSketch } from "../schemas/travel";
+
 const SERPAPI_BASE_URL = "https://serpapi.com/search.json";
 
 export const getSerpApiKey = (): string => {
@@ -79,3 +81,37 @@ export const formatLocalDate = (date: Date): string => {
 
   return `${year}-${month}-${day}`;
 };
+
+/** Formats a place ID based on its title and index. */
+const formatPlaceId = (title: string, index: number): string => {
+  const slug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40);
+
+  return slug.length > 0 ? `p-${slug}` : `p-${index + 1}`;
+};
+
+/** Ensures each place has a stable id and default status for the canvas. */
+export const normalizePlaces = (places: PlaceBrief[]): PlaceBrief[] =>
+  places.map((place: PlaceBrief, index: number) => ({
+    ...place,
+    id: place.id.trim() || formatPlaceId(place.title, index),
+    status: place.status ?? "new",
+  }));
+
+/** Normalizes sketch day order and marks the sketch as fresh for the canvas. */
+export const normalizeTripSketch = (sketch: TripSketch): TripSketch => ({
+  ...sketch,
+  isStale: false,
+  days: sketch.days.map((day) => ({
+    ...day,
+    stops: [...day.stops]
+      .sort((left, right) => left.order - right.order)
+      .map((stop, index) => ({
+        ...stop,
+        order: index + 1,
+      })),
+  })),
+});
