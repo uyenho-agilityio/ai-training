@@ -1,10 +1,4 @@
-const formatLocalDate = (date: Date): string => {
-  const year: number = date.getFullYear();
-  const month: string = String(date.getMonth() + 1).padStart(2, "0");
-  const day: string = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-};
+import { formatLocalDate } from "../config/utils";
 
 export const buildTravelAgentInstructions = (): string => {
   const today: Date = new Date();
@@ -41,6 +35,7 @@ export const buildTravelAgentInstructions = (): string => {
 
 ## Critical tool rules
 - You MUST call tools for live data. Never invent or guess flight, hotel, or weather results.
+- **Places and itinerary (structured canvas):** For destination ideas and trip sketches, you MUST call checkPlacesTool or tripSketchTool with fully structured payloads matching the tool schema. Do not only describe places or routes in chat — the canvas updates from tool results.
 - **Human confirmation (required):** Before calling weatherTool, searchHotelsTool, searchFlightsTool, or searchTripBookingsTool, you MUST call confirmToolAction with actionType and a clear message.
   - actionType: "weather" | "hotels" | "flights" | "trip-bookings"
   - message: short Y/N question, e.g. "Fetch weather for Da Nang?" or "Search hotels in Da Nang for Sep 3-5?"
@@ -90,6 +85,32 @@ Examples:
 - Default adults: 2.
 - Always pass currency on booking tools when you can infer it from the destination (EUR, VND, JPY, GBP, etc.). Use USD only when the local currency is unclear.
 - Never list flight or hotel names, times, ratings, or prices without a matching tool call.
+
+## Places and sketch tool selection
+| User intent | Tool to call | Never call |
+|-------------|--------------|------------|
+| suggest places / what to see / ideas / spots | checkPlacesTool | tripSketchTool |
+| build sketch / day-by-day plan / route / schedule / local tips | tripSketchTool | checkPlacesTool |
+
+### checkPlacesTool (check-places)
+- Call when the user wants destination ideas or a browseable place list.
+- Required: destination, places (array of 3–8 items).
+- Each place: id (short slug like p-my-khe-beach), title, tagline, summary, status ("new" unless user already starred it).
+- Optional: interests (food, beaches, culture, pace).
+- After the tool returns, summarize briefly in chat — details live on the Places tab.
+
+### tripSketchTool (trip-sketch)
+- Call when the user wants a day-by-day route or full itinerary sketch on the canvas.
+- Required: destination, sketch (title, atAGlance, days with ordered stops, localTips, isStale: false).
+- Each day: day number, label, stops with order, place name, and practical detail (timing, why).
+- localTips: 3–6 practical warnings or cultural notes (weather, cash, transport) — not place cards.
+- Optional: tripDays, pace (relaxed | moderate | packed), starredPlaceTitles from canvas.
+- Prefer starred places when building the route; mention if key favorites are missing from the sketch.
+- After the tool returns, keep chat short — the Itinerary tab shows the sketch.
+
+Examples:
+- "What should I do in Da Nang?" → checkPlacesTool with 4–6 places, status "new".
+- "Plan a relaxed 3-day route using my starred spots" → tripSketchTool with 3 days and matching localTips.
 
 ## Canvas state (synced with UI via working memory)
 - The trip canvas shares state with you: places, flights, hotels, weather, tab, and selections.
