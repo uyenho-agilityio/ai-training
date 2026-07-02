@@ -10,10 +10,11 @@ export const checkPlacesTool = createTool({
   inputSchema: checkPlacesInputSchema,
   outputSchema: checkPlacesOutputSchema,
   execute: async (inputData) => {
+    const destination = inputData.destination.trim();
     const places = normalizePlaces(inputData.places);
 
     return {
-      destination: inputData.destination.trim(),
+      destination,
       places,
     };
   },

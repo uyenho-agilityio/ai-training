@@ -23,9 +23,14 @@ import type {
   CopilotMessage,
   TripBookingsToolResult,
   TripCanvasState,
+  TripSketchToolResult,
+  CheckPlacesToolResult,
   WeatherToolResult,
 } from "@/types";
 import {
+  getDefaultExpandedSketchDays,
+  isCheckPlacesToolResult,
+  isTripSketchToolResult,
   mapWeatherToolResult,
   isWeatherToolResult,
   getToolRenderPayload,
@@ -46,6 +51,22 @@ type ToolRenderProps = ActionRenderPropsNoArgs & {
   output?: unknown;
 };
 
+const syncCanvasFields = (
+  setState: SyncTripToolResultsProps["setState"],
+  setToolPatch: SyncTripToolResultsProps["setToolPatch"],
+  toolPatch: ToolDrivenCanvasPatch,
+  statePatch: Partial<TripCanvasState>,
+): void => {
+  setToolPatch((prev: ToolDrivenCanvasPatch) => ({
+    ...prev,
+    ...toolPatch,
+  }));
+  setState((prev: TripCanvasState | undefined) => ({
+    ...(prev ?? INITIAL_TRIP_STATE),
+    ...statePatch,
+  }));
+};
+
 const SyncTripToolResultsComponent = ({
   setState,
   setToolPatch,
@@ -62,11 +83,7 @@ const SyncTripToolResultsComponent = ({
 
       const weather = mapWeatherToolResult(parsed);
 
-      setToolPatch((prev: ToolDrivenCanvasPatch) => ({ ...prev, weather }));
-      setState((prev: TripCanvasState | undefined) => ({
-        ...(prev ?? INITIAL_TRIP_STATE),
-        weather,
-      }));
+      syncCanvasFields(setState, setToolPatch, { weather }, { weather });
 
       return true;
     },
@@ -92,16 +109,24 @@ const SyncTripToolResultsComponent = ({
         return false;
       }
 
-      setToolPatch((prev: ToolDrivenCanvasPatch) => ({
-        ...prev,
-        activeTab: "book",
-        ...(flights.length ? { flights } : {}),
-        ...(hotels.length ? { hotels } : {}),
-      }));
+      syncCanvasFields(
+        setState,
+        setToolPatch,
+        {
+          activeTab: "book",
+          ...(flights.length ? { flights } : {}),
+          ...(hotels.length ? { hotels } : {}),
+        },
+        {
+          activeTab: "book",
+          ...(flights.length ? { flights } : {}),
+          ...(hotels.length ? { hotels } : {}),
+        },
+      );
 
       return true;
     },
-    [setToolPatch],
+    [setState, setToolPatch],
   );
 
   const applyFlightsResult = useCallback(
@@ -112,15 +137,16 @@ const SyncTripToolResultsComponent = ({
         return false;
       }
 
-      setToolPatch((prev: ToolDrivenCanvasPatch) => ({
-        ...prev,
-        flights: parsed.flights,
-        activeTab: "book",
-      }));
+      syncCanvasFields(
+        setState,
+        setToolPatch,
+        { flights: parsed.flights, activeTab: "book" },
+        { flights: parsed.flights, activeTab: "book" },
+      );
 
       return true;
     },
-    [setToolPatch],
+    [setState, setToolPatch],
   );
 
   const applyHotelsResult = useCallback(
@@ -131,15 +157,68 @@ const SyncTripToolResultsComponent = ({
         return false;
       }
 
-      setToolPatch((prev: ToolDrivenCanvasPatch) => ({
-        ...prev,
-        hotels: parsed.hotels,
-        activeTab: "book",
-      }));
+      syncCanvasFields(
+        setState,
+        setToolPatch,
+        { hotels: parsed.hotels, activeTab: "book" },
+        { hotels: parsed.hotels, activeTab: "book" },
+      );
 
       return true;
     },
-    [setToolPatch],
+    [setState, setToolPatch],
+  );
+
+  const applyPlacesResult = useCallback(
+    (result: unknown): boolean => {
+      const parsed = parseToolResult<CheckPlacesToolResult>(result);
+
+      if (!isCheckPlacesToolResult(parsed)) {
+        return false;
+      }
+
+      syncCanvasFields(
+        setState,
+        setToolPatch,
+        { places: parsed.places, activeTab: "places" },
+        { places: parsed.places, activeTab: "places" },
+      );
+
+      return true;
+    },
+    [setState, setToolPatch],
+  );
+
+  const applySketchResult = useCallback(
+    (result: unknown): boolean => {
+      const parsed = parseToolResult<TripSketchToolResult>(result);
+
+      if (!isTripSketchToolResult(parsed)) {
+        return false;
+      }
+
+      const expandedDays = getDefaultExpandedSketchDays(parsed.sketch);
+
+      syncCanvasFields(
+        setState,
+        setToolPatch,
+        {
+          sketch: parsed.sketch,
+          expandedDays,
+          itineraryPhase: "sketch",
+          activeTab: "itinerary",
+        },
+        {
+          sketch: parsed.sketch,
+          expandedDays,
+          itineraryPhase: "sketch",
+          activeTab: "itinerary",
+        },
+      );
+
+      return true;
+    },
+    [setState, setToolPatch],
   );
 
   const syncToolPayload = useCallback(
@@ -165,6 +244,12 @@ const SyncTripToolResultsComponent = ({
         case "weather":
           applied = applyWeatherResult(payload);
           break;
+        case "places":
+          applied = applyPlacesResult(payload);
+          break;
+        case "sketch":
+          applied = applySketchResult(payload);
+          break;
         default:
           break;
       }
@@ -178,6 +263,8 @@ const SyncTripToolResultsComponent = ({
       applyFlightsResult,
       applyHotelsResult,
       applyWeatherResult,
+      applyPlacesResult,
+      applySketchResult,
     ],
   );
 

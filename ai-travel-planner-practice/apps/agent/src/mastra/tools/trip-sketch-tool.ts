@@ -1,6 +1,11 @@
 import { createTool } from "@mastra/core/tools";
 
-import { normalizeTripSketch } from "../config/utils";
+import {
+  filterSketchToStarredPlaces,
+  dedupeSketchStopNames,
+  ensureAllStarredInSketch,
+  normalizeTripSketch,
+} from "../config/utils";
 import { tripSketchInputSchema, tripSketchOutputSchema } from "../schemas";
 
 export const tripSketchTool = createTool({
@@ -10,10 +15,25 @@ export const tripSketchTool = createTool({
   inputSchema: tripSketchInputSchema,
   outputSchema: tripSketchOutputSchema,
   execute: async (inputData) => {
-    const sketch = normalizeTripSketch(inputData.sketch);
+    const destination: string = inputData.destination.trim();
+    let sketch = normalizeTripSketch(inputData.sketch);
+    const tripDays: number = inputData.tripDays ?? sketch.days.length;
+
+    if (inputData.starredPlaceTitles?.length) {
+      sketch = filterSketchToStarredPlaces(
+        sketch,
+        inputData.starredPlaceTitles,
+      );
+      sketch = dedupeSketchStopNames(sketch);
+      sketch = ensureAllStarredInSketch(
+        sketch,
+        inputData.starredPlaceTitles,
+        tripDays,
+      );
+    }
 
     return {
-      destination: inputData.destination.trim(),
+      destination,
       sketch,
     };
   },

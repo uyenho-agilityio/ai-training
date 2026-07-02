@@ -3,8 +3,7 @@
 import { memo, type ReactElement } from "react";
 
 import { BookingCard } from "../../BookingCard";
-import { Text } from "../../commons";
-import { HOVER_BTN } from "../styles";
+import { Button, Heading, Text } from "../../commons";
 import type { FlightData, HotelData } from "@/types";
 import {
   BOOK_EMPTY_FLIGHTS_MESSAGE,
@@ -31,22 +30,28 @@ const BookSectionComponent = ({
   onViewSketch,
 }: BookSectionProps): ReactElement => (
   <section className="space-y-6 rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
-    <p className="text-xs font-medium text-slate-500">
+    <Text as="p" size="xs" color="muted" className="text-xs font-medium">
       Select flight & hotel — choices sync to{" "}
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="xs"
         onClick={onViewSketch}
-        className={`font-bold text-orange-600 underline-offset-2 hover:underline ${HOVER_BTN}`}
+        className="font-bold"
       >
         Logistics on Itinerary
-      </button>
+      </Button>
       .
-    </p>
+    </Text>
 
     <div className="space-y-3">
-      <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500">
+      <Heading
+        variant="h3"
+        size="xs"
+        color="muted"
+        className="text-sm uppercase tracking-wider"
+      >
         ✈️ Flights
-      </h3>
+      </Heading>
 
       {!flights?.length ? (
         <Text size="xs" color="muted" className="font-medium">
@@ -68,9 +73,14 @@ const BookSectionComponent = ({
     </div>
 
     <div className="space-y-3">
-      <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500">
+      <Heading
+        variant="h3"
+        size="xs"
+        color="muted"
+        className="text-sm uppercase tracking-wider"
+      >
         🏨 Hotels
-      </h3>
+      </Heading>
 
       {!hotels?.length ? (
         <Text size="xs" color="muted" className="font-medium">

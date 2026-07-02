@@ -6,7 +6,7 @@ const WRAPPER_KEYS: readonly (keyof ToolPayloadRecord)[] = [
   "data",
 ];
 
-/** True when payload looks like a weather / flight / hotel tool result. */
+/** True when payload looks like a synced travel tool result. */
 const isToolPayload = (value: unknown): boolean => {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return false;
@@ -21,7 +21,15 @@ const isToolPayload = (value: unknown): boolean => {
     (typeof record.location === "string" &&
       typeof record.checkIn === "string") ||
     (typeof record.origin === "string" &&
-      typeof record.destination === "string")
+      typeof record.destination === "string" &&
+      !Array.isArray(record.places) &&
+      record.sketch === undefined) ||
+    (typeof record.destination === "string" &&
+      Array.isArray(record.places) &&
+      record.places.length > 0) ||
+    (typeof record.destination === "string" &&
+      record.sketch !== undefined &&
+      typeof record.sketch === "object")
   );
 };
 
@@ -89,7 +97,7 @@ const unwrapToolResult = (payload: unknown): unknown => {
 export const parseToolResult = <T>(result: unknown): T | null => {
   const unwrapped = unwrapToolResult(result);
 
-  if (unwrapped === null || unwrapped === undefined) {
+  if (unwrapped == null) {
     return null;
   }
 

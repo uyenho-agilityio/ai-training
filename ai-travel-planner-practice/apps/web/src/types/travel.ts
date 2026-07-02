@@ -124,6 +124,16 @@ export interface HotelsToolResult {
 
 export type TripBookingsToolResult = FlightsToolResult & HotelsToolResult;
 
+export interface CheckPlacesToolResult {
+  destination: string;
+  places: PlaceBrief[];
+}
+
+export interface TripSketchToolResult {
+  destination: string;
+  sketch: TripSketch;
+}
+
 export interface FullItineraryDay {
   day: number;
   morning: string;
@@ -170,10 +180,26 @@ export type TripCanvasState = {
 };
 
 export type ToolDrivenCanvasPatch = Partial<
-  Pick<TripCanvasState, "weather" | "flights" | "hotels" | "activeTab">
+  Pick<
+    TripCanvasState,
+    | "weather"
+    | "flights"
+    | "hotels"
+    | "places"
+    | "sketch"
+    | "activeTab"
+    | "expandedDays"
+    | "itineraryPhase"
+  >
 >;
 
-export type ToolSyncKind = "tripBookings" | "flights" | "hotels" | "weather";
+export type ToolSyncKind =
+  | "tripBookings"
+  | "flights"
+  | "hotels"
+  | "weather"
+  | "places"
+  | "sketch";
 
 export type CopilotMessage = {
   role?: string;

@@ -93,15 +93,128 @@ const formatPlaceId = (title: string, index: number): string => {
   return slug.length > 0 ? `p-${slug}` : `p-${index + 1}`;
 };
 
-/** Ensures each place has a stable id and default status for the canvas. */
+/** Ensures each place has a stable id and is starred by default for the canvas. */
 export const normalizePlaces = (places: PlaceBrief[]): PlaceBrief[] =>
   places.map((place: PlaceBrief, index: number) => ({
     ...place,
     id: place.id.trim() || formatPlaceId(place.title, index),
-    status: place.status ?? "new",
+    status: place.status === "dismissed" ? "dismissed" : "starred",
   }));
 
-/** Normalizes sketch day order and marks the sketch as fresh for the canvas. */
+/** Case-insensitive loose match for place titles in sketch stops. */
+export const placeNamesMatch = (
+  stopPlace: string,
+  starredTitle: string,
+): boolean => {
+  const stop: string = stopPlace.toLowerCase().trim();
+  const title: string = starredTitle.toLowerCase().trim();
+
+  return stop === title || stop.includes(title) || title.includes(stop);
+};
+
+/** Keep only stops that match starred titles; drop empty days. */
+export const filterSketchToStarredPlaces = (
+  sketch: TripSketch,
+  starredPlaceTitles: readonly string[],
+): TripSketch => {
+  if (!starredPlaceTitles.length) {
+    return sketch;
+  }
+
+  const days = sketch.days
+    .map((day) => ({
+      ...day,
+      stops: day.stops.filter((stop) =>
+        starredPlaceTitles.some((title: string) =>
+          placeNamesMatch(stop.place, title),
+        ),
+      ),
+    }))
+    .filter((day) => day.stops.length > 0);
+
+  return normalizeTripSketch({
+    ...sketch,
+    days,
+  });
+};
+
+/** Drop duplicate venue names across the sketch (keep first occurrence). */
+export const dedupeSketchStopNames = (sketch: TripSketch): TripSketch => {
+  const seen = new Set<string>();
+
+  const days = sketch.days.map((day) => ({
+    ...day,
+    stops: day.stops.filter((stop) => {
+      const key: string = stop.place.toLowerCase().trim();
+
+      if (seen.has(key)) {
+        return false;
+      }
+
+      seen.add(key);
+
+      return true;
+    }),
+  }));
+
+  return {
+    ...sketch,
+    days,
+  };
+};
+
+/** Add any missing starred titles to the sketch — one stop each, spread across days. */
+export const ensureAllStarredInSketch = (
+  sketch: TripSketch,
+  starredPlaceTitles: readonly string[],
+  tripDays: number,
+): TripSketch => {
+  if (!starredPlaceTitles.length) {
+    return sketch;
+  }
+
+  const daysCount: number = Math.max(1, Math.round(tripDays));
+  const days = sketch.days.slice(0, daysCount).map((day) => ({
+    ...day,
+    stops: [...day.stops],
+  }));
+
+  while (days.length < daysCount) {
+    days.push({
+      day: days.length + 1,
+      label: "Explore",
+      stops: [],
+    });
+  }
+
+  const isTitleInSketch = (title: string): boolean =>
+    days.some((day) =>
+      day.stops.some((stop) => placeNamesMatch(stop.place, title)),
+    );
+
+  const missingTitles: string[] = starredPlaceTitles.filter(
+    (title: string) => !isTitleInSketch(title),
+  );
+
+  for (const title of missingTitles) {
+    const targetDay = days.reduce((min, day) =>
+      day.stops.length < min.stops.length ? day : min,
+    );
+
+    targetDay.stops.push({
+      order: targetDay.stops.length + 1,
+      place: title,
+      detail: `Visit ${title}`,
+    });
+  }
+
+  return normalizeTripSketch({
+    ...sketch,
+    days: days.map((day, index) => ({ ...day, day: index + 1 })),
+  });
+};
+
+/** Normalizes sketch day order, labels, and marks the sketch as fresh for the canvas. */
 export const normalizeTripSketch = (sketch: TripSketch): TripSketch => ({
   ...sketch,
   isStale: false,

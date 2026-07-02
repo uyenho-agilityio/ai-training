@@ -1,6 +1,13 @@
 "use client";
 
-import { memo, useCallback, useMemo, useState, type ReactElement } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactElement,
+} from "react";
 
 import { useCoAgent } from "@copilotkit/react-core";
 
@@ -16,6 +23,8 @@ import {
   GENERATE_ITINERARY_CONFIRM_MESSAGE,
   INITIAL_TRIP_STATE,
   MOCK_FULL_ITINERARY,
+  PLANNING_IN_PROGRESS_MESSAGE,
+  SKETCH_READY_ON_PLACES_MESSAGE,
 } from "@/constants";
 import type {
   CanvasTab,
@@ -27,31 +36,56 @@ import type {
   TripCanvasState,
 } from "@/types";
 import {
+  buildSketchFromStarredMessage,
   dismissPlace,
   filterPlacesByStatus,
   findBookingById,
+  getGenerateItineraryReadiness,
+  mergeCanvasState,
   togglePlaceStar,
 } from "@/utils";
 import { CANVAS_TABS } from "@/constants";
+import { useRunAgentMessage } from "@/hooks";
 import { WeatherCard } from "../WeatherCard";
 import { BookSection } from "./BookSection";
 import { ItinerarySection } from "./ItinerarySection";
 import { PlacesSection } from "./PlacesSection";
 
+/** Canvas fields mirrored in toolPatch so agent state resets do not wipe UI data. */
+const TOOL_PATCH_MIRROR_KEYS = [
+  "places",
+  "sketch",
+  "flights",
+  "hotels",
+  "weather",
+  "expandedDays",
+  "itineraryPhase",
+] as const satisfies ReadonlyArray<keyof ToolDrivenCanvasPatch>;
+
 const TravelCanvasComponent = (): ReactElement => {
-  const { state, setState } = useCoAgent<TripCanvasState>({
+  const {
+    state,
+    setState,
+    running: isAgentRunning,
+  } = useCoAgent<TripCanvasState>({
     name: copilotAgent,
     initialState: INITIAL_TRIP_STATE,
   });
 
+  const { runAgentMessage } = useRunAgentMessage();
+
   const [toolPatch, setToolPatch] = useState<ToolDrivenCanvasPatch>({});
   const [isConfirmOpen, setIsConfirmOpen] = useState<boolean>(false);
+  const [isSketchPending, setIsSketchPending] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!isAgentRunning) {
+      setIsSketchPending(false);
+    }
+  }, [isAgentRunning]);
 
   const canvasState = useMemo(
-    () => ({
-      ...(state ?? INITIAL_TRIP_STATE),
-      ...toolPatch,
-    }),
+    (): TripCanvasState => mergeCanvasState(state, toolPatch),
     [state, toolPatch],
   );
 
@@ -74,10 +108,29 @@ const TravelCanvasComponent = (): ReactElement => {
     [places, placeFilter],
   );
 
-  const starredCount = useMemo(
-    () =>
-      places?.filter((place: PlaceBrief) => place.status === "starred").length,
+  const starredPlaces: PlaceBrief[] = useMemo(
+    (): PlaceBrief[] =>
+      (places ?? []).filter((place: PlaceBrief) => place.status === "starred"),
     [places],
+  );
+
+  const starredCount = starredPlaces.length;
+
+  const isPlanningInProgress: boolean = useMemo(
+    () =>
+      isAgentRunning &&
+      (places?.length ?? 0) > 0 &&
+      (sketch?.days?.length ?? 0) === 0,
+    [isAgentRunning, places, sketch?.days],
+  );
+
+  const isSketchReadyOnPlaces: boolean = useMemo(
+    () =>
+      activeTab === "places" &&
+      !isAgentRunning &&
+      (places?.length ?? 0) > 0 &&
+      (sketch?.days?.length ?? 0) > 0,
+    [activeTab, isAgentRunning, places, sketch?.days],
   );
 
   const selectedFlight = useMemo(
@@ -90,6 +143,40 @@ const TravelCanvasComponent = (): ReactElement => {
     [hotels, selectedHotelId],
   );
 
+  const itineraryReadiness = useMemo(
+    () =>
+      getGenerateItineraryReadiness({
+        places,
+        flights,
+        hotels,
+        selectedFlightId,
+        selectedHotelId,
+        sketch,
+      }),
+    [places, flights, hotels, selectedFlightId, selectedHotelId, sketch],
+  );
+
+  const disabledReason = useMemo((): string => {
+    if (itineraryReadiness.isReady) {
+      return "";
+    }
+
+    const labels: Record<(typeof itineraryReadiness.missing)[number], string> =
+      {
+        places: "places",
+        flights: "a selected flight",
+        hotels: "a selected hotel",
+        routes: "day-by-day routes",
+        localTips: "local tips",
+      };
+
+    const missingLabels = itineraryReadiness.missing.map(
+      (requirement) => labels[requirement],
+    );
+
+    return `Add ${missingLabels.join(", ")} to generate your full itinerary.`;
+  }, [itineraryReadiness]);
+
   const patchState = useCallback(
     (patch: Partial<TripCanvasState>) => {
       setState((prev: TripCanvasState | undefined) => ({
@@ -98,6 +185,38 @@ const TravelCanvasComponent = (): ReactElement => {
       }));
     },
     [setState],
+  );
+
+  const patchCanvasState = useCallback(
+    (patch: Partial<TripCanvasState>) => {
+      patchState(patch);
+
+      setToolPatch((prev: ToolDrivenCanvasPatch) => {
+        const hasUpdates = TOOL_PATCH_MIRROR_KEYS.some(
+          (key: keyof ToolDrivenCanvasPatch) => patch[key] !== undefined,
+        );
+
+        if (!hasUpdates) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+          ...(patch.places !== undefined ? { places: patch.places } : {}),
+          ...(patch.sketch !== undefined ? { sketch: patch.sketch } : {}),
+          ...(patch.flights !== undefined ? { flights: patch.flights } : {}),
+          ...(patch.hotels !== undefined ? { hotels: patch.hotels } : {}),
+          ...(patch.weather !== undefined ? { weather: patch.weather } : {}),
+          ...(patch.expandedDays !== undefined
+            ? { expandedDays: patch.expandedDays }
+            : {}),
+          ...(patch.itineraryPhase !== undefined
+            ? { itineraryPhase: patch.itineraryPhase }
+            : {}),
+        };
+      });
+    },
+    [patchState],
   );
 
   const releaseToolTabPatch = useCallback((): void => {
@@ -143,25 +262,35 @@ const TravelCanvasComponent = (): ReactElement => {
 
   const handleStar = useCallback(
     (id: string) => {
-      patchState({ places: togglePlaceStar(places, id) });
+      patchCanvasState({ places: togglePlaceStar(places, id) });
     },
-    [patchState, places],
+    [patchCanvasState, places],
   );
 
   const handleDismiss = useCallback(
     (id: string) => {
-      patchState({ places: dismissPlace(places, id) });
+      patchCanvasState({ places: dismissPlace(places, id) });
     },
-    [patchState, places],
+    [patchCanvasState, places],
   );
 
-  const handleSketchFromStarred = useCallback(() => {
-    patchState({
-      sketch: { ...sketch, isStale: false },
-      expandedDays: [1],
-    });
-    navigateToTab("itinerary");
-  }, [navigateToTab, patchState, sketch]);
+  const handleSketchFromStarred = useCallback(async (): Promise<void> => {
+    if (starredPlaces.length === 0) {
+      return;
+    }
+
+    const tripDays: number =
+      sketch?.days?.length && sketch.days.length > 0
+        ? sketch.days.length
+        : Math.max(starredPlaces.length, 1);
+
+    patchCanvasState({ places });
+
+    setIsSketchPending(true);
+    await runAgentMessage(
+      buildSketchFromStarredMessage(starredPlaces, tripDays),
+    );
+  }, [patchCanvasState, places, runAgentMessage, sketch?.days, starredPlaces]);
 
   const handleToggleDay = useCallback(
     (dayNum: number) => {
@@ -169,14 +298,14 @@ const TravelCanvasComponent = (): ReactElement => {
         ? expandedDays.filter((day: number) => day !== dayNum)
         : [...expandedDays, dayNum];
 
-      patchState({ expandedDays: nextExpandedDays });
+      patchCanvasState({ expandedDays: nextExpandedDays });
     },
-    [expandedDays, patchState],
+    [expandedDays, patchCanvasState],
   );
 
   const handleRefreshSketch = useCallback(() => {
-    patchState({ sketch: { ...sketch, isStale: false } });
-  }, [patchState, sketch]);
+    patchCanvasState({ sketch: { ...sketch, isStale: false } });
+  }, [patchCanvasState, sketch]);
 
   const handleSelectFlight = useCallback(
     (id: string) => {
@@ -210,16 +339,17 @@ const TravelCanvasComponent = (): ReactElement => {
 
   const handleConfirmGenerateItinerary = useCallback((): void => {
     setIsConfirmOpen(false);
-    patchState({ itineraryPhase: "generating" });
+    patchCanvasState({ itineraryPhase: "generating" });
 
     window.setTimeout(() => {
-      setState((prev: TripCanvasState | undefined) => ({
-        ...(prev ?? INITIAL_TRIP_STATE),
+      const nextPatch: Partial<TripCanvasState> = {
         itineraryPhase: "full",
         expandedDays: [1, 2, 3],
-      }));
+      };
+
+      patchCanvasState(nextPatch);
     }, 1400);
-  }, [patchState, setState]);
+  }, [patchCanvasState]);
 
   const handleCancelGenerateItinerary = useCallback((): void => {
     setIsConfirmOpen(false);
@@ -255,6 +385,11 @@ const TravelCanvasComponent = (): ReactElement => {
             <PlacesSection
               places={filteredPlaces}
               starredCount={starredCount}
+              isSketching={isSketchPending && isAgentRunning}
+              isPlanningInProgress={isPlanningInProgress}
+              isSketchReady={isSketchReadyOnPlaces}
+              planningMessage={PLANNING_IN_PROGRESS_MESSAGE}
+              sketchReadyMessage={SKETCH_READY_ON_PLACES_MESSAGE}
               onFilterChange={handleFilterChange}
               onStar={handleStar}
               onDismiss={handleDismiss}
@@ -282,6 +417,8 @@ const TravelCanvasComponent = (): ReactElement => {
               fullItineraryDays={MOCK_FULL_ITINERARY}
               selectedFlight={selectedFlight}
               selectedHotel={selectedHotel}
+              isReady={itineraryReadiness.isReady}
+              disabledReason={disabledReason}
               onToggleDay={handleToggleDay}
               onRefreshSketch={handleRefreshSketch}
               onEditBookings={handleEditBookings}

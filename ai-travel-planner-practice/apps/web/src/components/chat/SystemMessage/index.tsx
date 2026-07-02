@@ -2,23 +2,35 @@
 
 import { memo, type ReactElement, type ReactNode } from "react";
 
+import { useCoAgent } from "@copilotkit/react-core";
 import { Markdown, type AssistantMessageProps } from "@copilotkit/react-ui";
 
-import { cn } from "@/utils";
+import { copilotAgent } from "@/constants";
+import { cn, getAssistantMessageText } from "@/utils";
 import { systemMessageBubbleClasses, systemMessageRowClasses } from "../styles";
 import { TypingIndicator } from "../TypingIndicator";
 
 const SystemMessageComponent = ({
   message,
   isLoading,
+  isGenerating,
+  isCurrentMessage,
   markdownTagRenderers,
 }: AssistantMessageProps): ReactElement => {
-  const content = message?.content ?? "";
+  const { running: isAgentRunning } = useCoAgent({ name: copilotAgent });
+
+  const content: string = getAssistantMessageText(message?.content ?? "");
   const uiPosition = message?.generativeUIPosition ?? "after";
   const generativeUi: ReactNode = message?.generativeUI?.();
+  const hasVisibleBody: boolean = Boolean(content || generativeUi);
+  const isAgentWorkingCurrentTurn: boolean =
+    Boolean(isCurrentMessage) && isAgentRunning;
+  const isThinking: boolean =
+    isLoading || isGenerating || isAgentWorkingCurrentTurn;
 
-  if (isLoading && !content) {
-    return <TypingIndicator />;
+  // Tool-only / empty turns: show typing while active, otherwise render nothing.
+  if (!hasVisibleBody) {
+    return isThinking ? <TypingIndicator /> : <></>;
   }
 
   return (
@@ -43,7 +55,7 @@ const SystemMessageComponent = ({
         </div>
       )}
 
-      {isLoading && content && <TypingIndicator className="mt-2" />}
+      {isThinking && <TypingIndicator className="mt-2" />}
     </>
   );
 };

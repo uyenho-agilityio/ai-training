@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { PLACE_COUNT_RULE } from "../config/planning";
+
 export const placeStatusSchema = z.enum(["new", "starred", "dismissed"]);
 
 export const placeBriefSchema = z.object({
@@ -18,7 +20,12 @@ export const routeStopSchema = z.object({
 
 export const sketchDaySchema = z.object({
   day: z.number().int().positive(),
-  label: z.string().min(1),
+  label: z
+    .string()
+    .min(1)
+    .describe(
+      'Theme only, NOT prefixed with "Day N" (the UI adds that). e.g. "Beach & Market"',
+    ),
   stops: z.array(routeStopSchema).min(1),
 });
 
@@ -39,12 +46,21 @@ export const checkPlacesInputSchema = z.object({
     .string()
     .optional()
     .describe("Optional vibe: food, beaches, culture, relaxed pace, etc."),
+  tripDays: z
+    .number()
+    .int()
+    .min(1)
+    .max(14)
+    .optional()
+    .describe(
+      "User's trip length in days — required when sizing places; never assume a default",
+    ),
   places: z
     .array(placeBriefSchema)
     .min(1)
-    .max(12)
+    .max(36)
     .describe(
-      "Suggested places for the Places tab. Each needs id, title, tagline, summary, status.",
+      `Suggested places for the Places tab — length must equal suggestPlaceCount(tripDays): ${PLACE_COUNT_RULE}. Every entry must be in the destination only.`,
     ),
 });
 
@@ -69,7 +85,9 @@ export const tripSketchInputSchema = z.object({
   starredPlaceTitles: z
     .array(z.string().min(1))
     .optional()
-    .describe("Starred place titles from the canvas to prioritize"),
+    .describe(
+      "Every starred place title that must appear exactly once in the route. When set, the tool keeps only these stops and injects any missing titles — total stops equals this list length; spread across tripDays with ceil(count / tripDays) stops per day when possible.",
+    ),
   sketch: tripSketchSchema.describe(
     "Full day-by-day sketch with route stops and local tips for the Itinerary tab",
   ),

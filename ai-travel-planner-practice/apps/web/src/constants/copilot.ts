@@ -19,3 +19,10 @@ export const HIDDEN_BOOKING_TOOL_NAMES = {
   searchHotelsTool: "searchHotelsTool",
   searchHotels: "search-hotels",
 } as const;
+
+export const HIDDEN_PLANNING_TOOL_NAMES = {
+  checkPlacesTool: "checkPlacesTool",
+  checkPlaces: "check-places",
+  tripSketchTool: "tripSketchTool",
+  tripSketch: "trip-sketch",
+} as const;

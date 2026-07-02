@@ -2,8 +2,8 @@
 
 import { memo, type ReactElement } from "react";
 
-import { HOVER_BTN } from "../../styles";
 import type { FlightData, HotelData } from "@/types";
+import { Button, Heading, Text } from "../../../commons";
 
 type SketchLogisticsBlockProps = {
   flight: FlightData | null;
@@ -18,17 +18,23 @@ const SketchLogisticsBlockComponent = ({
 }: SketchLogisticsBlockProps): ReactElement => (
   <div className="rounded-xl border border-slate-200 bg-white p-4">
     <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-      <h3 className="text-xs font-black uppercase tracking-wider text-orange-600">
+      <Heading
+        variant="h3"
+        size="xs"
+        color="accent"
+        className="text-xs uppercase tracking-wider"
+      >
         Logistics (from Book)
-      </h3>
+      </Heading>
 
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="xs"
         onClick={onEditBookings}
-        className={`text-xs font-bold text-orange-600 underline-offset-2 hover:underline ${HOVER_BTN}`}
+        className="font-bold"
       >
         {flight || hotel ? "Change →" : "Select →"}
-      </button>
+      </Button>
     </div>
 
     {flight || hotel ? (
@@ -46,9 +52,9 @@ const SketchLogisticsBlockComponent = ({
         )}
       </ul>
     ) : (
-      <p className="text-xs font-medium text-slate-500">
+      <Text size="xs" color="muted" className="text-xs font-medium">
         No flight or hotel selected yet. Use Select to open Book.
-      </p>
+      </Text>
     )}
   </div>
 );

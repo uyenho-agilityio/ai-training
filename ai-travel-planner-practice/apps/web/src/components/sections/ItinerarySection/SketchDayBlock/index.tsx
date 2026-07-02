@@ -2,7 +2,7 @@
 
 import { memo, type ReactElement } from "react";
 
-import { HOVER_BTN } from "../../styles";
+import { Button, Text } from "../../../commons";
 import type { RouteStop, SketchDay } from "@/types";
 
 type SketchDayBlockProps = {
@@ -17,19 +17,20 @@ const SketchDayBlockComponent = ({
   onToggle,
 }: SketchDayBlockProps): ReactElement => (
   <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-    <button
-      type="button"
+    <Button
+      variant="ghost"
+      size="md"
       onClick={() => onToggle(day.day)}
-      className={`flex w-full items-center justify-between bg-white px-4 py-3 text-left hover:bg-orange-50/50 ${HOVER_BTN}`}
+      className="h-auto w-full justify-between rounded-none bg-white px-4 py-3 text-left font-normal hover:bg-orange-50/50 hover:no-underline"
     >
-      <span className="text-sm font-black text-slate-800">
+      <Text as="span" size="xs" isBold className="text-sm text-slate-800">
         Day {day.day} — {day.label}
-      </span>
+      </Text>
 
-      <span className="text-xs font-bold text-orange-600">
+      <Text as="span" size="xs" color="accent" isBold className="text-xs">
         {isExpanded ? "▲" : "▼"}
-      </span>
-    </button>
+      </Text>
+    </Button>
 
     {isExpanded && (
       <div className="space-y-2 border-t border-slate-100 bg-white p-4">
@@ -38,16 +39,24 @@ const SketchDayBlockComponent = ({
             key={`${day.day}-${stop.order}`}
             className="flex gap-3 rounded-lg border border-slate-100 bg-white p-3 transition-colors hover:border-orange-200 hover:bg-orange-50/30"
           >
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 text-xs font-black text-white">
+            <Text
+              as="span"
+              size="xs"
+              isBold
+              color="inverse"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-linear-to-br from-orange-500 to-amber-400 text-xs"
+            >
               {stop.order}
-            </span>
+            </Text>
 
             <div>
-              <p className="text-sm font-bold text-slate-800">{stop.place}</p>
+              <Text size="xs" isBold className="text-sm text-slate-800">
+                {stop.place}
+              </Text>
 
-              <p className="text-xs font-medium text-slate-500">
+              <Text size="xs" color="muted" className="text-xs font-medium">
                 {stop.detail}
-              </p>
+              </Text>
             </div>
           </div>
         ))}

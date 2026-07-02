@@ -18,3 +18,10 @@ export type ToolConfirmationRenderStatus =
   | "inProgress"
   | "executing"
   | "complete";
+
+export type TextMessagePart = {
+  type: "text";
+  text: string;
+};
+
+export type AssistantMessageContent = string | TextMessagePart[];

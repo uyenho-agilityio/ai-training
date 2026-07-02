@@ -2,6 +2,7 @@
 
 import { memo, type ReactElement } from "react";
 
+import { Heading, Text } from "../../../commons";
 import type { FullItineraryDay } from "@/types";
 
 type FullItineraryBlockProps = {
@@ -12,31 +13,72 @@ const FullItineraryBlockComponent = ({
   days,
 }: FullItineraryBlockProps): ReactElement => (
   <div className="space-y-4 rounded-xl border-2 border-orange-200 bg-white p-4">
-    <h3 className="text-sm font-black text-slate-800">
+    <Heading variant="h3" size="xs" className="text-sm text-slate-800">
       Full itinerary (generated on canvas)
-    </h3>
+    </Heading>
 
     {days.map((day: FullItineraryDay) => (
       <div
         key={day.day}
         className="rounded-lg border border-slate-200 bg-white p-3"
       >
-        <p className="text-xs font-black uppercase text-orange-600">
+        <Text
+          isBold
+          size="xs"
+          color="accent"
+          className="text-xs uppercase text-orange-600"
+        >
           Day {day.day}
-        </p>
+        </Text>
 
         <div className="mt-2 space-y-1.5 text-xs font-semibold text-slate-700">
-          <p>
-            <span className="text-orange-600">Morning —</span> {day.morning}
-          </p>
+          <Text
+            as="p"
+            size="xs"
+            className="text-xs font-semibold text-slate-700"
+          >
+            <Text
+              as="span"
+              size="xs"
+              color="accent"
+              className="text-orange-600"
+            >
+              Morning —
+            </Text>{" "}
+            {day.morning}
+          </Text>
 
-          <p>
-            <span className="text-orange-600">Afternoon —</span> {day.afternoon}
-          </p>
+          <Text
+            as="p"
+            size="xs"
+            className="text-xs font-semibold text-slate-700"
+          >
+            <Text
+              as="span"
+              size="xs"
+              color="accent"
+              className="text-orange-600"
+            >
+              Afternoon —
+            </Text>{" "}
+            {day.afternoon}
+          </Text>
 
-          <p>
-            <span className="text-orange-600">Evening —</span> {day.evening}
-          </p>
+          <Text
+            as="p"
+            size="xs"
+            className="text-xs font-semibold text-slate-700"
+          >
+            <Text
+              as="span"
+              size="xs"
+              color="accent"
+              className="text-orange-600"
+            >
+              Evening —
+            </Text>{" "}
+            {day.evening}
+          </Text>
         </div>
       </div>
     ))}

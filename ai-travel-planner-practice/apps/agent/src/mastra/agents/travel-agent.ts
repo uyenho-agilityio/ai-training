@@ -55,7 +55,7 @@ export const travelAgent = new Agent({
   memory: new Memory({
     options: {
       workingMemory: {
-        enabled: true,
+        enabled: false,
       },
     },
   }),

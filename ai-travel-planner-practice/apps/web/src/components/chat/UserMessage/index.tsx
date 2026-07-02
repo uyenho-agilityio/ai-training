@@ -17,7 +17,7 @@ const UserMessageComponent = ({ message }: UserMessageProps): ReactElement => {
           .join(" ") ?? "");
 
   if (!text) {
-    return <div className={userMessageRowClasses} />;
+    return <></>;
   }
 
   return (

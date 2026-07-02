@@ -10,11 +10,14 @@ import {
   type ReactElement,
 } from "react";
 
+import { useCoAgent } from "@copilotkit/react-core";
 import type { InputProps } from "@copilotkit/react-ui";
 import { useChatContext } from "@copilotkit/react-ui";
 
+import { copilotAgent, PLANNING_IN_PROGRESS_MESSAGE } from "@/constants";
 import { SendArrowIcon } from "@/icons";
-import { Button } from "../../commons";
+import { Button, Text } from "../../commons";
+import { TypingIndicator } from "../TypingIndicator";
 import { chatInputContainerClasses, chatInputTextareaClasses } from "../styles";
 
 const ChatInputComponent = ({
@@ -25,9 +28,11 @@ const ChatInputComponent = ({
   onStop,
 }: InputProps): ReactElement => {
   const { labels } = useChatContext();
+  const { running: isAgentRunning } = useCoAgent({ name: copilotAgent });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [text, setText] = useState<string>("");
   const [isComposing, setIsComposing] = useState<boolean>(false);
+  const showAgentWorking: boolean = isAgentRunning && !inProgress;
 
   const handleChange = useCallback(
     (event: ChangeEvent<HTMLTextAreaElement>) => {
@@ -67,6 +72,19 @@ const ChatInputComponent = ({
 
   return (
     <div className="px-4 pb-3 pt-2">
+      {showAgentWorking && (
+        <div className="mb-2">
+          <TypingIndicator />
+          <Text
+            size="xs"
+            color="muted"
+            className="mt-1 px-1 text-xs font-medium text-amber-900"
+          >
+            {PLANNING_IN_PROGRESS_MESSAGE}
+          </Text>
+        </div>
+      )}
+
       <div className={chatInputContainerClasses}>
         <textarea
           ref={textareaRef}

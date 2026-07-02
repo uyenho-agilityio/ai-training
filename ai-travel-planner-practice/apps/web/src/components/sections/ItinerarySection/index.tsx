@@ -2,7 +2,6 @@
 
 import { memo, type ReactElement } from "react";
 
-import { HOVER_BTN } from "../styles";
 import type {
   FlightData,
   FullItineraryDay,
@@ -14,6 +13,7 @@ import type {
 import { FullItineraryBlock } from "./FullItineraryBlock";
 import { SketchDayBlock } from "./SketchDayBlock";
 import { SketchLogisticsBlock } from "./SketchLogisticsBlock";
+import { Button, Heading, Text } from "../../commons";
 
 type ItinerarySectionProps = {
   sketch: TripSketch;
@@ -22,6 +22,8 @@ type ItinerarySectionProps = {
   fullItineraryDays: FullItineraryDay[];
   selectedFlight: FlightData | null;
   selectedHotel: HotelData | null;
+  isReady: boolean;
+  disabledReason?: string;
   onToggleDay: (dayNum: number) => void;
   onRefreshSketch: () => void;
   onGenerateItinerary: () => void;
@@ -35,113 +37,178 @@ const ItinerarySectionComponent = ({
   fullItineraryDays,
   selectedFlight,
   selectedHotel,
+  isReady,
+  disabledReason,
   onToggleDay,
   onRefreshSketch,
   onGenerateItinerary,
   onEditBookings,
-}: ItinerarySectionProps): ReactElement => (
-  <section className="space-y-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-    <div>
-      <h2 className="text-base font-black text-slate-800 sm:text-lg">
-        {sketch?.title}
-      </h2>
+}: ItinerarySectionProps): ReactElement => {
+  const hasSketchContent: boolean = (sketch?.days.length ?? 0) > 0;
+  const isGenerateDisabled: boolean =
+    itineraryPhase === "generating" || !isReady;
 
-      <p className="mt-1 text-xs font-medium text-slate-500">
-        Your trip, sketched out
-      </p>
-    </div>
+  return (
+    <section className="space-y-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <div>
+        <Heading variant="h2" size="sm" className="text-base sm:text-lg">
+          {sketch?.title}
+        </Heading>
 
-    {sketch?.isStale && (
-      <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs font-semibold text-amber-900">
-          Things changed — new briefs or chat since this sketch. Want a fresh
-          take?
-        </p>
-
-        <button
-          type="button"
-          onClick={onRefreshSketch}
-          className={`shrink-0 rounded-lg bg-amber-600 px-4 py-2 text-xs font-bold text-white hover:bg-amber-700 ${HOVER_BTN}`}
-        >
-          Refresh sketch
-        </button>
+        <Text size="xs" color="muted" className="mt-1 text-xs font-medium">
+          Your trip, sketched out
+        </Text>
       </div>
-    )}
 
-    <SketchLogisticsBlock
-      flight={selectedFlight}
-      hotel={selectedHotel}
-      onEditBookings={onEditBookings}
-    />
+      {sketch?.isStale && (
+        <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+          <Text size="xs" className="text-xs font-semibold text-amber-900">
+            Things changed — new briefs or chat since this sketch. Want a fresh
+            take?
+          </Text>
 
-    <div>
-      <h3 className="text-xs font-black uppercase tracking-wider text-orange-600">
-        At a glance
-      </h3>
-
-      <p className="mt-2 text-sm font-medium leading-relaxed text-slate-700">
-        {sketch?.atAGlance}
-      </p>
-    </div>
-
-    <div className="space-y-2">
-      <h3 className="text-xs font-black uppercase tracking-wider text-orange-600">
-        Day by day
-      </h3>
-
-      {sketch?.days.map((day: SketchDay) => (
-        <SketchDayBlock
-          key={day.day}
-          day={day}
-          isExpanded={expandedDays.includes(day.day)}
-          onToggle={onToggleDay}
-        />
-      ))}
-    </div>
-
-    <div>
-      <h3 className="text-xs font-black uppercase tracking-wider text-orange-600">
-        Local tips ({sketch?.localTips.length})
-      </h3>
-
-      <ul className="mt-2 space-y-1.5">
-        {sketch?.localTips.map((tip: string, index: number) => (
-          <li
-            key={index}
-            className="flex gap-2 text-xs font-semibold text-slate-700"
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={onRefreshSketch}
+            className="shrink-0 bg-amber-600 from-amber-600 to-amber-600 shadow-none hover:from-amber-700 hover:to-amber-700"
           >
-            <span className="text-orange-500">•</span>
+            Refresh sketch
+          </Button>
+        </div>
+      )}
 
-            {tip}
-          </li>
-        ))}
-      </ul>
-    </div>
+      <SketchLogisticsBlock
+        flight={selectedFlight}
+        hotel={selectedHotel}
+        onEditBookings={onEditBookings}
+      />
 
-    {itineraryPhase === "full" && (
-      <FullItineraryBlock days={fullItineraryDays} />
-    )}
+      {!hasSketchContent ? (
+        <Text
+          size="xs"
+          color="muted"
+          className="rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm font-medium"
+        >
+          No itinerary sketch yet. Star places or ask in chat to build a
+          day-by-day plan.
+        </Text>
+      ) : (
+        <>
+          <div>
+            <Heading
+              variant="h3"
+              size="xs"
+              color="accent"
+              className="text-xs uppercase tracking-wider"
+            >
+              At a glance
+            </Heading>
 
-    <button
-      type="button"
-      disabled={itineraryPhase === "generating"}
-      onClick={onGenerateItinerary}
-      className={`w-full rounded-xl border-2 border-dashed border-orange-300 bg-white py-3 text-sm font-bold text-orange-600 hover:border-orange-400 hover:bg-orange-50 disabled:cursor-wait disabled:opacity-70 ${HOVER_BTN}`}
-    >
-      {itineraryPhase === "generating"
-        ? "Generating…"
-        : itineraryPhase === "full"
-          ? "Regenerate"
-          : "Let's make it real"}
-    </button>
+            <Text
+              size="xs"
+              className="mt-2 text-sm font-medium leading-relaxed text-slate-700"
+            >
+              {sketch?.atAGlance}
+            </Text>
+          </div>
 
-    {itineraryPhase === "generating" && (
-      <p className="text-center text-xs font-medium text-slate-500">
-        (Draft demo: agent would stream state → canvas updates below, not only
-        chat text.)
-      </p>
-    )}
-  </section>
-);
+          <div className="space-y-2">
+            <Heading
+              variant="h3"
+              size="xs"
+              color="accent"
+              className="text-xs uppercase tracking-wider"
+            >
+              Day by day
+            </Heading>
+
+            {sketch?.days.map((day: SketchDay) => (
+              <SketchDayBlock
+                key={day.day}
+                day={day}
+                isExpanded={expandedDays.includes(day.day)}
+                onToggle={onToggleDay}
+              />
+            ))}
+          </div>
+
+          <div>
+            <Heading
+              variant="h3"
+              size="xs"
+              color="accent"
+              className="text-xs uppercase tracking-wider"
+            >
+              Local tips ({sketch?.localTips.length})
+            </Heading>
+
+            <ul className="mt-2 space-y-1.5">
+              {sketch?.localTips.map((tip: string, index: number) => (
+                <Text
+                  key={index}
+                  as="li"
+                  size="xs"
+                  className="flex gap-2 text-xs font-semibold text-slate-700"
+                >
+                  <Text
+                    as="span"
+                    size="xs"
+                    color="accent"
+                    className="text-orange-500"
+                  >
+                    •
+                  </Text>
+
+                  {tip}
+                </Text>
+              ))}
+            </ul>
+          </div>
+        </>
+      )}
+
+      {itineraryPhase === "full" && (
+        <FullItineraryBlock days={fullItineraryDays} />
+      )}
+
+      <Button
+        variant="outline"
+        size="lg"
+        disabled={isGenerateDisabled}
+        title={disabledReason}
+        onClick={onGenerateItinerary}
+        className="border-2 border-dashed border-orange-300 text-orange-600 ring-0 hover:border-orange-400 hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {itineraryPhase === "generating"
+          ? "Generating…"
+          : itineraryPhase === "full"
+            ? "Regenerate"
+            : "Let's make it real"}
+      </Button>
+
+      {itineraryPhase === "generating" && (
+        <Text
+          size="xs"
+          color="muted"
+          className="text-center text-xs font-medium"
+        >
+          (Draft demo: agent would stream state → canvas updates below, not only
+          chat text.)
+        </Text>
+      )}
+
+      {!isReady && itineraryPhase !== "generating" && (
+        <Text
+          size="xs"
+          color="muted"
+          className="text-center text-xs font-medium"
+        >
+          {disabledReason}
+        </Text>
+      )}
+    </section>
+  );
+};
 
 export const ItinerarySection = memo(ItinerarySectionComponent);
