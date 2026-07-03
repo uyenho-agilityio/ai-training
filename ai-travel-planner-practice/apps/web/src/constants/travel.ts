@@ -44,6 +44,8 @@ export const INITIAL_TRIP_STATE: TripCanvasState = {
   weather: null,
   itineraryPhase: "sketch",
   expandedDays: [],
+  fullItinerary: null,
+  isGenerateConfirm: false,
 };
 
 export const TOOL_NAME_PATTERNS: Record<ToolSyncKind, readonly string[]> = {
@@ -53,4 +55,6 @@ export const TOOL_NAME_PATTERNS: Record<ToolSyncKind, readonly string[]> = {
   weather: ["weather", "get-weather"],
   places: ["check-place", "checkplaces"],
   sketch: ["trip-sketch", "tripsketch"],
+  fullItinerary: ["generate-itinerary", "generateitinerary"],
+  selectBookings: ["select-booking", "selectbookings"],
 };

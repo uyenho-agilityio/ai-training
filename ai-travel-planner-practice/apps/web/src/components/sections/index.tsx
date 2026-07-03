@@ -20,9 +20,7 @@ import {
 } from "@/components";
 import {
   copilotAgent,
-  GENERATE_ITINERARY_CONFIRM_MESSAGE,
   INITIAL_TRIP_STATE,
-  MOCK_FULL_ITINERARY,
   PLANNING_IN_PROGRESS_MESSAGE,
   SKETCH_READY_ON_PLACES_MESSAGE,
 } from "@/constants";
@@ -36,6 +34,8 @@ import type {
   TripCanvasState,
 } from "@/types";
 import {
+  buildGenerateItineraryConfirmMessage,
+  buildGenerateItineraryMessage,
   buildSketchFromStarredMessage,
   dismissPlace,
   filterPlacesByStatus,
@@ -51,7 +51,6 @@ import { BookSection } from "./BookSection";
 import { ItinerarySection } from "./ItinerarySection";
 import { PlacesSection } from "./PlacesSection";
 
-/** Canvas fields mirrored in toolPatch so agent state resets do not wipe UI data. */
 const TOOL_PATCH_MIRROR_KEYS = [
   "places",
   "sketch",
@@ -60,6 +59,10 @@ const TOOL_PATCH_MIRROR_KEYS = [
   "weather",
   "expandedDays",
   "itineraryPhase",
+  "fullItinerary",
+  "selectedFlightId",
+  "selectedHotelId",
+  "isGenerateConfirm",
 ] as const satisfies ReadonlyArray<keyof ToolDrivenCanvasPatch>;
 
 const TravelCanvasComponent = (): ReactElement => {
@@ -77,10 +80,12 @@ const TravelCanvasComponent = (): ReactElement => {
   const [toolPatch, setToolPatch] = useState<ToolDrivenCanvasPatch>({});
   const [isConfirmOpen, setIsConfirmOpen] = useState<boolean>(false);
   const [isSketchPending, setIsSketchPending] = useState<boolean>(false);
+  const [isGeneratePending, setIsGeneratePending] = useState<boolean>(false);
 
   useEffect(() => {
     if (!isAgentRunning) {
       setIsSketchPending(false);
+      setIsGeneratePending(false);
     }
   }, [isAgentRunning]);
 
@@ -101,6 +106,8 @@ const TravelCanvasComponent = (): ReactElement => {
     weather,
     itineraryPhase,
     expandedDays,
+    fullItinerary,
+    isGenerateConfirm,
   } = canvasState;
 
   const filteredPlaces: PlaceBrief[] = useMemo(
@@ -164,8 +171,8 @@ const TravelCanvasComponent = (): ReactElement => {
     const labels: Record<(typeof itineraryReadiness.missing)[number], string> =
       {
         places: "places",
-        flights: "a selected flight",
-        hotels: "a selected hotel",
+        flights: "flight search results",
+        hotels: "hotel search results",
         routes: "day-by-day routes",
         localTips: "local tips",
       };
@@ -212,6 +219,18 @@ const TravelCanvasComponent = (): ReactElement => {
             : {}),
           ...(patch.itineraryPhase !== undefined
             ? { itineraryPhase: patch.itineraryPhase }
+            : {}),
+          ...(patch.fullItinerary !== undefined
+            ? { fullItinerary: patch.fullItinerary }
+            : {}),
+          ...(patch.selectedFlightId !== undefined
+            ? { selectedFlightId: patch.selectedFlightId }
+            : {}),
+          ...(patch.selectedHotelId !== undefined
+            ? { selectedHotelId: patch.selectedHotelId }
+            : {}),
+          ...(patch.isGenerateConfirm !== undefined
+            ? { isGenerateConfirm: patch.isGenerateConfirm }
             : {}),
         };
       });
@@ -334,22 +353,92 @@ const TravelCanvasComponent = (): ReactElement => {
   }, [navigateToTab]);
 
   const handleOpenGenerateItineraryConfirm = useCallback((): void => {
+    const autoFlightId: string | null =
+      selectedFlightId ?? flights[0]?.id ?? null;
+    const autoHotelId: string | null = selectedHotelId ?? hotels[0]?.id ?? null;
+
+    if (!autoFlightId || !autoHotelId || !itineraryReadiness.isReady) {
+      return;
+    }
+
+    if (autoFlightId !== selectedFlightId || autoHotelId !== selectedHotelId) {
+      patchState({
+        selectedFlightId: autoFlightId,
+        selectedHotelId: autoHotelId,
+      });
+    }
+
     setIsConfirmOpen(true);
-  }, []);
+  }, [
+    flights,
+    hotels,
+    itineraryReadiness.isReady,
+    patchState,
+    selectedFlightId,
+    selectedHotelId,
+  ]);
 
-  const handleConfirmGenerateItinerary = useCallback((): void => {
-    setIsConfirmOpen(false);
-    patchCanvasState({ itineraryPhase: "generating" });
+  const generateConfirmMessage = useMemo((): string => {
+    const flight: FlightData | null = findBookingById<FlightData>(
+      flights,
+      selectedFlightId ?? flights[0]?.id ?? null,
+    );
+    const hotel: HotelData | null = findBookingById<HotelData>(
+      hotels,
+      selectedHotelId ?? hotels[0]?.id ?? null,
+    );
 
-    window.setTimeout(() => {
-      const nextPatch: Partial<TripCanvasState> = {
-        itineraryPhase: "full",
-        expandedDays: [1, 2, 3],
-      };
+    return buildGenerateItineraryConfirmMessage(flight, hotel);
+  }, [flights, hotels, selectedFlightId, selectedHotelId]);
 
-      patchCanvasState(nextPatch);
-    }, 1400);
-  }, [patchCanvasState]);
+  useEffect(() => {
+    if (!isGenerateConfirm || !itineraryReadiness.isReady) {
+      return;
+    }
+
+    patchCanvasState({ isGenerateConfirm: false });
+    handleOpenGenerateItineraryConfirm();
+  }, [
+    handleOpenGenerateItineraryConfirm,
+    itineraryReadiness.isReady,
+    patchCanvasState,
+    isGenerateConfirm,
+  ]);
+
+  const handleConfirmGenerateItinerary =
+    useCallback(async (): Promise<void> => {
+      if (!selectedFlight || !selectedHotel) {
+        return;
+      }
+
+      setIsConfirmOpen(false);
+      patchCanvasState({ itineraryPhase: "generating" });
+      setIsGeneratePending(true);
+
+      await runAgentMessage(
+        buildGenerateItineraryMessage({
+          sketch,
+          flight: selectedFlight,
+          hotel: selectedHotel,
+          starredPlaces,
+        }),
+      );
+    }, [
+      patchCanvasState,
+      runAgentMessage,
+      selectedFlight,
+      selectedHotel,
+      sketch,
+      starredPlaces,
+    ]);
+
+  useEffect(() => {
+    if (!isAgentRunning && itineraryPhase === "generating") {
+      patchCanvasState({
+        itineraryPhase: fullItinerary ? "full" : "sketch",
+      });
+    }
+  }, [fullItinerary, isAgentRunning, itineraryPhase, patchCanvasState]);
 
   const handleCancelGenerateItinerary = useCallback((): void => {
     setIsConfirmOpen(false);
@@ -361,14 +450,14 @@ const TravelCanvasComponent = (): ReactElement => {
         <Modal onClose={handleCancelGenerateItinerary}>
           <Confirmation
             variant="modal"
-            message={GENERATE_ITINERARY_CONFIRM_MESSAGE}
+            message={generateConfirmMessage}
             onConfirm={handleConfirmGenerateItinerary}
             onCancel={handleCancelGenerateItinerary}
           />
         </Modal>
       )}
 
-      <SyncTripToolResults setState={setState} setToolPatch={setToolPatch} />
+      <SyncTripToolResults setToolPatch={setToolPatch} />
 
       <main className="flex min-h-screen w-full min-w-0 flex-col gap-4 overflow-y-auto bg-white p-4 sm:gap-5 sm:p-10">
         <Header title="Plan places, book travel & build your itinerary" />
@@ -414,10 +503,11 @@ const TravelCanvasComponent = (): ReactElement => {
               sketch={sketch}
               expandedDays={expandedDays}
               itineraryPhase={itineraryPhase}
-              fullItineraryDays={MOCK_FULL_ITINERARY}
+              fullItinerary={fullItinerary}
               selectedFlight={selectedFlight}
               selectedHotel={selectedHotel}
               isReady={itineraryReadiness.isReady}
+              isGenerating={isGeneratePending && isAgentRunning}
               disabledReason={disabledReason}
               onToggleDay={handleToggleDay}
               onRefreshSketch={handleRefreshSketch}

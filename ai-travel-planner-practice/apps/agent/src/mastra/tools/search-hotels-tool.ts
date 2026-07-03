@@ -157,17 +157,9 @@ const searchHotels = async (
   try {
     return await searchHotelsViaSerpApi(normalizedInput);
   } catch (error) {
-    console.warn(
-      "[search-hotels] SerpAPI failed — returning empty results",
-      error,
-    );
+    console.warn("[search-hotels] SerpAPI failed — returning mock data", error);
 
-    return {
-      hotels: [],
-      location: normalizedInput.location,
-      checkIn: normalizedInput.checkIn,
-      checkOut: normalizedInput.checkOut,
-    };
+    return buildMockHotelsResult(normalizedInput);
   }
 };
 

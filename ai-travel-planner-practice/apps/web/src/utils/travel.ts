@@ -66,6 +66,57 @@ export const buildSketchFromStarredMessage = (
   return `Sketch from my starred places on the canvas. Starred (${starredPlaces.length}): ${titles}. ${tripDays} day${tripDays === 1 ? "" : "s"}. Include every starred place in the route.`;
 };
 
+type BuildGenerateItineraryMessageInput = {
+  sketch: TripSketch;
+  flight: FlightData;
+  hotel: HotelData;
+  starredPlaces: PlaceBrief[];
+};
+
+/** User message when confirming Let's make it real — agent calls generateItineraryTool. */
+export const buildGenerateItineraryMessage = ({
+  sketch,
+  flight,
+  hotel,
+  starredPlaces,
+}: BuildGenerateItineraryMessageInput): string => {
+  const dayStops: string = sketch.days
+    .map(
+      (day) =>
+        `Day ${day.day} (${day.label}): ${day.stops.map((stop) => stop.place).join(", ")}`,
+    )
+    .join("; ");
+  const starredTitles: string = starredPlaces
+    .map((place: PlaceBrief) => place.title)
+    .join(", ");
+
+  return [
+    "Generate my full itinerary on the canvas (Let's make it real).",
+    `Trip: ${sketch.title}. ${sketch.days.length} day${sketch.days.length === 1 ? "" : "s"}.`,
+    `Selected flight: ${flight.airline}, ${flight.route}, ${flight.time}, ${flight.price}.`,
+    `Selected hotel: ${hotel.name}, ${hotel.rating}★, ${hotel.price}.`,
+    `Sketch stops: ${dayStops}.`,
+    starredTitles ? `Starred places: ${starredTitles}.` : "",
+    "Call generateItineraryTool once. One timed segment per sketch stop with activity + logistics.",
+  ]
+    .filter(Boolean)
+    .join(" ");
+};
+
+export const buildGenerateItineraryConfirmMessage = (
+  flight: FlightData | null,
+  hotel: HotelData | null,
+): string => {
+  const flightLine: string = flight
+    ? `${flight.airline} (${flight.price})`
+    : "your flight";
+  const hotelLine: string = hotel
+    ? `${hotel.name} (${hotel.price})`
+    : "your hotel";
+
+  return `Generate a full day-by-day itinerary using ${flightLine} and ${hotelLine}? You can change selections on the Book tab before confirming.`;
+};
+
 export const findBookingById = <T extends BookingItem>(
   items: T[],
   id: string | null,
@@ -107,11 +158,11 @@ export const getGenerateItineraryReadiness = ({
     missing.push("places");
   }
 
-  if ((flights?.length ?? 0) === 0 || selectedFlightId == null) {
+  if ((flights?.length ?? 0) === 0) {
     missing.push("flights");
   }
 
-  if ((hotels?.length ?? 0) === 0 || selectedHotelId == null) {
+  if ((hotels?.length ?? 0) === 0) {
     missing.push("hotels");
   }
 
@@ -179,9 +230,27 @@ export const mergeCanvasState = (
       resolved.itineraryPhase,
       "sketch",
     ),
+    fullItinerary: pickSynced(
+      toolPatch.fullItinerary,
+      resolved.fullItinerary,
+      null,
+    ),
     activeTab: pickSynced(toolPatch.activeTab, resolved.activeTab, "places"),
-    selectedFlightId: resolved.selectedFlightId,
-    selectedHotelId: resolved.selectedHotelId,
+    selectedFlightId: pickSynced(
+      toolPatch.selectedFlightId,
+      resolved.selectedFlightId,
+      null,
+    ),
+    selectedHotelId: pickSynced(
+      toolPatch.selectedHotelId,
+      resolved.selectedHotelId,
+      null,
+    ),
+    isGenerateConfirm: pickSynced(
+      toolPatch.isGenerateConfirm,
+      resolved.isGenerateConfirm,
+      false,
+    ),
     placeFilter: resolved.placeFilter,
   };
 };

@@ -4,7 +4,7 @@ import { memo, type ReactElement } from "react";
 
 import type {
   FlightData,
-  FullItineraryDay,
+  FullItinerary,
   HotelData,
   ItineraryPhase,
   SketchDay,
@@ -19,10 +19,11 @@ type ItinerarySectionProps = {
   sketch: TripSketch;
   expandedDays: number[];
   itineraryPhase: ItineraryPhase;
-  fullItineraryDays: FullItineraryDay[];
+  fullItinerary: FullItinerary | null;
   selectedFlight: FlightData | null;
   selectedHotel: HotelData | null;
   isReady: boolean;
+  isGenerating: boolean;
   disabledReason?: string;
   onToggleDay: (dayNum: number) => void;
   onRefreshSketch: () => void;
@@ -34,10 +35,11 @@ const ItinerarySectionComponent = ({
   sketch,
   expandedDays,
   itineraryPhase,
-  fullItineraryDays,
+  fullItinerary,
   selectedFlight,
   selectedHotel,
   isReady,
+  isGenerating,
   disabledReason,
   onToggleDay,
   onRefreshSketch,
@@ -46,7 +48,7 @@ const ItinerarySectionComponent = ({
 }: ItinerarySectionProps): ReactElement => {
   const hasSketchContent: boolean = (sketch?.days.length ?? 0) > 0;
   const isGenerateDisabled: boolean =
-    itineraryPhase === "generating" || !isReady;
+    isGenerating || !isReady || itineraryPhase === "generating";
 
   return (
     <section className="space-y-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
@@ -168,9 +170,9 @@ const ItinerarySectionComponent = ({
         </>
       )}
 
-      {itineraryPhase === "full" && (
-        <FullItineraryBlock days={fullItineraryDays} />
-      )}
+      {itineraryPhase === "full" && fullItinerary ? (
+        <FullItineraryBlock itinerary={fullItinerary} />
+      ) : null}
 
       <Button
         variant="outline"
@@ -180,25 +182,24 @@ const ItinerarySectionComponent = ({
         onClick={onGenerateItinerary}
         className="border-2 border-dashed border-orange-300 text-orange-600 ring-0 hover:border-orange-400 hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {itineraryPhase === "generating"
+        {isGenerating || itineraryPhase === "generating"
           ? "Generating…"
           : itineraryPhase === "full"
             ? "Regenerate"
             : "Let's make it real"}
       </Button>
 
-      {itineraryPhase === "generating" && (
+      {(isGenerating || itineraryPhase === "generating") && (
         <Text
           size="xs"
           color="muted"
           className="text-center text-xs font-medium"
         >
-          (Draft demo: agent would stream state → canvas updates below, not only
-          chat text.)
+          Building your full itinerary on the canvas…
         </Text>
       )}
 
-      {!isReady && itineraryPhase !== "generating" && (
+      {!isReady && !isGenerating && itineraryPhase !== "generating" && (
         <Text
           size="xs"
           color="muted"

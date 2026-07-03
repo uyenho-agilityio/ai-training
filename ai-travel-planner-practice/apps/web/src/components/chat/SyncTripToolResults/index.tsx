@@ -11,38 +11,40 @@ import {
 } from "react";
 
 import {
-  useCopilotMessagesContext,
   useRenderToolCall,
   type ActionRenderPropsNoArgs,
 } from "@copilotkit/react-core";
+import { useAgent } from "@copilotkit/react-core/v2";
 
+import { copilotAgent } from "@/constants";
 import type {
   FlightsToolResult,
   HotelsToolResult,
   ToolDrivenCanvasPatch,
   CopilotMessage,
   TripBookingsToolResult,
-  TripCanvasState,
   TripSketchToolResult,
   CheckPlacesToolResult,
+  GenerateItineraryToolResult,
+  SelectBookingsToolResult,
   WeatherToolResult,
 } from "@/types";
 import {
+  getDefaultExpandedFullItineraryDays,
   getDefaultExpandedSketchDays,
   isCheckPlacesToolResult,
+  isGenerateItineraryToolResult,
+  isSelectBookingsToolResult,
   isTripSketchToolResult,
   mapWeatherToolResult,
   isWeatherToolResult,
+  collectToolResultMessages,
   getToolRenderPayload,
   parseToolResult,
   resolveToolSyncKind,
 } from "@/utils";
-import { INITIAL_TRIP_STATE } from "@/constants";
 
 type SyncTripToolResultsProps = {
-  setState: (
-    update: (prev: TripCanvasState | undefined) => TripCanvasState,
-  ) => void;
   setToolPatch: Dispatch<SetStateAction<ToolDrivenCanvasPatch>>;
 };
 
@@ -51,24 +53,18 @@ type ToolRenderProps = ActionRenderPropsNoArgs & {
   output?: unknown;
 };
 
-const syncCanvasFields = (
-  setState: SyncTripToolResultsProps["setState"],
+/** Tool-driven canvas updates live in toolPatch so co-agent resets cannot wipe them. */
+const applyToolPatch = (
   setToolPatch: SyncTripToolResultsProps["setToolPatch"],
-  toolPatch: ToolDrivenCanvasPatch,
-  statePatch: Partial<TripCanvasState>,
+  patch: ToolDrivenCanvasPatch,
 ): void => {
   setToolPatch((prev: ToolDrivenCanvasPatch) => ({
     ...prev,
-    ...toolPatch,
-  }));
-  setState((prev: TripCanvasState | undefined) => ({
-    ...(prev ?? INITIAL_TRIP_STATE),
-    ...statePatch,
+    ...patch,
   }));
 };
 
 const SyncTripToolResultsComponent = ({
-  setState,
   setToolPatch,
 }: SyncTripToolResultsProps): null => {
   const syncedPayloadKeysRef = useRef<Set<string>>(new Set());
@@ -83,11 +79,11 @@ const SyncTripToolResultsComponent = ({
 
       const weather = mapWeatherToolResult(parsed);
 
-      syncCanvasFields(setState, setToolPatch, { weather }, { weather });
+      applyToolPatch(setToolPatch, { weather });
 
       return true;
     },
-    [setState, setToolPatch],
+    [setToolPatch],
   );
 
   const applyTripBookingsResult = useCallback(
@@ -109,24 +105,15 @@ const SyncTripToolResultsComponent = ({
         return false;
       }
 
-      syncCanvasFields(
-        setState,
-        setToolPatch,
-        {
-          activeTab: "book",
-          ...(flights.length ? { flights } : {}),
-          ...(hotels.length ? { hotels } : {}),
-        },
-        {
-          activeTab: "book",
-          ...(flights.length ? { flights } : {}),
-          ...(hotels.length ? { hotels } : {}),
-        },
-      );
+      applyToolPatch(setToolPatch, {
+        activeTab: "book",
+        ...(flights.length ? { flights } : {}),
+        ...(hotels.length ? { hotels } : {}),
+      });
 
       return true;
     },
-    [setState, setToolPatch],
+    [setToolPatch],
   );
 
   const applyFlightsResult = useCallback(
@@ -137,16 +124,14 @@ const SyncTripToolResultsComponent = ({
         return false;
       }
 
-      syncCanvasFields(
-        setState,
-        setToolPatch,
-        { flights: parsed.flights, activeTab: "book" },
-        { flights: parsed.flights, activeTab: "book" },
-      );
+      applyToolPatch(setToolPatch, {
+        flights: parsed.flights,
+        activeTab: "book",
+      });
 
       return true;
     },
-    [setState, setToolPatch],
+    [setToolPatch],
   );
 
   const applyHotelsResult = useCallback(
@@ -157,16 +142,14 @@ const SyncTripToolResultsComponent = ({
         return false;
       }
 
-      syncCanvasFields(
-        setState,
-        setToolPatch,
-        { hotels: parsed.hotels, activeTab: "book" },
-        { hotels: parsed.hotels, activeTab: "book" },
-      );
+      applyToolPatch(setToolPatch, {
+        hotels: parsed.hotels,
+        activeTab: "book",
+      });
 
       return true;
     },
-    [setState, setToolPatch],
+    [setToolPatch],
   );
 
   const applyPlacesResult = useCallback(
@@ -177,16 +160,14 @@ const SyncTripToolResultsComponent = ({
         return false;
       }
 
-      syncCanvasFields(
-        setState,
-        setToolPatch,
-        { places: parsed.places, activeTab: "places" },
-        { places: parsed.places, activeTab: "places" },
-      );
+      applyToolPatch(setToolPatch, {
+        places: parsed.places,
+        activeTab: "places",
+      });
 
       return true;
     },
-    [setState, setToolPatch],
+    [setToolPatch],
   );
 
   const applySketchResult = useCallback(
@@ -199,26 +180,67 @@ const SyncTripToolResultsComponent = ({
 
       const expandedDays = getDefaultExpandedSketchDays(parsed.sketch);
 
-      syncCanvasFields(
-        setState,
-        setToolPatch,
-        {
-          sketch: parsed.sketch,
-          expandedDays,
-          itineraryPhase: "sketch",
-          activeTab: "itinerary",
-        },
-        {
-          sketch: parsed.sketch,
-          expandedDays,
-          itineraryPhase: "sketch",
-          activeTab: "itinerary",
-        },
-      );
+      applyToolPatch(setToolPatch, {
+        sketch: parsed.sketch,
+        expandedDays,
+        itineraryPhase: "sketch",
+        fullItinerary: null,
+        activeTab: "itinerary",
+      });
 
       return true;
     },
-    [setState, setToolPatch],
+    [setToolPatch],
+  );
+
+  const applyFullItineraryResult = useCallback(
+    (result: unknown): boolean => {
+      const parsed = parseToolResult<GenerateItineraryToolResult>(result);
+
+      if (!isGenerateItineraryToolResult(parsed)) {
+        return false;
+      }
+
+      const expandedDays = getDefaultExpandedFullItineraryDays(
+        parsed.itinerary,
+      );
+
+      applyToolPatch(setToolPatch, {
+        fullItinerary: parsed.itinerary,
+        expandedDays,
+        itineraryPhase: "full",
+        activeTab: "itinerary",
+      });
+
+      return true;
+    },
+    [setToolPatch],
+  );
+
+  const applySelectBookingsResult = useCallback(
+    (result: unknown): boolean => {
+      const parsed = parseToolResult<SelectBookingsToolResult>(result);
+
+      if (!isSelectBookingsToolResult(parsed)) {
+        return false;
+      }
+
+      const toolPatch: ToolDrivenCanvasPatch = {
+        activeTab: "book",
+        ...(parsed.selectedFlightId != null
+          ? { selectedFlightId: parsed.selectedFlightId }
+          : {}),
+        ...(parsed.selectedHotelId != null
+          ? { selectedHotelId: parsed.selectedHotelId }
+          : {}),
+        ...(parsed.suggestGenerateItinerary ? { isGenerateConfirm: true } : {}),
+      };
+
+      applyToolPatch(setToolPatch, toolPatch);
+
+      return true;
+    },
+    [setToolPatch],
   );
 
   const syncToolPayload = useCallback(
@@ -250,6 +272,12 @@ const SyncTripToolResultsComponent = ({
         case "sketch":
           applied = applySketchResult(payload);
           break;
+        case "fullItinerary":
+          applied = applyFullItineraryResult(payload);
+          break;
+        case "selectBookings":
+          applied = applySelectBookingsResult(payload);
+          break;
         default:
           break;
       }
@@ -265,6 +293,8 @@ const SyncTripToolResultsComponent = ({
       applyWeatherResult,
       applyPlacesResult,
       applySketchResult,
+      applyFullItineraryResult,
+      applySelectBookingsResult,
     ],
   );
 
@@ -296,38 +326,38 @@ const SyncTripToolResultsComponent = ({
     render: handleWildcardToolRender,
   });
 
-  const { messages } = useCopilotMessagesContext();
+  const { agent } = useAgent({ agentId: copilotAgent });
 
-  useEffect(() => {
-    if (!messages?.length) {
+  /** v2 agent stream — not legacy useCopilotMessagesContext (stays empty in agent mode). */
+  const syncAgentToolMessages = useCallback((): void => {
+    if (!agent.messages.length) {
       return;
     }
 
-    const typedMessages = messages as CopilotMessage[];
+    const toolResults = collectToolResultMessages(
+      agent.messages as CopilotMessage[],
+    );
 
-    for (const message of typedMessages) {
-      const role = message.role?.toLowerCase();
-
-      if (role !== "assistant" || !message.toolCalls?.length) {
-        continue;
-      }
-
-      for (const toolCall of message.toolCalls) {
-        const toolName = toolCall.function?.name ?? "";
-        const toolMessage = typedMessages.find(
-          (entry: CopilotMessage) =>
-            entry.role?.toLowerCase() === "tool" &&
-            entry.toolCallId === toolCall.id,
-        );
-
-        if (!toolName || !toolMessage?.content) {
-          continue;
-        }
-
-        syncToolPayload(toolName, toolMessage.content);
-      }
+    for (const { toolName, payload } of toolResults) {
+      syncToolPayload(toolName, payload);
     }
-  }, [messages, syncToolPayload]);
+  }, [agent.messages, syncToolPayload]);
+
+  useEffect(() => {
+    syncAgentToolMessages();
+  }, [syncAgentToolMessages]);
+
+  useEffect(() => {
+    const subscription = agent.subscribe({
+      onMessagesChanged: () => {
+        syncAgentToolMessages();
+      },
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [agent, syncAgentToolMessages]);
 
   return null;
 };

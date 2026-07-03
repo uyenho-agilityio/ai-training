@@ -6,7 +6,7 @@ import { useCoAgent } from "@copilotkit/react-core";
 import { Markdown, type AssistantMessageProps } from "@copilotkit/react-ui";
 
 import { copilotAgent } from "@/constants";
-import { cn, getAssistantMessageText } from "@/utils";
+import { cn, getAssistantMessageText, isVisibleMessage } from "@/utils";
 import { systemMessageBubbleClasses, systemMessageRowClasses } from "../styles";
 import { TypingIndicator } from "../TypingIndicator";
 
@@ -19,43 +19,45 @@ const SystemMessageComponent = ({
 }: AssistantMessageProps): ReactElement => {
   const { running: isAgentRunning } = useCoAgent({ name: copilotAgent });
 
-  const content: string = getAssistantMessageText(message?.content ?? "");
+  const content: string = getAssistantMessageText(
+    message?.content ?? "",
+  ).trim();
   const uiPosition = message?.generativeUIPosition ?? "after";
   const generativeUi: ReactNode = message?.generativeUI?.();
-  const hasVisibleBody: boolean = Boolean(content || generativeUi);
+  const hasGenerativeUi: boolean = isVisibleMessage(generativeUi);
+  const hasVisibleBody: boolean = Boolean(content || hasGenerativeUi);
   const isAgentWorkingCurrentTurn: boolean =
     Boolean(isCurrentMessage) && isAgentRunning;
   const isThinking: boolean =
     isLoading || isGenerating || isAgentWorkingCurrentTurn;
 
-  // Tool-only / empty turns: show typing while active, otherwise render nothing.
   if (!hasVisibleBody) {
     return isThinking ? <TypingIndicator /> : <></>;
   }
 
   return (
     <>
-      {generativeUi && uiPosition === "before" && (
+      {hasGenerativeUi && uiPosition === "before" && (
         <div className={cn(systemMessageRowClasses, "mb-2")}>
           {generativeUi}
         </div>
       )}
 
-      {content && (
+      {content ? (
         <div className={systemMessageRowClasses}>
           <div className={systemMessageBubbleClasses}>
             <Markdown content={content} components={markdownTagRenderers} />
           </div>
         </div>
-      )}
+      ) : null}
 
-      {generativeUi && uiPosition === "after" && (
+      {hasGenerativeUi && uiPosition === "after" && (
         <div className={cn(systemMessageRowClasses, "mt-2")}>
           {generativeUi}
         </div>
       )}
 
-      {isThinking && <TypingIndicator className="mt-2" />}
+      {isThinking && !content ? <TypingIndicator className="mt-2" /> : null}
     </>
   );
 };

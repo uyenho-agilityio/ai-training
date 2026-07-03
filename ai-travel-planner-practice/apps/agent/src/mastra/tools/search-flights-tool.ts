@@ -92,17 +92,11 @@ const searchFlights = async (input: {
     return await searchFlightsViaSerpApi(normalizedInput);
   } catch (error) {
     console.warn(
-      "[search-flights] SerpAPI failed — returning empty results",
+      "[search-flights] SerpAPI failed — returning mock data",
       error,
     );
 
-    return {
-      flights: [],
-      origin: normalizedInput.origin.toUpperCase(),
-      destination: normalizedInput.destination.toUpperCase(),
-      departureDate: normalizedInput.departureDate,
-      returnDate: normalizedInput.returnDate,
-    };
+    return buildMockFlightsResult(normalizedInput);
   }
 };
 

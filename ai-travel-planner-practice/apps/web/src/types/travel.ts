@@ -134,11 +134,34 @@ export interface TripSketchToolResult {
   sketch: TripSketch;
 }
 
+export interface FullItinerarySegment {
+  order: number;
+  timeLabel: string;
+  activity: string;
+  logistics?: string;
+}
+
 export interface FullItineraryDay {
   day: number;
-  morning: string;
-  afternoon: string;
-  evening: string;
+  label: string;
+  segments: FullItinerarySegment[];
+}
+
+export interface FullItinerary {
+  title: string;
+  summary: string;
+  days: FullItineraryDay[];
+}
+
+export interface SelectBookingsToolResult {
+  selectedFlightId: string | null;
+  selectedHotelId: string | null;
+  suggestGenerateItinerary: boolean;
+}
+
+export interface GenerateItineraryToolResult {
+  destination: string;
+  itinerary: FullItinerary;
 }
 
 export type BookingCardType = "flight" | "hotel";
@@ -177,6 +200,8 @@ export type TripCanvasState = {
   weather: WeatherData | null;
   itineraryPhase: ItineraryPhase;
   expandedDays: number[];
+  fullItinerary: FullItinerary | null;
+  isGenerateConfirm: boolean;
 };
 
 export type ToolDrivenCanvasPatch = Partial<
@@ -190,6 +215,10 @@ export type ToolDrivenCanvasPatch = Partial<
     | "activeTab"
     | "expandedDays"
     | "itineraryPhase"
+    | "fullItinerary"
+    | "selectedFlightId"
+    | "selectedHotelId"
+    | "isGenerateConfirm"
   >
 >;
 
@@ -199,7 +228,9 @@ export type ToolSyncKind =
   | "hotels"
   | "weather"
   | "places"
-  | "sketch";
+  | "sketch"
+  | "fullItinerary"
+  | "selectBookings";
 
 export type CopilotMessage = {
   role?: string;

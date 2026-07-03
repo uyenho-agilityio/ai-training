@@ -1,8 +1,15 @@
 import type {
   CheckPlacesToolResult,
+  FlightData,
+  FullItinerary,
+  FullItineraryDay,
+  FullItinerarySegment,
+  GenerateItineraryToolResult,
+  HotelData,
   PlaceBrief,
   PlaceStatus,
   RouteStop,
+  SelectBookingsToolResult,
   SketchDay,
   TripSketch,
   TripSketchToolResult,
@@ -34,10 +41,12 @@ const isRouteStop = (value: unknown): value is RouteStop => {
     return false;
   }
 
+  // Only `place` is required; order/detail are normalized by the agent tool.
   return (
-    typeof value.order === "number" &&
     typeof value.place === "string" &&
-    typeof value.detail === "string"
+    value.place.length > 0 &&
+    (value.order === undefined || typeof value.order === "number") &&
+    (value.detail === undefined || typeof value.detail === "string")
   );
 };
 
@@ -103,4 +112,81 @@ export const getDefaultExpandedSketchDays = (sketch: TripSketch): number[] => {
   const firstDay = sketch.days[0]?.day ?? 0;
 
   return firstDay ? [firstDay] : [1];
+};
+
+const isFullItinerarySegment = (
+  value: unknown,
+): value is FullItinerarySegment => {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.order === "number" &&
+    typeof value.timeLabel === "string" &&
+    typeof value.activity === "string" &&
+    (value.logistics === undefined || typeof value.logistics === "string")
+  );
+};
+
+const isFullItineraryDay = (value: unknown): value is FullItineraryDay => {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.day === "number" &&
+    typeof value.label === "string" &&
+    Array.isArray(value.segments) &&
+    value.segments.length > 0 &&
+    value.segments.every(isFullItinerarySegment)
+  );
+};
+
+const isFullItinerary = (value: unknown): value is FullItinerary => {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.title === "string" &&
+    typeof value.summary === "string" &&
+    Array.isArray(value.days) &&
+    value.days.length > 0 &&
+    value.days.every(isFullItineraryDay)
+  );
+};
+
+export const isGenerateItineraryToolResult = (
+  value: unknown,
+): value is GenerateItineraryToolResult => {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.destination === "string" && isFullItinerary(value.itinerary)
+  );
+};
+
+/** Expand every day after a full itinerary lands on the canvas. */
+export const getDefaultExpandedFullItineraryDays = (
+  itinerary: FullItinerary,
+): number[] => itinerary.days.map((day: FullItineraryDay) => day.day);
+
+export const isSelectBookingsToolResult = (
+  value: unknown,
+): value is SelectBookingsToolResult => {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  const flightId = value.selectedFlightId;
+  const hotelId = value.selectedHotelId;
+
+  return (
+    (flightId === null || typeof flightId === "string") &&
+    (hotelId === null || typeof hotelId === "string") &&
+    typeof value.suggestGenerateItinerary === "boolean"
+  );
 };

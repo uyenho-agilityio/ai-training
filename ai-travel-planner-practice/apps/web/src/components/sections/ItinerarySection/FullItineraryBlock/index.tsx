@@ -3,82 +3,75 @@
 import { memo, type ReactElement } from "react";
 
 import { Heading, Text } from "../../../commons";
-import type { FullItineraryDay } from "@/types";
+import type {
+  FullItinerary,
+  FullItineraryDay,
+  FullItinerarySegment,
+} from "@/types";
 
 type FullItineraryBlockProps = {
-  days: FullItineraryDay[];
+  itinerary: FullItinerary;
 };
 
 const FullItineraryBlockComponent = ({
-  days,
+  itinerary,
 }: FullItineraryBlockProps): ReactElement => (
-  <div className="space-y-4 rounded-xl border-2 border-orange-200 bg-white p-4">
-    <Heading variant="h3" size="xs" className="text-sm text-slate-800">
-      Full itinerary (generated on canvas)
-    </Heading>
+  <div className="space-y-4 rounded-xl border-2 border-orange-200 bg-orange-50/30 p-4">
+    <div>
+      <Heading variant="h3" size="xs" className="text-sm text-slate-800">
+        {itinerary.title}
+      </Heading>
 
-    {days.map((day: FullItineraryDay) => (
+      <Text
+        size="xs"
+        className="mt-2 text-sm font-medium leading-relaxed text-slate-700"
+      >
+        {itinerary.summary}
+      </Text>
+    </div>
+
+    {itinerary.days.map((day: FullItineraryDay) => (
       <div
         key={day.day}
         className="rounded-lg border border-slate-200 bg-white p-3"
       >
-        <Text
-          isBold
-          size="xs"
-          color="accent"
-          className="text-xs uppercase text-orange-600"
-        >
-          Day {day.day}
+        <Text isBold size="xs" className="text-sm text-slate-800">
+          Day {day.day} — {day.label}
         </Text>
 
-        <div className="mt-2 space-y-1.5 text-xs font-semibold text-slate-700">
-          <Text
-            as="p"
-            size="xs"
-            className="text-xs font-semibold text-slate-700"
-          >
-            <Text
-              as="span"
-              size="xs"
-              color="accent"
-              className="text-orange-600"
+        <div className="mt-3 space-y-3">
+          {day.segments.map((segment: FullItinerarySegment) => (
+            <div
+              key={`${day.day}-${segment.order}`}
+              className="border-l-2 border-orange-300 pl-3"
             >
-              Morning —
-            </Text>{" "}
-            {day.morning}
-          </Text>
+              <Text
+                size="xs"
+                color="accent"
+                isBold
+                className="text-xs uppercase tracking-wide text-orange-600"
+              >
+                {segment.timeLabel}
+              </Text>
 
-          <Text
-            as="p"
-            size="xs"
-            className="text-xs font-semibold text-slate-700"
-          >
-            <Text
-              as="span"
-              size="xs"
-              color="accent"
-              className="text-orange-600"
-            >
-              Afternoon —
-            </Text>{" "}
-            {day.afternoon}
-          </Text>
+              <Text
+                size="xs"
+                className="mt-1 text-sm font-medium leading-relaxed text-slate-800"
+              >
+                {segment.activity}
+              </Text>
 
-          <Text
-            as="p"
-            size="xs"
-            className="text-xs font-semibold text-slate-700"
-          >
-            <Text
-              as="span"
-              size="xs"
-              color="accent"
-              className="text-orange-600"
-            >
-              Evening —
-            </Text>{" "}
-            {day.evening}
-          </Text>
+              {segment.logistics ? (
+                <Text
+                  size="xs"
+                  color="muted"
+                  className="mt-1 text-xs font-medium leading-relaxed"
+                >
+                  {segment.logistics}
+                </Text>
+              ) : null}
+            </div>
+          ))}
         </div>
       </div>
     ))}

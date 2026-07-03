@@ -23,13 +23,17 @@ const isToolPayload = (value: unknown): boolean => {
     (typeof record.origin === "string" &&
       typeof record.destination === "string" &&
       !Array.isArray(record.places) &&
-      record.sketch === undefined) ||
+      record.sketch === undefined &&
+      record.itinerary === undefined) ||
     (typeof record.destination === "string" &&
       Array.isArray(record.places) &&
       record.places.length > 0) ||
     (typeof record.destination === "string" &&
       record.sketch !== undefined &&
-      typeof record.sketch === "object")
+      typeof record.sketch === "object") ||
+    (record.itinerary !== undefined && typeof record.itinerary === "object") ||
+    record.selectedFlightId !== undefined ||
+    record.selectedHotelId !== undefined
   );
 };
 

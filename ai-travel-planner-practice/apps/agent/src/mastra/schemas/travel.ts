@@ -13,9 +13,17 @@ export const placeBriefSchema = z.object({
 });
 
 export const routeStopSchema = z.object({
-  order: z.number().int().positive(),
+  order: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe("Position in the day; auto-renumbered if omitted"),
   place: z.string().min(1),
-  detail: z.string().min(1),
+  detail: z
+    .string()
+    .optional()
+    .describe('One-line what to do; defaults to "Visit <place>" if omitted'),
 });
 
 export const sketchDaySchema = z.object({
@@ -98,9 +106,101 @@ export const tripSketchOutputSchema = z.object({
   sketch: tripSketchSchema,
 });
 
+export const fullItinerarySegmentSchema = z.object({
+  order: z.number().int().positive(),
+  timeLabel: z
+    .string()
+    .min(1)
+    .describe('Time block e.g. "8:30 AM", "Morning", "Lunch break"'),
+  activity: z
+    .string()
+    .min(1)
+    .describe("What to do — 1-2 sentences naming the place and the experience"),
+  logistics: z
+    .string()
+    .optional()
+    .describe(
+      "Practical note: transport, duration, dress code, booking, or cost ballpark",
+    ),
+});
+
+export const fullItineraryDaySchema = z.object({
+  day: z.number().int().positive(),
+  label: z
+    .string()
+    .min(1)
+    .describe(
+      'Theme only, NOT prefixed with "Day N" (the UI adds that). e.g. "Beach & seafood"',
+    ),
+  segments: z
+    .array(fullItinerarySegmentSchema)
+    .min(1)
+    .describe("Ordered time blocks for the day — one segment per sketch stop"),
+});
+
+export const fullItinerarySchema = z.object({
+  title: z.string().min(1),
+  summary: z
+    .string()
+    .min(1)
+    .describe(
+      "2-3 sentences: trip overview anchoring selected flight, hotel, and vibe",
+    ),
+  days: z.array(fullItineraryDaySchema).min(1),
+});
+
+const selectedFlightSchema = z.object({
+  airline: z.string().min(1),
+  route: z.string().min(1),
+  time: z.string().min(1),
+  price: z.string().min(1),
+});
+
+const selectedHotelSchema = z.object({
+  name: z.string().min(1),
+  rating: z.number(),
+  price: z.string().min(1),
+});
+
+export const generateItineraryInputSchema = z.object({
+  destination: z.string().min(1).describe("City or region for this trip"),
+  sketch: tripSketchSchema.describe("Current trip sketch from the canvas"),
+  selectedFlight: selectedFlightSchema
+    .optional()
+    .describe(
+      "User-selected flight from the Book tab, when available — weave into the summary and Day 1 arrival",
+    ),
+  selectedHotel: selectedHotelSchema
+    .optional()
+    .describe(
+      "User-selected hotel from the Book tab, when available — weave into the summary and check-in",
+    ),
+  starredPlaceTitles: z
+    .array(z.string().min(1))
+    .optional()
+    .describe("Starred place titles to weave into activities"),
+  itinerary: fullItinerarySchema.describe(
+    "Full day-by-day itinerary with timed segments for the Itinerary tab",
+  ),
+});
+
+export const generateItineraryOutputSchema = z.object({
+  destination: z.string(),
+  itinerary: fullItinerarySchema,
+});
+
 export type PlaceBrief = z.infer<typeof placeBriefSchema>;
 export type TripSketch = z.infer<typeof tripSketchSchema>;
 export type CheckPlacesInput = z.infer<typeof checkPlacesInputSchema>;
 export type CheckPlacesOutput = z.infer<typeof checkPlacesOutputSchema>;
 export type TripSketchInput = z.infer<typeof tripSketchInputSchema>;
 export type TripSketchOutput = z.infer<typeof tripSketchOutputSchema>;
+export type FullItinerarySegment = z.infer<typeof fullItinerarySegmentSchema>;
+export type FullItineraryDay = z.infer<typeof fullItineraryDaySchema>;
+export type FullItinerary = z.infer<typeof fullItinerarySchema>;
+export type GenerateItineraryInput = z.infer<
+  typeof generateItineraryInputSchema
+>;
+export type GenerateItineraryOutput = z.infer<
+  typeof generateItineraryOutputSchema
+>;

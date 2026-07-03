@@ -214,17 +214,27 @@ export const ensureAllStarredInSketch = (
   });
 };
 
-/** Normalizes sketch day order, labels, and marks the sketch as fresh for the canvas. */
-export const normalizeTripSketch = (sketch: TripSketch): TripSketch => ({
-  ...sketch,
-  isStale: false,
-  days: sketch.days.map((day) => ({
-    ...day,
-    stops: [...day.stops]
-      .sort((left, right) => left.order - right.order)
-      .map((stop, index) => ({
-        ...stop,
-        order: index + 1,
-      })),
-  })),
-});
+/** Normalizes sketch day order, labels, fills stop details, and drops empty days. */
+export const normalizeTripSketch = (sketch: TripSketch): TripSketch => {
+  const days = sketch.days
+    .map((day) => ({
+      ...day,
+      label: day.label?.trim() || "Explore",
+      stops: [...day.stops]
+        .sort((left, right) => (left.order ?? 0) - (right.order ?? 0))
+        .map((stop, index) => ({
+          ...stop,
+          order: index + 1,
+          place: stop.place.trim(),
+          detail: stop.detail?.trim() || `Visit ${stop.place.trim()}`,
+        })),
+    }))
+    .filter((day) => day.stops.length > 0)
+    .map((day, index) => ({ ...day, day: index + 1 }));
+
+  return {
+    ...sketch,
+    isStale: false,
+    days,
+  };
+};
