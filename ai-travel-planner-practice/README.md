@@ -35,7 +35,7 @@ A practice that simulates autonomous travel research and logistics orchestration
 | Agent ↔ UI protocol | [AG-UI](https://docs.ag-ui.com/)                                                                                                                                                                          |
 | Web app             | [Next.js](https://nextjs.org/docs)                                                                                                                                                                        |
 | Styling             | [Tailwind CSS](https://tailwindcss.com/docs)                                                                                                                                                              |
-| LLM                 | [gpt-4o-mini](https://openrouter.ai/openai/gpt-4o-mini) via [OpenRouter](https://openrouter.ai/docs)                                                                                                      |
+| LLM                 | [gpt-4o-mini](https://platform.openai.com/docs/models/gpt-4o-mini) via [OpenAI API](https://platform.openai.com/docs)                                                                                     |
 | Memory / threads    | [Postgres](https://www.postgresql.org/) ([Neon](https://neon.com/guides/mastra-neon)) + [`@mastra/pg`](https://mastra.ai/reference/storage/postgresql), or local [LibSQL](https://docs.turso.tech/libsql) |
 | Deploy & traces     | [Mastra Platform](https://mastra.ai/docs/mastra-platform/overview)                                                                                                                                        |
 
@@ -89,20 +89,20 @@ Set production values on your web host (e.g. Vercel → Environment Variables). 
 
 ### Agent (`apps/agent`) — core
 
-| Variable             | Purpose                                    | Where to get it                                                                |
-| -------------------- | ------------------------------------------ | ------------------------------------------------------------------------------ |
-| `OPENROUTER_API_KEY` | LLM chat and eval judge                    | [openrouter.ai/keys](https://openrouter.ai/keys)                               |
-| `DATABASE_URL`       | Threads and message memory (Neon Postgres) | [Neon](https://neon.com) or any Postgres — omit for local LibSQL file fallback |
+| Variable         | Purpose                                    | Where to get it                                                                |
+| ---------------- | ------------------------------------------ | ------------------------------------------------------------------------------ |
+| `OPENAI_API_KEY` | LLM chat and eval judge                    | [platform.openai.com/api-keys](https://platform.openai.com/api-keys)           |
+| `DATABASE_URL`   | Threads and message memory (Neon Postgres) | [Neon](https://neon.com) or any Postgres — omit for local LibSQL file fallback |
 
 Recommended model setup:
 
 ```env
-OPENROUTER_API_KEY=sk-or-v1-...
-LLM_MODEL=openrouter/openai/gpt-4o-mini
-JUDGE_MODEL=openrouter/google/gemini-2.5-flash-lite
+OPENAI_API_KEY=sk-proj-...
+LLM_MODEL=openai/gpt-4o-mini
+JUDGE_MODEL=openai/gpt-4o-mini
 ```
 
-Use `openrouter/openai/gpt-4o-mini`, not `openai/gpt-4o-mini`, when you only configure `OPENROUTER_API_KEY`.
+Use `openai/gpt-4o-mini` (not `openrouter/openai/gpt-4o-mini`) when you configure `OPENAI_API_KEY`.
 
 ### Mastra Platform observability (optional)
 
@@ -185,7 +185,7 @@ Two apps run locally. The **web** app is what you see; the **agent** app is the 
 **When you send a chat message:**
 
 1. **Web** sends the message to `http://localhost:4111/chat` (CopilotKit + AG-UI)
-2. **Agent** runs the Mastra travel agent: reads chat history from the database, calls the LLM on OpenRouter
+2. **Agent** runs the Mastra travel agent: reads chat history from the database, calls the LLM on OpenAI
 3. If needed, the agent calls **tools** (weather, flights, hotels) and may ask you to **confirm** first (HITL)
 4. Replies and tool results **stream back** to the web app; the UI updates cards and tabs
 5. Optional: traces go to [Mastra Platform](https://projects.mastra.ai) if observability env vars are set
@@ -195,7 +195,7 @@ Browser (web :3000)
     │  chat + UI updates
     ▼
 Mastra agent (:4111 /chat)
-    ├── OpenRouter (LLM)
+    ├── OpenAI (LLM)
     ├── Tools → Open-Meteo, SerpAPI
     └── Database → chat threads & memory
 ```
