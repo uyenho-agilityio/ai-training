@@ -22,8 +22,10 @@ export const routeStopSchema = z.object({
   place: z.string().min(1),
   detail: z
     .string()
-    .optional()
-    .describe('One-line what to do; defaults to "Visit <place>" if omitted'),
+    .min(1)
+    .describe(
+      "Required specific one-line description of what to do at this stop — write a real detail for EVERY stop across ALL days; never omit it or leave it generic like 'Visit <place>'",
+    ),
 });
 
 export const sketchDaySchema = z.object({
@@ -94,7 +96,13 @@ export const tripSketchInputSchema = z.object({
     .array(z.string().min(1))
     .optional()
     .describe(
-      "Every starred place title that must appear exactly once in the route. When set, the tool keeps only these stops and injects any missing titles — total stops equals this list length; spread across tripDays with ceil(count / tripDays) stops per day when possible.",
+      "Reference list of every starred place title for validation. You MUST place each of these as an explicit stop with a real `detail` inside `days` yourself, spread across ALL days (ceil(count / tripDays) stops per day) — do NOT rely on the tool to inject missing titles; injection is a last-resort fallback that produces generic placeholders. Total stops in `days` must equal this list length.",
+    ),
+  places: z
+    .array(placeBriefSchema)
+    .optional()
+    .describe(
+      "Place briefs from checkPlacesTool (same array you just returned). Required when calling tripSketchTool right after checkPlacesTool so injected stops use real summaries on the canvas.",
     ),
   sketch: tripSketchSchema.describe(
     "Full day-by-day sketch with route stops and local tips for the Itinerary tab",

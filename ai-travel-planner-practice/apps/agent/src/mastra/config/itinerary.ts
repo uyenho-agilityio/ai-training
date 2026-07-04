@@ -5,6 +5,29 @@ import type {
 } from "../schemas/travel";
 import { placeNamesMatch } from "./utils";
 
+/** Build a segment activity from sketch stop data already normalized by tripSketchTool. */
+const buildSegmentActivity = (place: string, detail?: string): string => {
+  const title: string = place.trim();
+  const trimmed: string = detail?.trim() ?? "";
+
+  if (!trimmed.length) {
+    return title;
+  }
+
+  return trimmed.toLowerCase().includes(title.toLowerCase())
+    ? trimmed
+    : `${title} — ${trimmed}`;
+};
+
+/** Find a sketch stop by place title across all days. */
+const findSketchStop = (
+  sketchDays: TripSketch["days"],
+  placeTitle: string,
+): TripSketch["days"][number]["stops"][number] | undefined =>
+  sketchDays
+    .flatMap((day) => day.stops)
+    .find((stop) => placeNamesMatch(stop.place, placeTitle));
+
 /** Sort segment order and renumber within each day. */
 const normalizeItineraryDays = (days: FullItineraryDay[]): FullItineraryDay[] =>
   days.map((day: FullItineraryDay) => ({
@@ -33,9 +56,7 @@ const ensureSketchStopsInDay = (
       segments.push({
         order: segments.length + 1,
         timeLabel: "Flexible",
-        activity: stop.detail?.trim()
-          ? `${stop.place} — ${stop.detail.trim()}`
-          : `Visit ${stop.place}`,
+        activity: buildSegmentActivity(stop.place, stop.detail),
         logistics: "From your trip sketch",
       });
     }
@@ -95,11 +116,12 @@ export const normalizeFullItinerary = (
       const targetDay = normalizedDays.reduce((min, day) =>
         day.segments.length < min.segments.length ? day : min,
       );
+      const sketchStop = findSketchStop(sketchDays, title);
 
       targetDay.segments.push({
         order: targetDay.segments.length + 1,
         timeLabel: "Flexible",
-        activity: `Visit ${title}`,
+        activity: buildSegmentActivity(title, sketchStop?.detail),
         logistics: "Starred on your Places tab",
       });
     }

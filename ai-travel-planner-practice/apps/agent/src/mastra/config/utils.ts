@@ -112,10 +112,46 @@ export const placeNamesMatch = (
   return stop === title || stop.includes(title) || title.includes(stop);
 };
 
+/** Look up stop detail from place briefs when the model omitted detail. */
+export const resolveStopDetailFromPlace = (
+  placeTitle: string,
+  places: readonly PlaceBrief[] | undefined,
+): string | null => {
+  if (!places?.length) {
+    return null;
+  }
+
+  const match: PlaceBrief | undefined = places.find((place: PlaceBrief) =>
+    placeNamesMatch(placeTitle, place.title),
+  );
+
+  if (!match) {
+    return null;
+  }
+
+  return match.summary.trim() || match.tagline.trim();
+};
+
+/** Use model detail when present; otherwise fall back to place summary or title. */
+export const resolveSketchStopDetail = (
+  placeTitle: string,
+  detail: string | undefined,
+  places: readonly PlaceBrief[] | undefined,
+): string => {
+  const trimmed: string = detail?.trim() ?? "";
+
+  if (trimmed.length) {
+    return trimmed;
+  }
+
+  return resolveStopDetailFromPlace(placeTitle, places) ?? placeTitle.trim();
+};
+
 /** Keep only stops that match starred titles; drop empty days. */
 export const filterSketchToStarredPlaces = (
   sketch: TripSketch,
   starredPlaceTitles: readonly string[],
+  places?: readonly PlaceBrief[],
 ): TripSketch => {
   if (!starredPlaceTitles.length) {
     return sketch;
@@ -132,10 +168,13 @@ export const filterSketchToStarredPlaces = (
     }))
     .filter((day) => day.stops.length > 0);
 
-  return normalizeTripSketch({
-    ...sketch,
-    days,
-  });
+  return normalizeTripSketch(
+    {
+      ...sketch,
+      days,
+    },
+    places,
+  );
 };
 
 /** Drop duplicate venue names across the sketch (keep first occurrence). */
@@ -168,6 +207,7 @@ export const ensureAllStarredInSketch = (
   sketch: TripSketch,
   starredPlaceTitles: readonly string[],
   tripDays: number,
+  places?: readonly PlaceBrief[],
 ): TripSketch => {
   if (!starredPlaceTitles.length) {
     return sketch;
@@ -204,18 +244,24 @@ export const ensureAllStarredInSketch = (
     targetDay.stops.push({
       order: targetDay.stops.length + 1,
       place: title,
-      detail: `Visit ${title}`,
+      detail: resolveSketchStopDetail(title, undefined, places),
     });
   }
 
-  return normalizeTripSketch({
-    ...sketch,
-    days: days.map((day, index) => ({ ...day, day: index + 1 })),
-  });
+  return normalizeTripSketch(
+    {
+      ...sketch,
+      days: days.map((day, index) => ({ ...day, day: index + 1 })),
+    },
+    places,
+  );
 };
 
 /** Normalizes sketch day order, labels, fills stop details, and drops empty days. */
-export const normalizeTripSketch = (sketch: TripSketch): TripSketch => {
+export const normalizeTripSketch = (
+  sketch: TripSketch,
+  places?: readonly PlaceBrief[],
+): TripSketch => {
   const days = sketch.days
     .map((day) => ({
       ...day,
@@ -226,7 +272,7 @@ export const normalizeTripSketch = (sketch: TripSketch): TripSketch => {
           ...stop,
           order: index + 1,
           place: stop.place.trim(),
-          detail: stop.detail?.trim() || `Visit ${stop.place.trim()}`,
+          detail: resolveSketchStopDetail(stop.place, stop.detail, places),
         })),
     }))
     .filter((day) => day.stops.length > 0)

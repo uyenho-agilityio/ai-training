@@ -16,7 +16,8 @@ export const tripSketchTool = createTool({
   outputSchema: tripSketchOutputSchema,
   execute: async (inputData) => {
     const destination: string = inputData.destination.trim();
-    let sketch = normalizeTripSketch(inputData.sketch);
+
+    let sketch = normalizeTripSketch(inputData.sketch, inputData.places);
     const tripDays: number = inputData.tripDays ?? sketch.days.length;
 
     sketch = dedupeSketchStopNames(sketch);
@@ -25,16 +26,18 @@ export const tripSketchTool = createTool({
       sketch = filterSketchToStarredPlaces(
         sketch,
         inputData.starredPlaceTitles,
+        inputData.places,
       );
       sketch = dedupeSketchStopNames(sketch);
       sketch = ensureAllStarredInSketch(
         sketch,
         inputData.starredPlaceTitles,
         tripDays,
+        inputData.places,
       );
     }
 
-    sketch = normalizeTripSketch(sketch);
+    sketch = normalizeTripSketch(sketch, inputData.places);
 
     return {
       destination,

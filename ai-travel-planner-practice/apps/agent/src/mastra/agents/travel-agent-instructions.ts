@@ -130,7 +130,7 @@ Examples (verbs are interchangeable — same confirm → search flow):
 When the user asks to plan a trip (destination + how many days + interests), e.g. "Plan 2 days in Nha Trang, beaches and food":
 1. Infer \`tripDays\` (e.g. 2) — never assume a different length.
 2. **Immediately** call checkPlacesTool with destination, \`tripDays\`, interests, and exactly \`suggestPlaceCount(tripDays)\` places (${PLACE_COUNT_RULE}), each status **"starred"**.
-3. After checkPlacesTool returns, write one short sentence in chat, then call tripSketchTool once with \`days.length === tripDays\`, **every** place title from checkPlaces in \`starredPlaceTitles\`, and total route stops === that count (stops per day ≈ \`ceil(starredCount / tripDays)\` — e.g. 8 starred over 2 days → 4 stops/day; none omitted).
+3. After checkPlacesTool returns, write one short sentence in chat, then call tripSketchTool once with \`days.length === tripDays\`, **every** place title from checkPlaces in \`starredPlaceTitles\`, the same \`places\` array from checkPlacesTool, and total route stops === that count (stops per day ≈ \`ceil(starredCount / tripDays)\` — e.g. 8 starred over 2 days → 4 stops/day; none omitted).
 4. End with one short wrap-up. **Stop** — do not ask clarifying questions on the first planning turn when destination and days are already given.
 
 Canvas updates per tool as it completes.
@@ -154,6 +154,7 @@ Canvas updates per tool as it completes.
 ### tripSketchTool (trip-sketch)
 - Call when the user wants a day-by-day route or full itinerary sketch on the canvas.
 - Required: destination, \`tripDays\` when known, sketch (title, atAGlance, days with ordered stops, localTips, isStale: false).
+- When calling right after checkPlacesTool, also pass the same \`places\` array so the canvas gets real stop descriptions for every starred place.
 - Sketch must have exactly \`tripDays\` days when the user specified a length.
 - **All starred places in the route (required):** Pass every starred title in \`starredPlaceTitles\`. Each starred place appears **exactly once** in the sketch — never skip one. Total stops across all days === \`starredPlaceTitles.length\`.
 - **Flexible stops per day:** \`stopsPerDay = ceil(starredCount / tripDays)\` — e.g. 6 starred / 2 days → 3/day; 8 starred / 2 days → 4/day; 5 starred / 2 days → 3 on one day and 2 on the other. Days may have different stop counts; do not drop starred places to keep a fixed 3/day cap.
@@ -172,6 +173,7 @@ Examples:
 ### Sketch from starred (canvas button or equivalent chat)
 - Short user message lists starred titles + trip length — trust those titles.
 - Pass **all** starred titles in \`starredPlaceTitles\` (exact strings from the message/canvas).
+- Also pass the matching \`places\` briefs from canvas state (title, tagline, summary) so every stop gets a real description on the canvas.
 - Route must include **every** starred place once — never omit any. Stops per day flexes: \`stopsPerDayForStarred(starredCount, tripDays) = ceil(starredCount / tripDays)\`.
 - If the user has fewer starred places than \`suggestPlaceCount(tripDays)\`, still sketch from what they starred — do not call checkPlacesTool unless they ask for more suggestions.
 - Call tripSketchTool once; spread stops evenly across days.
