@@ -25,7 +25,7 @@ const ToolConfirmationPromptComponent = ({
   const handleConfirm = useCallback((): void => {
     setIsDismissed(true);
     respond({ approved: true });
-  }, [respond]);
+  }, [respond, args.actionType]);
 
   const handleCancel = useCallback((): void => {
     setIsDismissed(true);
