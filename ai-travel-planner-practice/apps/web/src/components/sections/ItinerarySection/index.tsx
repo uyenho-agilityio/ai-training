@@ -49,6 +49,8 @@ const ItinerarySectionComponent = ({
   const hasSketchContent: boolean = (sketch?.days.length ?? 0) > 0;
   const isGenerateDisabled: boolean =
     isGenerating || !isReady || itineraryPhase === "generating";
+  const showFullItinerary: boolean = fullItinerary != null;
+  const showSketchDays: boolean = hasSketchContent && !showFullItinerary;
 
   return (
     <section className="space-y-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
@@ -86,7 +88,7 @@ const ItinerarySectionComponent = ({
         onEditBookings={onEditBookings}
       />
 
-      {!hasSketchContent ? (
+      {!hasSketchContent && !showFullItinerary ? (
         <Text
           size="xs"
           color="muted"
@@ -95,7 +97,7 @@ const ItinerarySectionComponent = ({
           No itinerary sketch yet. Star places or ask in chat to build a
           day-by-day plan.
         </Text>
-      ) : (
+      ) : showSketchDays ? (
         <>
           <div>
             <Heading
@@ -168,9 +170,9 @@ const ItinerarySectionComponent = ({
             </ul>
           </div>
         </>
-      )}
+      ) : null}
 
-      {itineraryPhase === "full" && fullItinerary ? (
+      {showFullItinerary && fullItinerary ? (
         <FullItineraryBlock itinerary={fullItinerary} />
       ) : null}
 
@@ -184,7 +186,7 @@ const ItinerarySectionComponent = ({
       >
         {isGenerating || itineraryPhase === "generating"
           ? "Generating…"
-          : itineraryPhase === "full"
+          : showFullItinerary
             ? "Regenerate"
             : "Let's make it real"}
       </Button>

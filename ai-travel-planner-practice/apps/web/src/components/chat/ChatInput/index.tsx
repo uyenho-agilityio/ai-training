@@ -15,7 +15,16 @@ import type { InputProps } from "@copilotkit/react-ui";
 import { useChatContext } from "@copilotkit/react-ui";
 
 import { copilotAgent, PLANNING_IN_PROGRESS_MESSAGE } from "@/constants";
+import { useRunAgentMessage } from "@/hooks";
 import { SendArrowIcon } from "@/icons";
+import {
+  armGenerateConfirmFromAgent,
+  isGenerateItineraryChatIntent,
+  isRetryChatMessage,
+  tryHandleGenerateConfirmChatIntent,
+  tryHandleGenerateItineraryChatIntent,
+  tryHandleGenerateRetryChatIntent,
+} from "@/utils";
 import { Button, Text } from "../../commons";
 import { TypingIndicator } from "../TypingIndicator";
 import { chatInputContainerClasses, chatInputTextareaClasses } from "../styles";
@@ -29,6 +38,7 @@ const ChatInputComponent = ({
 }: InputProps): ReactElement => {
   const { labels } = useChatContext();
   const { running: isAgentRunning } = useCoAgent({ name: copilotAgent });
+  const { appendCanvasChatOnlyUserMessage } = useRunAgentMessage();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [text, setText] = useState<string>("");
   const [isComposing, setIsComposing] = useState<boolean>(false);
@@ -51,10 +61,55 @@ const ChatInputComponent = ({
       return;
     }
 
-    onSend(text);
+    const trimmed: string = text.trim();
+
+    if (tryHandleGenerateConfirmChatIntent(trimmed)) {
+      appendCanvasChatOnlyUserMessage(trimmed);
+      setText("");
+      textareaRef.current?.focus();
+      return;
+    }
+
+    if (
+      isRetryChatMessage(trimmed) &&
+      tryHandleGenerateRetryChatIntent(trimmed)
+    ) {
+      appendCanvasChatOnlyUserMessage(trimmed);
+      setText("");
+      textareaRef.current?.focus();
+      return;
+    }
+
+    const interceptedMakeItReal: boolean =
+      isGenerateItineraryChatIntent(trimmed) &&
+      tryHandleGenerateItineraryChatIntent(
+        trimmed,
+        isGenerateItineraryChatIntent,
+      );
+
+    if (interceptedMakeItReal) {
+      appendCanvasChatOnlyUserMessage(trimmed);
+      setText("");
+      textareaRef.current?.focus();
+      return;
+    }
+
+    if (isGenerateItineraryChatIntent(trimmed) || isRetryChatMessage(trimmed)) {
+      armGenerateConfirmFromAgent();
+    }
+
+    onSend(trimmed);
     setText("");
     textareaRef.current?.focus();
-  }, [chatReady, hideStopButton, inProgress, onSend, onStop, text]);
+  }, [
+    appendCanvasChatOnlyUserMessage,
+    chatReady,
+    hideStopButton,
+    inProgress,
+    onSend,
+    onStop,
+    text,
+  ]);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLTextAreaElement>) => {

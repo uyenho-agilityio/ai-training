@@ -2,6 +2,12 @@ export type CanvasTab = "places" | "book" | "itinerary";
 export type PlaceFilter = "all" | "starred" | "new" | "dismissed";
 export type PlaceStatus = "new" | "starred" | "dismissed";
 export type ItineraryPhase = "sketch" | "generating" | "full";
+export type GenerateItineraryRequirement =
+  | "places"
+  | "flights"
+  | "hotels"
+  | "routes"
+  | "localTips";
 export type StatusCardVariant = "success" | "error" | "warning";
 
 export type TabNavItem = {
@@ -157,6 +163,9 @@ export interface SelectBookingsToolResult {
   selectedFlightId: string | null;
   selectedHotelId: string | null;
   suggestGenerateItinerary: boolean;
+  readinessBlocked?: boolean;
+  missing?: GenerateItineraryRequirement[];
+  blockedMessage?: string;
 }
 
 export interface GenerateItineraryToolResult {

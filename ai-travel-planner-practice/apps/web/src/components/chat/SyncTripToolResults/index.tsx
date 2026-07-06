@@ -6,6 +6,7 @@ import {
   useEffect,
   useRef,
   type Dispatch,
+  type MutableRefObject,
   type ReactElement,
   type SetStateAction,
 } from "react";
@@ -46,6 +47,20 @@ import {
 
 type SyncTripToolResultsProps = {
   setToolPatch: Dispatch<SetStateAction<ToolDrivenCanvasPatch>>;
+  allowFullItinerarySyncRef: MutableRefObject<boolean>;
+  fullItineraryAppliedRef: MutableRefObject<boolean>;
+  /** When false, blocks suggest-generate selectBookings from reopening the modal after cancel. */
+  allowNextGenerateConfirmRef: MutableRefObject<boolean>;
+  /** Increment after modal confirm to re-sync generate-itinerary tool results. */
+  fullItineraryResyncNonce: number;
+  /** Increment when the generate modal is canceled so cached selectBookings can reopen it. */
+  suggestGenerateResyncNonce: number;
+  onRegisterSyncAgentToolMessages?: (sync: () => void) => void;
+};
+
+type ToolApplyOutcome = {
+  applied: boolean;
+  consumed: boolean;
 };
 
 type ToolRenderProps = ActionRenderPropsNoArgs & {
@@ -64,8 +79,44 @@ const applyToolPatch = (
   }));
 };
 
+/** Drop cached selectBookings suggest-generate payloads after modal cancel. */
+const clearSuggestGenerateSelectBookingsCache = (
+  cachedKeys: Set<string>,
+): number => {
+  let removedCount: number = 0;
+
+  for (const key of [...cachedKeys]) {
+    const separatorIndex: number = key.indexOf(":");
+
+    if (separatorIndex === -1) {
+      continue;
+    }
+
+    const toolName: string = key.slice(0, separatorIndex);
+
+    if (resolveToolSyncKind(toolName) !== "selectBookings") {
+      continue;
+    }
+
+    if (!key.includes("suggestGenerateItinerary")) {
+      continue;
+    }
+
+    cachedKeys.delete(key);
+    removedCount += 1;
+  }
+
+  return removedCount;
+};
+
 const SyncTripToolResultsComponent = ({
   setToolPatch,
+  allowFullItinerarySyncRef,
+  fullItineraryAppliedRef,
+  allowNextGenerateConfirmRef,
+  fullItineraryResyncNonce,
+  suggestGenerateResyncNonce,
+  onRegisterSyncAgentToolMessages,
 }: SyncTripToolResultsProps): null => {
   const syncedPayloadKeysRef = useRef<Set<string>>(new Set());
 
@@ -194,11 +245,15 @@ const SyncTripToolResultsComponent = ({
   );
 
   const applyFullItineraryResult = useCallback(
-    (result: unknown): boolean => {
+    (result: unknown): ToolApplyOutcome => {
       const parsed = parseToolResult<GenerateItineraryToolResult>(result);
 
       if (!isGenerateItineraryToolResult(parsed)) {
-        return false;
+        return { applied: false, consumed: false };
+      }
+
+      if (!allowFullItinerarySyncRef.current) {
+        return { applied: false, consumed: false };
       }
 
       const expandedDays = getDefaultExpandedFullItineraryDays(
@@ -212,9 +267,12 @@ const SyncTripToolResultsComponent = ({
         activeTab: "itinerary",
       });
 
-      return true;
+      allowFullItinerarySyncRef.current = false;
+      fullItineraryAppliedRef.current = true;
+
+      return { applied: true, consumed: true };
     },
-    [setToolPatch],
+    [allowFullItinerarySyncRef, fullItineraryAppliedRef, setToolPatch],
   );
 
   const applySelectBookingsResult = useCallback(
@@ -225,22 +283,34 @@ const SyncTripToolResultsComponent = ({
         return false;
       }
 
+      const isGenerateOnlyRequest: boolean =
+        Boolean(parsed.suggestGenerateItinerary) && !parsed.readinessBlocked;
+
+      const willOpenGenerateConfirm: boolean =
+        isGenerateOnlyRequest &&
+        !allowFullItinerarySyncRef.current &&
+        allowNextGenerateConfirmRef.current;
+
+      if (willOpenGenerateConfirm) {
+        allowNextGenerateConfirmRef.current = false;
+      }
+
       const toolPatch: ToolDrivenCanvasPatch = {
-        activeTab: "book",
-        ...(parsed.selectedFlightId != null
+        ...(!isGenerateOnlyRequest ? { activeTab: "book" as const } : {}),
+        ...(!isGenerateOnlyRequest && parsed.selectedFlightId != null
           ? { selectedFlightId: parsed.selectedFlightId }
           : {}),
-        ...(parsed.selectedHotelId != null
+        ...(!isGenerateOnlyRequest && parsed.selectedHotelId != null
           ? { selectedHotelId: parsed.selectedHotelId }
           : {}),
-        ...(parsed.suggestGenerateItinerary ? { isGenerateConfirm: true } : {}),
+        ...(willOpenGenerateConfirm ? { isGenerateConfirm: true } : {}),
       };
 
       applyToolPatch(setToolPatch, toolPatch);
 
       return true;
     },
-    [setToolPatch],
+    [allowFullItinerarySyncRef, allowNextGenerateConfirmRef, setToolPatch],
   );
 
   const syncToolPayload = useCallback(
@@ -252,6 +322,7 @@ const SyncTripToolResultsComponent = ({
       }
 
       let applied = false;
+      let consumed = false;
 
       switch (resolveToolSyncKind(toolName)) {
         case "tripBookings":
@@ -272,9 +343,12 @@ const SyncTripToolResultsComponent = ({
         case "sketch":
           applied = applySketchResult(payload);
           break;
-        case "fullItinerary":
-          applied = applyFullItineraryResult(payload);
+        case "fullItinerary": {
+          const outcome = applyFullItineraryResult(payload);
+          applied = outcome.applied;
+          consumed = outcome.consumed;
           break;
+        }
         case "selectBookings":
           applied = applySelectBookingsResult(payload);
           break;
@@ -282,7 +356,7 @@ const SyncTripToolResultsComponent = ({
           break;
       }
 
-      if (applied) {
+      if (applied || consumed) {
         syncedPayloadKeysRef.current.add(payloadKey);
       }
     },
@@ -342,6 +416,26 @@ const SyncTripToolResultsComponent = ({
       syncToolPayload(toolName, payload);
     }
   }, [agent.messages, syncToolPayload]);
+
+  useEffect(() => {
+    onRegisterSyncAgentToolMessages?.(syncAgentToolMessages);
+  }, [onRegisterSyncAgentToolMessages, syncAgentToolMessages]);
+
+  useEffect(() => {
+    if (fullItineraryResyncNonce === 0) {
+      return;
+    }
+
+    syncAgentToolMessages();
+  }, [fullItineraryResyncNonce, syncAgentToolMessages]);
+
+  useEffect(() => {
+    if (suggestGenerateResyncNonce === 0) {
+      return;
+    }
+
+    clearSuggestGenerateSelectBookingsCache(syncedPayloadKeysRef.current);
+  }, [suggestGenerateResyncNonce]);
 
   useEffect(() => {
     syncAgentToolMessages();

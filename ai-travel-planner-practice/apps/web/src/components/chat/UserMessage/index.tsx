@@ -3,7 +3,11 @@
 import { memo, type ReactElement } from "react";
 
 import type { UserMessageProps } from "@copilotkit/react-ui";
-import { cn } from "@/utils";
+import {
+  cn,
+  isHiddenCanvasChatMessage,
+  stripCanvasChatOnlyPrefix,
+} from "@/utils";
 import { userMessageBubbleClasses, userMessageRowClasses } from "../styles";
 
 const UserMessageComponent = ({ message }: UserMessageProps): ReactElement => {
@@ -16,9 +20,11 @@ const UserMessageComponent = ({ message }: UserMessageProps): ReactElement => {
           .map((part) => part.text)
           .join(" ") ?? "");
 
-  if (!text) {
+  if (!text || isHiddenCanvasChatMessage(text)) {
     return <></>;
   }
+
+  const displayText: string = stripCanvasChatOnlyPrefix(text);
 
   return (
     <div className={userMessageRowClasses}>
@@ -28,7 +34,7 @@ const UserMessageComponent = ({ message }: UserMessageProps): ReactElement => {
           "whitespace-pre-wrap wrap-break-word",
         )}
       >
-        {text}
+        {displayText}
       </div>
     </div>
   );

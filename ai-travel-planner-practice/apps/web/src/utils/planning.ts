@@ -184,9 +184,41 @@ export const isSelectBookingsToolResult = (
   const flightId = value.selectedFlightId;
   const hotelId = value.selectedHotelId;
 
-  return (
-    (flightId === null || typeof flightId === "string") &&
-    (hotelId === null || typeof hotelId === "string") &&
-    typeof value.suggestGenerateItinerary === "boolean"
-  );
+  if (
+    (flightId !== null && typeof flightId !== "string") ||
+    (hotelId !== null && typeof hotelId !== "string") ||
+    typeof value.suggestGenerateItinerary !== "boolean"
+  ) {
+    return false;
+  }
+
+  if (value.readinessBlocked !== undefined) {
+    if (typeof value.readinessBlocked !== "boolean") {
+      return false;
+    }
+  }
+
+  if (value.blockedMessage !== undefined) {
+    if (typeof value.blockedMessage !== "string") {
+      return false;
+    }
+  }
+
+  if (value.missing !== undefined) {
+    if (
+      !Array.isArray(value.missing) ||
+      !value.missing.every(
+        (item: unknown) =>
+          item === "places" ||
+          item === "flights" ||
+          item === "hotels" ||
+          item === "routes" ||
+          item === "localTips",
+      )
+    ) {
+      return false;
+    }
+  }
+
+  return true;
 };

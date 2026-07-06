@@ -5,35 +5,40 @@ import "@copilotkit/react-ui/styles.css";
 import { copilotAgent, copilotRuntimeUrl } from "@/constants";
 import {
   ChatInput,
+  ChatMessages,
   copilotSidebarClasses,
   SystemMessage,
   UserMessage,
   TravelCanvas,
   ToolConfirmation,
 } from "@/components";
+import { DisplayOnlyChatProvider } from "@/hooks";
 
 const Home = () => (
   <CopilotKit runtimeUrl={copilotRuntimeUrl} agent={copilotAgent}>
-    <div className="flex min-h-screen w-full flex-col sm:flex-row">
-      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
-        <TravelCanvas />
-      </div>
+    <DisplayOnlyChatProvider>
+      <div className="flex min-h-screen w-full flex-col sm:flex-row">
+        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+          <TravelCanvas />
+        </div>
 
-      <CopilotSidebar
-        defaultOpen
-        clickOutsideToClose={false}
-        className={copilotSidebarClasses}
-        labels={{
-          title: "AI Assistant",
-          initial: "Hi! 👋 How can I help you with your travel plans?",
-          placeholder: "Tell me about your trip...",
-        }}
-        UserMessage={UserMessage}
-        AssistantMessage={SystemMessage}
-        Input={ChatInput}
-      />
-      <ToolConfirmation />
-    </div>
+        <CopilotSidebar
+          defaultOpen
+          clickOutsideToClose={false}
+          className={copilotSidebarClasses}
+          labels={{
+            title: "AI Assistant",
+            initial: "Hi! 👋 How can I help you with your travel plans?",
+            placeholder: "Tell me about your trip...",
+          }}
+          Messages={ChatMessages}
+          UserMessage={UserMessage}
+          AssistantMessage={SystemMessage}
+          Input={ChatInput}
+        />
+        <ToolConfirmation />
+      </div>
+    </DisplayOnlyChatProvider>
   </CopilotKit>
 );
 

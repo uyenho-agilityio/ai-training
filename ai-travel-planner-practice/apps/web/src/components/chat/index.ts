@@ -1,4 +1,5 @@
 export * from "./ChatInput";
+export * from "./ChatMessages";
 export * from "./SystemMessage";
 export * from "./TypingIndicator";
 export * from "./UserMessage";

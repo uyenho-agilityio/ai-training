@@ -4,3 +4,4 @@ export * from "./travel";
 export * from "./tools";
 export * from "./planning";
 export * from "./tool-sync";
+export * from "./itinerary";

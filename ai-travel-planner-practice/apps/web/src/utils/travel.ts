@@ -1,7 +1,16 @@
-import { TOOL_NAME_PATTERNS } from "@/constants";
+import {
+  EMPTY_TRIP_SKETCH,
+  GENERATE_FULL_ITINERARY_MESSAGE,
+  INITIAL_TRIP_STATE,
+  CANVAS_CHAT_ONLY_PREFIX,
+  CANVAS_CONFIRM_PREFIX,
+  CANVAS_DECLINED_PREFIX,
+  TOOL_NAME_PATTERNS,
+} from "@/constants";
 import type {
   BookingItem,
   FlightData,
+  GenerateItineraryRequirement,
   HotelData,
   PlaceBrief,
   PlaceFilter,
@@ -13,7 +22,6 @@ import type {
   AssistantMessageContent,
   TextMessagePart,
 } from "@/types";
-import { EMPTY_TRIP_SKETCH, INITIAL_TRIP_STATE } from "@/constants";
 import { matchesToolName } from "./tools";
 
 /** Tool-synced value wins when present; otherwise fall back to co-agent state. */
@@ -54,53 +62,118 @@ export const dismissPlace = (places: PlaceBrief[], id: string): PlaceBrief[] =>
     place.id === id ? { ...place, status: "dismissed" } : place,
   );
 
-/** User message for sketch-from-starred — short confirm only; agent reads rules from instructions. */
+/** User message for sketch-from-starred — lists starred titles only; agent reads trip length from canvas. */
 export const buildSketchFromStarredMessage = (
   starredPlaces: PlaceBrief[],
-  tripDays: number,
 ): string => {
   const titles: string = starredPlaces
     .map((place: PlaceBrief) => place.title)
     .join(", ");
 
-  return `Sketch from my starred places on the canvas. Starred (${starredPlaces.length}): ${titles}. ${tripDays} day${tripDays === 1 ? "" : "s"}. Include every starred place in the route.`;
-};
-
-type BuildGenerateItineraryMessageInput = {
-  sketch: TripSketch;
-  flight: FlightData;
-  hotel: HotelData;
-  starredPlaces: PlaceBrief[];
+  return `Sketch from my starred places on the canvas. Starred (${starredPlaces.length}): ${titles}.`;
 };
 
 /** User message when confirming Let's make it real — agent calls generateItineraryTool. */
-export const buildGenerateItineraryMessage = ({
-  sketch,
-  flight,
-  hotel,
-  starredPlaces,
-}: BuildGenerateItineraryMessageInput): string => {
-  const dayStops: string = sketch.days
-    .map(
-      (day) =>
-        `Day ${day.day} (${day.label}): ${day.stops.map((stop) => stop.place).join(", ")}`,
-    )
-    .join("; ");
-  const starredTitles: string = starredPlaces
-    .map((place: PlaceBrief) => place.title)
-    .join(", ");
+export const buildGenerateItineraryMessage = (
+  visibleInChat: boolean = true,
+  flightId: string | null = null,
+  hotelId: string | null = null,
+): string => {
+  if (visibleInChat) {
+    return GENERATE_FULL_ITINERARY_MESSAGE;
+  }
 
-  return [
-    "Generate my full itinerary on the canvas (Let's make it real).",
-    `Trip: ${sketch.title}. ${sketch.days.length} day${sketch.days.length === 1 ? "" : "s"}.`,
-    `Selected flight: ${flight.airline}, ${flight.route}, ${flight.time}, ${flight.price}.`,
-    `Selected hotel: ${hotel.name}, ${hotel.rating}★, ${hotel.price}.`,
-    `Sketch stops: ${dayStops}.`,
-    starredTitles ? `Starred places: ${starredTitles}.` : "",
-    "Call generateItineraryTool once. One timed segment per sketch stop with activity + logistics.",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const bookingSuffix: string =
+    flightId && hotelId ? `::${flightId}::${hotelId}::` : "";
+
+  return `${CANVAS_CONFIRM_PREFIX}${GENERATE_FULL_ITINERARY_MESSAGE}${bookingSuffix}`;
+};
+
+/** True for chat-initiated confirm messages that should not render in the sidebar. */
+export const isHiddenCanvasConfirmChatMessage = (text: string): boolean =>
+  text.trim().startsWith(CANVAS_CONFIRM_PREFIX);
+
+/** True for hidden decline markers after the user cancels the generate-itinerary modal. */
+export const isHiddenCanvasDeclinedChatMessage = (text: string): boolean =>
+  text.trim().startsWith(CANVAS_DECLINED_PREFIX);
+
+/** Hidden user message recorded when the generate-itinerary modal is canceled. */
+export const buildCanvasItineraryDeclinedMessage = (): string =>
+  `${CANVAS_DECLINED_PREFIX}User declined canvas itinerary confirmation.`;
+
+/** Chat-only user message — visible in sidebar, stripped from agent context on run. */
+export const buildCanvasChatOnlyUserMessage = (visibleText: string): string =>
+  `${CANVAS_CHAT_ONLY_PREFIX}${visibleText.trim()}`;
+
+/** True for user messages that should render in chat but not reach the agent. */
+export const isCanvasChatOnlyUserMessage = (text: string): boolean =>
+  text.trim().startsWith(CANVAS_CHAT_ONLY_PREFIX);
+
+/** Strip the chat-only prefix for sidebar display. */
+export const stripCanvasChatOnlyPrefix = (text: string): string => {
+  const trimmed: string = text.trim();
+
+  if (!trimmed.startsWith(CANVAS_CHAT_ONLY_PREFIX)) {
+    return trimmed;
+  }
+
+  return trimmed.slice(CANVAS_CHAT_ONLY_PREFIX.length).trim();
+};
+
+/** True when the message should not render in the chat sidebar. */
+export const isHiddenCanvasChatMessage = (text: string): boolean =>
+  isHiddenCanvasConfirmChatMessage(text) ||
+  isHiddenCanvasDeclinedChatMessage(text);
+
+/** True when text is the post-modal full-itinerary confirm (visible or hidden). */
+export const isGenerateFullItineraryConfirmMessage = (
+  text: string,
+): boolean => {
+  const trimmed: string = text.trim();
+
+  if (isHiddenCanvasConfirmChatMessage(trimmed)) {
+    const withoutPrefix: string = trimmed
+      .slice(CANVAS_CONFIRM_PREFIX.length)
+      .trim();
+    const bookingMarker: number = withoutPrefix.indexOf("::");
+    const messageText: string =
+      bookingMarker !== -1
+        ? withoutPrefix.slice(0, bookingMarker).trim()
+        : withoutPrefix;
+
+    return messageText === GENERATE_FULL_ITINERARY_MESSAGE;
+  }
+
+  return trimmed === GENERATE_FULL_ITINERARY_MESSAGE;
+};
+
+/** True when the user is asking to repeat the last actionable step. */
+export const isRetryChatMessage = (message: string): boolean =>
+  /\b(try\s+again|retry|one\s+more\s+time)\b/i.test(message.trim());
+
+const GENERATE_ITINERARY_INTENT_PATTERN =
+  /\b(make\s+it\s+real(?:\s+now)?|let'?s\s+make\s+it\s+real|generate\s+(?:my\s+)?full\s+itinerary|build\s+(?:my\s+)?full\s+itinerary)\b/i;
+
+const BOOKING_CHAT_INTENT_PATTERN =
+  /\b(book|search|find|get|show)\b.*\b(flight|flights|hotel|hotels|trip|travel)\b/i;
+
+/** User chat asked to generate the full itinerary (not the post-modal confirm message). */
+export const isGenerateItineraryChatIntent = (message: string): boolean => {
+  const trimmed: string = message.trim();
+
+  if (!trimmed || isGenerateFullItineraryConfirmMessage(trimmed)) {
+    return false;
+  }
+
+  if (isHiddenCanvasDeclinedChatMessage(trimmed)) {
+    return false;
+  }
+
+  if (BOOKING_CHAT_INTENT_PATTERN.test(trimmed)) {
+    return false;
+  }
+
+  return GENERATE_ITINERARY_INTENT_PATTERN.test(trimmed);
 };
 
 export const buildGenerateItineraryConfirmMessage = (
@@ -121,13 +194,6 @@ export const findBookingById = <T extends BookingItem>(
   items: T[],
   id: string | null,
 ): T | null => (id ? (items.find((item: T) => item.id === id) ?? null) : null);
-
-export type GenerateItineraryRequirement =
-  | "places"
-  | "flights"
-  | "hotels"
-  | "routes"
-  | "localTips";
 
 export type GenerateItineraryReadinessInput = {
   places: PlaceBrief[];
@@ -183,6 +249,59 @@ export const getGenerateItineraryReadiness = ({
     missing,
   };
 };
+
+/** Resolve effective booking ids — mirrors the generate-itinerary modal fallback. */
+export const resolveBookingSelectionIds = (
+  flights: FlightData[],
+  hotels: HotelData[],
+  selectedFlightId: string | null,
+  selectedHotelId: string | null,
+): { flightId: string | null; hotelId: string | null } => ({
+  flightId: selectedFlightId ?? flights[0]?.id ?? null,
+  hotelId: selectedHotelId ?? hotels[0]?.id ?? null,
+});
+
+/** Payload for selectBookingsTool canvasReadiness — keep in sync with agent schema. */
+export const buildCanvasReadinessInput = ({
+  places,
+  flights,
+  hotels,
+  selectedFlightId,
+  selectedHotelId,
+  sketch,
+}: GenerateItineraryReadinessInput): {
+  placesCount: number;
+  flightsCount: number;
+  hotelsCount: number;
+  sketchDayStops: number[];
+  localTipsCount: number;
+  selectedFlightId: string | null;
+  selectedHotelId: string | null;
+} => {
+  const { flightId, hotelId } = resolveBookingSelectionIds(
+    flights,
+    hotels,
+    selectedFlightId,
+    selectedHotelId,
+  );
+
+  return {
+    placesCount: places?.length ?? 0,
+    flightsCount: flights?.length ?? 0,
+    hotelsCount: hotels?.length ?? 0,
+    sketchDayStops: sketch?.days?.map((day) => day.stops?.length ?? 0) ?? [],
+    localTipsCount: sketch?.localTips?.length ?? 0,
+    selectedFlightId: flightId,
+    selectedHotelId: hotelId,
+  };
+};
+
+const GENERATE_CONFIRM_CHAT_PATTERN =
+  /^(go|yes|yep|yeah|yes\s+pls|yes\s+please|ok|okay|confirm|proceed|let'?s\s+go|do\s+it)$/i;
+
+/** Short affirmations that confirm the open generate-itinerary modal from chat. */
+export const isGenerateConfirmChatIntent = (message: string): boolean =>
+  GENERATE_CONFIRM_CHAT_PATTERN.test(message.trim());
 
 /** Read tool output from whichever field CopilotKit populated. */
 export const getToolRenderPayload = (

@@ -5,9 +5,12 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactElement,
 } from "react";
+
+import { flushSync } from "react-dom";
 
 import { useCoAgent } from "@copilotkit/react-core";
 
@@ -20,6 +23,7 @@ import {
 } from "@/components";
 import {
   copilotAgent,
+  GENERATE_FULL_ITINERARY_MESSAGE,
   INITIAL_TRIP_STATE,
   PLANNING_IN_PROGRESS_MESSAGE,
   SKETCH_READY_ON_PLACES_MESSAGE,
@@ -34,6 +38,7 @@ import type {
   TripCanvasState,
 } from "@/types";
 import {
+  buildCanvasItineraryDeclinedMessage,
   buildGenerateItineraryConfirmMessage,
   buildGenerateItineraryMessage,
   buildSketchFromStarredMessage,
@@ -42,6 +47,8 @@ import {
   findBookingById,
   getGenerateItineraryReadiness,
   mergeCanvasState,
+  registerTravelCanvasBridge,
+  resolveBookingSelectionIds,
   togglePlaceStar,
 } from "@/utils";
 import { CANVAS_TABS } from "@/constants";
@@ -75,12 +82,34 @@ const TravelCanvasComponent = (): ReactElement => {
     initialState: INITIAL_TRIP_STATE,
   });
 
-  const { runAgentMessage } = useRunAgentMessage();
+  const { appendUserChatMessage, runAgentMessage } = useRunAgentMessage();
 
   const [toolPatch, setToolPatch] = useState<ToolDrivenCanvasPatch>({});
   const [isConfirmOpen, setIsConfirmOpen] = useState<boolean>(false);
   const [isSketchPending, setIsSketchPending] = useState<boolean>(false);
   const [isGeneratePending, setIsGeneratePending] = useState<boolean>(false);
+  const [fullItineraryResyncNonce, setFullItineraryResyncNonce] =
+    useState<number>(0);
+  const [suggestGenerateResyncNonce, setSuggestGenerateResyncNonce] =
+    useState<number>(0);
+  /** Only true after user confirms the generate-itinerary modal — blocks premature agent tool sync. */
+  const allowFullItinerarySyncRef = useRef<boolean>(false);
+  const fullItineraryAppliedRef = useRef<boolean>(false);
+  const generateConfirmSourceRef = useRef<"chat" | "button">("button");
+  /** False after modal cancel — blocks stale agent sync from reopening until user retries. */
+  const allowNextGenerateConfirmRef = useRef<boolean>(true);
+  /** Ref mirror of isConfirmOpen — avoids stale bridge closures in chat input. */
+  const isConfirmOpenRef = useRef<boolean>(false);
+  /** True from make-it-real / modal open until user confirms or cancels. */
+  const generateConfirmPendingRef = useRef<boolean>(false);
+  const syncAgentToolMessagesRef = useRef<(() => void) | null>(null);
+
+  const handleRegisterSyncAgentToolMessages = useCallback(
+    (sync: () => void): void => {
+      syncAgentToolMessagesRef.current = sync;
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!isAgentRunning) {
@@ -298,18 +327,11 @@ const TravelCanvasComponent = (): ReactElement => {
       return;
     }
 
-    const tripDays: number =
-      sketch?.days?.length && sketch.days.length > 0
-        ? sketch.days.length
-        : Math.max(starredPlaces.length, 1);
-
     patchCanvasState({ places });
 
     setIsSketchPending(true);
-    await runAgentMessage(
-      buildSketchFromStarredMessage(starredPlaces, tripDays),
-    );
-  }, [patchCanvasState, places, runAgentMessage, sketch?.days, starredPlaces]);
+    await runAgentMessage(buildSketchFromStarredMessage(starredPlaces));
+  }, [patchCanvasState, places, runAgentMessage, starredPlaces]);
 
   const handleToggleDay = useCallback(
     (dayNum: number) => {
@@ -327,21 +349,19 @@ const TravelCanvasComponent = (): ReactElement => {
   }, [patchCanvasState, sketch]);
 
   const handleSelectFlight = useCallback(
-    (id: string) => {
-      patchState({
-        selectedFlightId: selectedFlightId === id ? null : id,
-      });
+    (id: string): void => {
+      const nextId: string | null = selectedFlightId === id ? null : id;
+      patchCanvasState({ selectedFlightId: nextId });
     },
-    [patchState, selectedFlightId],
+    [patchCanvasState, selectedFlightId],
   );
 
   const handleSelectHotel = useCallback(
-    (id: string) => {
-      patchState({
-        selectedHotelId: selectedHotelId === id ? null : id,
-      });
+    (id: string): void => {
+      const nextId: string | null = selectedHotelId === id ? null : id;
+      patchCanvasState({ selectedHotelId: nextId });
     },
-    [patchState, selectedHotelId],
+    [patchCanvasState, selectedHotelId],
   );
 
   const handleEditBookings = useCallback(() => {
@@ -352,30 +372,188 @@ const TravelCanvasComponent = (): ReactElement => {
     navigateToTab("itinerary");
   }, [navigateToTab]);
 
-  const handleOpenGenerateItineraryConfirm = useCallback((): void => {
-    const autoFlightId: string | null =
-      selectedFlightId ?? flights[0]?.id ?? null;
-    const autoHotelId: string | null = selectedHotelId ?? hotels[0]?.id ?? null;
+  /** Sync resolved Book tab selections to co-agent before generate-itinerary flows. */
+  const ensureResolvedBookingSelections = useCallback((): {
+    flightId: string | null;
+    hotelId: string | null;
+  } => {
+    const { flightId, hotelId } = resolveBookingSelectionIds(
+      flights,
+      hotels,
+      selectedFlightId,
+      selectedHotelId,
+    );
 
-    if (!autoFlightId || !autoHotelId || !itineraryReadiness.isReady) {
-      return;
-    }
-
-    if (autoFlightId !== selectedFlightId || autoHotelId !== selectedHotelId) {
-      patchState({
-        selectedFlightId: autoFlightId,
-        selectedHotelId: autoHotelId,
+    if (
+      flightId &&
+      hotelId &&
+      (flightId !== selectedFlightId || hotelId !== selectedHotelId)
+    ) {
+      patchCanvasState({
+        selectedFlightId: flightId,
+        selectedHotelId: hotelId,
       });
     }
 
-    setIsConfirmOpen(true);
+    return { flightId, hotelId };
+  }, [flights, hotels, patchCanvasState, selectedFlightId, selectedHotelId]);
+
+  const handleOpenGenerateItineraryConfirm = useCallback(
+    (source: "chat" | "button" = "button"): void => {
+      const { flightId: resolvedFlightId, hotelId: resolvedHotelId } =
+        ensureResolvedBookingSelections();
+
+      if (
+        !resolvedFlightId ||
+        !resolvedHotelId ||
+        !itineraryReadiness.isReady
+      ) {
+        return;
+      }
+
+      generateConfirmSourceRef.current = source;
+      allowFullItinerarySyncRef.current = false;
+      generateConfirmPendingRef.current = true;
+      isConfirmOpenRef.current = true;
+      setIsConfirmOpen(true);
+    },
+    [ensureResolvedBookingSelections, itineraryReadiness.isReady],
+  );
+
+  const handleConfirmGenerateItinerary =
+    useCallback(async (): Promise<void> => {
+      const { flightId, hotelId } = ensureResolvedBookingSelections();
+      const resolvedFlight: FlightData | null = findBookingById<FlightData>(
+        flights,
+        flightId,
+      );
+      const resolvedHotel: HotelData | null = findBookingById<HotelData>(
+        hotels,
+        hotelId,
+      );
+
+      if (!resolvedFlight || !resolvedHotel) {
+        return;
+      }
+
+      generateConfirmPendingRef.current = false;
+      isConfirmOpenRef.current = false;
+      setIsConfirmOpen(false);
+      fullItineraryAppliedRef.current = false;
+
+      const visibleInChat: boolean =
+        generateConfirmSourceRef.current === "button";
+
+      if (visibleInChat) {
+        appendUserChatMessage(GENERATE_FULL_ITINERARY_MESSAGE);
+      }
+
+      allowFullItinerarySyncRef.current = true;
+      syncAgentToolMessagesRef.current?.();
+
+      const appliedFromCachedToolResult: boolean =
+        !allowFullItinerarySyncRef.current;
+
+      if (appliedFromCachedToolResult) {
+        patchCanvasState({ activeTab: "itinerary" });
+        return;
+      }
+
+      allowFullItinerarySyncRef.current = true;
+      setFullItineraryResyncNonce(
+        (previousNonce: number): number => previousNonce + 1,
+      );
+      patchCanvasState({ itineraryPhase: "generating" });
+      setIsGeneratePending(true);
+
+      flushSync((): void => {
+        patchCanvasState({
+          selectedFlightId: flightId,
+          selectedHotelId: hotelId,
+        });
+      });
+
+      // Chat confirm: append hidden prefixed message to agent thread (filtered from UI).
+      // Button confirm: visible message already appended above — skip duplicate.
+      await runAgentMessage(
+        buildGenerateItineraryMessage(visibleInChat, flightId, hotelId),
+        {
+          appendUserMessage: !visibleInChat,
+        },
+      );
+
+      allowFullItinerarySyncRef.current = true;
+      syncAgentToolMessagesRef.current?.();
+
+      if (fullItineraryAppliedRef.current) {
+        patchCanvasState({ activeTab: "itinerary" });
+      } else {
+        patchCanvasState({ itineraryPhase: "sketch" });
+      }
+
+      setIsGeneratePending(false);
+    }, [
+      appendUserChatMessage,
+      ensureResolvedBookingSelections,
+      flights,
+      hotels,
+      patchCanvasState,
+      runAgentMessage,
+    ]);
+
+  useEffect(() => {
+    isConfirmOpenRef.current = isConfirmOpen;
+  }, [isConfirmOpen]);
+
+  const handleReopenGenerateItineraryConfirm = useCallback((): boolean => {
+    if (!itineraryReadiness.isReady) {
+      return false;
+    }
+
+    const { flightId, hotelId } = ensureResolvedBookingSelections();
+
+    if (!flightId || !hotelId) {
+      return false;
+    }
+
+    handleOpenGenerateItineraryConfirm("chat");
+    return true;
   }, [
-    flights,
-    hotels,
+    ensureResolvedBookingSelections,
+    handleOpenGenerateItineraryConfirm,
     itineraryReadiness.isReady,
-    patchState,
-    selectedFlightId,
-    selectedHotelId,
+  ]);
+
+  useEffect(() => {
+    registerTravelCanvasBridge({
+      isGenerateItineraryReady: (): boolean => itineraryReadiness.isReady,
+      openGenerateItineraryConfirm: (): void => {
+        allowFullItinerarySyncRef.current = false;
+        handleOpenGenerateItineraryConfirm("chat");
+      },
+      armGenerateConfirmFromAgent: (): void => {
+        ensureResolvedBookingSelections();
+        allowNextGenerateConfirmRef.current = true;
+      },
+      isGenerateConfirmModalOpen: (): boolean => isConfirmOpenRef.current,
+      isGenerateConfirmPending: (): boolean =>
+        generateConfirmPendingRef.current,
+      confirmGenerateItineraryModalFromChat: (): void => {
+        void handleConfirmGenerateItinerary();
+      },
+      reopenGenerateItineraryConfirm: (): boolean =>
+        handleReopenGenerateItineraryConfirm(),
+    });
+
+    return (): void => {
+      registerTravelCanvasBridge(null);
+    };
+  }, [
+    ensureResolvedBookingSelections,
+    handleConfirmGenerateItinerary,
+    handleOpenGenerateItineraryConfirm,
+    handleReopenGenerateItineraryConfirm,
+    itineraryReadiness.isReady,
   ]);
 
   const generateConfirmMessage = useMemo((): string => {
@@ -392,45 +570,24 @@ const TravelCanvasComponent = (): ReactElement => {
   }, [flights, hotels, selectedFlightId, selectedHotelId]);
 
   useEffect(() => {
-    if (!isGenerateConfirm || !itineraryReadiness.isReady) {
+    if (!isGenerateConfirm || isConfirmOpen) {
       return;
     }
 
     patchCanvasState({ isGenerateConfirm: false });
-    handleOpenGenerateItineraryConfirm();
+
+    if (!itineraryReadiness.isReady) {
+      return;
+    }
+
+    handleOpenGenerateItineraryConfirm("chat");
   }, [
     handleOpenGenerateItineraryConfirm,
+    isConfirmOpen,
     itineraryReadiness.isReady,
     patchCanvasState,
     isGenerateConfirm,
   ]);
-
-  const handleConfirmGenerateItinerary =
-    useCallback(async (): Promise<void> => {
-      if (!selectedFlight || !selectedHotel) {
-        return;
-      }
-
-      setIsConfirmOpen(false);
-      patchCanvasState({ itineraryPhase: "generating" });
-      setIsGeneratePending(true);
-
-      await runAgentMessage(
-        buildGenerateItineraryMessage({
-          sketch,
-          flight: selectedFlight,
-          hotel: selectedHotel,
-          starredPlaces,
-        }),
-      );
-    }, [
-      patchCanvasState,
-      runAgentMessage,
-      selectedFlight,
-      selectedHotel,
-      sketch,
-      starredPlaces,
-    ]);
 
   useEffect(() => {
     if (!isAgentRunning && itineraryPhase === "generating") {
@@ -441,8 +598,20 @@ const TravelCanvasComponent = (): ReactElement => {
   }, [fullItinerary, isAgentRunning, itineraryPhase, patchCanvasState]);
 
   const handleCancelGenerateItinerary = useCallback((): void => {
+    allowFullItinerarySyncRef.current = false;
+    allowNextGenerateConfirmRef.current = false;
+    generateConfirmPendingRef.current = false;
+    isConfirmOpenRef.current = false;
     setIsConfirmOpen(false);
-  }, []);
+    patchCanvasState({ isGenerateConfirm: false });
+    setSuggestGenerateResyncNonce(
+      (previousNonce: number): number => previousNonce + 1,
+    );
+
+    if (generateConfirmSourceRef.current === "chat") {
+      appendUserChatMessage(buildCanvasItineraryDeclinedMessage());
+    }
+  }, [appendUserChatMessage, patchCanvasState]);
 
   return (
     <>
@@ -457,7 +626,15 @@ const TravelCanvasComponent = (): ReactElement => {
         </Modal>
       )}
 
-      <SyncTripToolResults setToolPatch={setToolPatch} />
+      <SyncTripToolResults
+        setToolPatch={setToolPatch}
+        allowFullItinerarySyncRef={allowFullItinerarySyncRef}
+        fullItineraryAppliedRef={fullItineraryAppliedRef}
+        allowNextGenerateConfirmRef={allowNextGenerateConfirmRef}
+        fullItineraryResyncNonce={fullItineraryResyncNonce}
+        suggestGenerateResyncNonce={suggestGenerateResyncNonce}
+        onRegisterSyncAgentToolMessages={handleRegisterSyncAgentToolMessages}
+      />
 
       <main className="flex min-h-screen w-full min-w-0 flex-col gap-4 overflow-y-auto bg-white p-4 sm:gap-5 sm:p-10">
         <Header title="Plan places, book travel & build your itinerary" />

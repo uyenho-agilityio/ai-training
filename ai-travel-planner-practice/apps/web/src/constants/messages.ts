@@ -7,6 +7,16 @@ export const BOOK_EMPTY_HOTELS_MESSAGE: string =
 export const GENERATE_ITINERARY_CONFIRM_MESSAGE: string =
   "Generate a full day-by-day itinerary on the canvas? The AI will build it here — you stay in control and can change anything after.";
 
+export const GENERATE_FULL_ITINERARY_MESSAGE: string =
+  "Generate my full itinerary on the canvas.";
+
+export const CANVAS_CONFIRM_PREFIX: string = "__canvas_confirm__:";
+
+export const CANVAS_DECLINED_PREFIX: string = "__canvas_declined__:";
+
+/** User messages shown in chat but excluded from agent context (e.g. intercepted make-it-real). */
+export const CANVAS_CHAT_ONLY_PREFIX: string = "__canvas_chat_only__:";
+
 export const SKETCH_FROM_STARRED_USER_MESSAGE: string =
   "Sketch from my starred places on the canvas.";
 
