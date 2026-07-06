@@ -18,12 +18,10 @@ import { copilotAgent, PLANNING_IN_PROGRESS_MESSAGE } from "@/constants";
 import { useRunAgentMessage } from "@/hooks";
 import { SendArrowIcon } from "@/icons";
 import {
-  armGenerateConfirmFromAgent,
   isGenerateItineraryChatIntent,
   isRetryChatMessage,
+  tryConsumeGenerateItineraryFromChat,
   tryHandleGenerateConfirmChatIntent,
-  tryHandleGenerateItineraryChatIntent,
-  tryHandleGenerateRetryChatIntent,
 } from "@/utils";
 import { Button, Text } from "../../commons";
 import { TypingIndicator } from "../TypingIndicator";
@@ -70,32 +68,22 @@ const ChatInputComponent = ({
       return;
     }
 
-    if (
-      isRetryChatMessage(trimmed) &&
-      tryHandleGenerateRetryChatIntent(trimmed)
-    ) {
+    const isMakeItRealOrRetry: boolean =
+      isGenerateItineraryChatIntent(trimmed) || isRetryChatMessage(trimmed);
+
+    if (isMakeItRealOrRetry) {
       appendCanvasChatOnlyUserMessage(trimmed);
+
+      if (tryConsumeGenerateItineraryFromChat(trimmed)) {
+        setText("");
+        textareaRef.current?.focus();
+        return;
+      }
+
+      onSend(trimmed);
       setText("");
       textareaRef.current?.focus();
       return;
-    }
-
-    const interceptedMakeItReal: boolean =
-      isGenerateItineraryChatIntent(trimmed) &&
-      tryHandleGenerateItineraryChatIntent(
-        trimmed,
-        isGenerateItineraryChatIntent,
-      );
-
-    if (interceptedMakeItReal) {
-      appendCanvasChatOnlyUserMessage(trimmed);
-      setText("");
-      textareaRef.current?.focus();
-      return;
-    }
-
-    if (isGenerateItineraryChatIntent(trimmed) || isRetryChatMessage(trimmed)) {
-      armGenerateConfirmFromAgent();
     }
 
     onSend(trimmed);

@@ -1,4 +1,8 @@
-import { isGenerateConfirmChatIntent, isRetryChatMessage } from "./travel";
+import {
+  isGenerateConfirmChatIntent,
+  isGenerateItineraryChatIntent,
+  isRetryChatMessage,
+} from "./travel";
 
 type TravelCanvasBridgeHandlers = {
   isGenerateItineraryReady: () => boolean;
@@ -96,7 +100,59 @@ export const tryHandleGenerateItineraryChatIntent = (
     return false;
   }
 
+  if (bridgeHandlers.isGenerateConfirmModalOpen()) {
+    return true;
+  }
+
+  if (bridgeHandlers.isGenerateConfirmPending()) {
+    return bridgeHandlers.reopenGenerateItineraryConfirm();
+  }
+
   bridgeHandlers.openGenerateItineraryConfirm();
 
   return true;
+};
+
+/** True when the canvas can open the generate-itinerary confirmation modal. */
+export const isGenerateItineraryReadyOnCanvas = (): boolean =>
+  bridgeHandlers?.isGenerateItineraryReady() ?? false;
+
+/** Opens the generate-itinerary modal from chat when the canvas is ready. */
+export const openGenerateItineraryConfirmFromChat = (): void => {
+  bridgeHandlers?.openGenerateItineraryConfirm();
+};
+
+/**
+ * Consumes make-it-real / regenerate chat intents on the client.
+ * When the canvas is ready, never forwards to the agent (avoids "confirm on canvas" loops).
+ */
+export const tryConsumeGenerateItineraryFromChat = (
+  message: string,
+): boolean => {
+  const isMakeItReal: boolean = isGenerateItineraryChatIntent(message);
+  const isRetry: boolean = isRetryChatMessage(message);
+
+  if (!isMakeItReal && !isRetry) {
+    return false;
+  }
+
+  if (
+    isMakeItReal &&
+    tryHandleGenerateItineraryChatIntent(message, isGenerateItineraryChatIntent)
+  ) {
+    return true;
+  }
+
+  if (isRetry && tryHandleGenerateRetryChatIntent(message)) {
+    return true;
+  }
+
+  if (isGenerateItineraryReadyOnCanvas()) {
+    openGenerateItineraryConfirmFromChat();
+    return true;
+  }
+
+  armGenerateConfirmFromAgent();
+
+  return false;
 };

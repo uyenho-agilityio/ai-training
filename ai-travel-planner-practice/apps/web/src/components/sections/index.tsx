@@ -526,7 +526,15 @@ const TravelCanvasComponent = (): ReactElement => {
 
   useEffect(() => {
     registerTravelCanvasBridge({
-      isGenerateItineraryReady: (): boolean => itineraryReadiness.isReady,
+      isGenerateItineraryReady: (): boolean => {
+        if (!itineraryReadiness.isReady) {
+          return false;
+        }
+
+        const { flightId, hotelId } = ensureResolvedBookingSelections();
+
+        return Boolean(flightId && hotelId);
+      },
       openGenerateItineraryConfirm: (): void => {
         allowFullItinerarySyncRef.current = false;
         handleOpenGenerateItineraryConfirm("chat");
@@ -574,14 +582,20 @@ const TravelCanvasComponent = (): ReactElement => {
       return;
     }
 
-    patchCanvasState({ isGenerateConfirm: false });
-
     if (!itineraryReadiness.isReady) {
       return;
     }
 
+    const { flightId, hotelId } = ensureResolvedBookingSelections();
+
+    if (!flightId || !hotelId) {
+      return;
+    }
+
+    patchCanvasState({ isGenerateConfirm: false });
     handleOpenGenerateItineraryConfirm("chat");
   }, [
+    ensureResolvedBookingSelections,
     handleOpenGenerateItineraryConfirm,
     isConfirmOpen,
     itineraryReadiness.isReady,

@@ -149,10 +149,12 @@ export const isGenerateFullItineraryConfirmMessage = (
 
 /** True when the user is asking to repeat the last actionable step. */
 export const isRetryChatMessage = (message: string): boolean =>
-  /\b(try\s+again|retry|one\s+more\s+time)\b/i.test(message.trim());
+  /\b(try\s+again|retry|one\s+more\s+time|regenerate(?:\s+pls)?)\b/i.test(
+    message.trim(),
+  );
 
 const GENERATE_ITINERARY_INTENT_PATTERN =
-  /\b(make\s+it\s+real(?:\s+now)?|let'?s\s+make\s+it\s+real|generate\s+(?:my\s+)?full\s+itinerary|build\s+(?:my\s+)?full\s+itinerary)\b/i;
+  /\b(make\s+it\s+real(?:\s+now)?|let'?s\s+make\s+it\s+real|generate\s+(?:my\s+)?full\s+itinerary|build\s+(?:my\s+)?full\s+itinerary|regenerate(?:\s+(?:my\s+)?(?:full\s+)?itinerary)?)\b/i;
 
 const BOOKING_CHAT_INTENT_PATTERN =
   /\b(book|search|find|get|show)\b.*\b(flight|flights|hotel|hotels|trip|travel)\b/i;

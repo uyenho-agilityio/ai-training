@@ -2,6 +2,10 @@ import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 
 import {
+  getLatestUserMessageText,
+  isCanvasItineraryConfirmMessage,
+} from "../config/generate-itinerary-gate";
+import {
   canvasReadinessInputSchema,
   formatBookingSelectionBlockedMessage,
   formatGenerateItineraryBlockedMessage,
@@ -71,7 +75,20 @@ export const selectBookingsTool = createTool({
     "Set the user's selected flight and/or hotel on the Book tab, or request the canvas confirmation modal before generating a full itinerary. For make-it-real / full-itinerary requests: pass suggestGenerateItinerary: true + canvasReadiness (counts AND selectedFlightId/selectedHotelId from synced canvas state). Omit top-level selectedFlightId/selectedHotelId unless the user explicitly asks you to pick a specific booking.",
   inputSchema: selectBookingsInputSchema,
   outputSchema: selectBookingsOutputSchema,
-  execute: async (inputData) => {
+  execute: async (inputData, context) => {
+    const latestUserMessage: string | null = getLatestUserMessageText(
+      context?.agent?.messages ?? [],
+    );
+
+    if (
+      latestUserMessage &&
+      isCanvasItineraryConfirmMessage(latestUserMessage)
+    ) {
+      throw new Error(
+        "User already confirmed on the canvas. Call generateItineraryTool now — do not call selectBookingsTool.",
+      );
+    }
+
     const selectedFlightId: string | null = inputData.selectedFlightId ?? null;
     const selectedHotelId: string | null = inputData.selectedHotelId ?? null;
     const wantsGenerate: boolean = inputData.suggestGenerateItinerary ?? false;
