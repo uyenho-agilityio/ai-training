@@ -409,7 +409,18 @@ const TravelCanvasComponent = (): ReactElement => {
           return;
         }
 
-        setCoAgentStateRef.current(workingMemory);
+        setCoAgentStateRef.current(
+          (previous: TripCanvasState | undefined): TripCanvasState => {
+            const resolved: TripCanvasState = previous ?? INITIAL_TRIP_STATE;
+            const { activeTab: _savedTab, ...restoredState } = workingMemory;
+
+            return {
+              ...resolved,
+              ...restoredState,
+              activeTab: resolved.activeTab,
+            };
+          },
+        );
       } catch {
         // If hydration fails, keep the current in-memory state.
       }

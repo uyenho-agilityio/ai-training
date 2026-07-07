@@ -233,7 +233,7 @@ const SyncTripToolResultsComponent = ({
   );
 
   const applyTripBookingsResult = useCallback(
-    (result: unknown): boolean => {
+    (result: unknown, shouldUpdateUi: boolean): boolean => {
       const parsed = parseToolResult<TripBookingsToolResult>(result);
 
       if (!parsed) {
@@ -252,7 +252,7 @@ const SyncTripToolResultsComponent = ({
       }
 
       applyToolPatch(setToolPatch, {
-        activeTab: "book",
+        ...(shouldUpdateUi ? { activeTab: "book" as const } : {}),
         ...(flights.length ? { flights } : {}),
         ...(hotels.length ? { hotels } : {}),
       });
@@ -263,7 +263,7 @@ const SyncTripToolResultsComponent = ({
   );
 
   const applyFlightsResult = useCallback(
-    (result: unknown): boolean => {
+    (result: unknown, shouldUpdateUi: boolean): boolean => {
       const parsed = parseToolResult<FlightsToolResult>(result);
 
       if (!parsed || !Array.isArray(parsed.flights) || !parsed.flights.length) {
@@ -272,7 +272,7 @@ const SyncTripToolResultsComponent = ({
 
       applyToolPatch(setToolPatch, {
         flights: parsed.flights,
-        activeTab: "book",
+        ...(shouldUpdateUi ? { activeTab: "book" as const } : {}),
       });
 
       return true;
@@ -281,7 +281,7 @@ const SyncTripToolResultsComponent = ({
   );
 
   const applyHotelsResult = useCallback(
-    (result: unknown): boolean => {
+    (result: unknown, shouldUpdateUi: boolean): boolean => {
       const parsed = parseToolResult<HotelsToolResult>(result);
 
       if (!parsed || !Array.isArray(parsed.hotels) || !parsed.hotels.length) {
@@ -290,7 +290,7 @@ const SyncTripToolResultsComponent = ({
 
       applyToolPatch(setToolPatch, {
         hotels: parsed.hotels,
-        activeTab: "book",
+        ...(shouldUpdateUi ? { activeTab: "book" as const } : {}),
       });
 
       return true;
@@ -299,7 +299,7 @@ const SyncTripToolResultsComponent = ({
   );
 
   const applyPlacesResult = useCallback(
-    (result: unknown, shouldUpdateTitle: boolean): boolean => {
+    (result: unknown, shouldUpdateUi: boolean): boolean => {
       const parsed = parseToolResult<CheckPlacesToolResult>(result);
 
       if (!isCheckPlacesToolResult(parsed)) {
@@ -308,10 +308,10 @@ const SyncTripToolResultsComponent = ({
 
       applyToolPatch(setToolPatch, {
         places: parsed.places,
-        activeTab: "places",
+        ...(shouldUpdateUi ? { activeTab: "places" as const } : {}),
       });
 
-      if (shouldUpdateTitle) {
+      if (shouldUpdateUi) {
         notifyDestinationFromTool(parsed);
       }
 
@@ -321,7 +321,7 @@ const SyncTripToolResultsComponent = ({
   );
 
   const applySketchResult = useCallback(
-    (result: unknown, shouldUpdateTitle: boolean): boolean => {
+    (result: unknown, shouldUpdateUi: boolean): boolean => {
       const parsed = parseToolResult<TripSketchToolResult>(result);
 
       if (!isTripSketchToolResult(parsed)) {
@@ -334,11 +334,11 @@ const SyncTripToolResultsComponent = ({
         sketch: parsed.sketch,
         expandedDays,
         itineraryPhase: "sketch",
-        ...(shouldUpdateTitle ? { fullItinerary: null } : {}),
-        activeTab: "itinerary",
+        ...(shouldUpdateUi ? { fullItinerary: null } : {}),
+        ...(shouldUpdateUi ? { activeTab: "itinerary" as const } : {}),
       });
 
-      if (shouldUpdateTitle) {
+      if (shouldUpdateUi) {
         notifyDestinationFromTool(parsed);
       }
 
@@ -348,7 +348,7 @@ const SyncTripToolResultsComponent = ({
   );
 
   const applyFullItineraryResult = useCallback(
-    (result: unknown, shouldUpdateTitle: boolean): ToolApplyOutcome => {
+    (result: unknown, shouldUpdateUi: boolean): ToolApplyOutcome => {
       const parsed = parseToolResult<GenerateItineraryToolResult>(result);
 
       if (!isGenerateItineraryToolResult(parsed)) {
@@ -357,7 +357,7 @@ const SyncTripToolResultsComponent = ({
 
       // When hydrating from persisted thread history, always allow restoring full itineraries.
       // The generate-confirm modal gate only applies to live tool results.
-      if (shouldUpdateTitle && !allowFullItinerarySyncRef.current) {
+      if (shouldUpdateUi && !allowFullItinerarySyncRef.current) {
         return { applied: false, consumed: false };
       }
 
@@ -369,10 +369,10 @@ const SyncTripToolResultsComponent = ({
         fullItinerary: parsed.itinerary,
         expandedDays,
         itineraryPhase: "full",
-        activeTab: "itinerary",
+        ...(shouldUpdateUi ? { activeTab: "itinerary" as const } : {}),
       });
 
-      if (shouldUpdateTitle) {
+      if (shouldUpdateUi) {
         notifyDestinationFromTool(parsed);
       }
 
@@ -390,7 +390,7 @@ const SyncTripToolResultsComponent = ({
   );
 
   const applySelectBookingsResult = useCallback(
-    (result: unknown): boolean => {
+    (result: unknown, shouldUpdateUi: boolean): boolean => {
       const parsed = parseToolResult<SelectBookingsToolResult>(result);
 
       if (!isSelectBookingsToolResult(parsed)) {
@@ -410,7 +410,9 @@ const SyncTripToolResultsComponent = ({
       }
 
       const toolPatch: ToolDrivenCanvasPatch = {
-        ...(!isGenerateOnlyRequest ? { activeTab: "book" as const } : {}),
+        ...(!isGenerateOnlyRequest && shouldUpdateUi
+          ? { activeTab: "book" as const }
+          : {}),
         ...(!isGenerateOnlyRequest && parsed.selectedFlightId != null
           ? { selectedFlightId: parsed.selectedFlightId }
           : {}),
@@ -444,13 +446,13 @@ const SyncTripToolResultsComponent = ({
 
       switch (resolveToolSyncKind(toolName)) {
         case "tripBookings":
-          applied = applyTripBookingsResult(payload);
+          applied = applyTripBookingsResult(payload, shouldUpdateTitle);
           break;
         case "flights":
-          applied = applyFlightsResult(payload);
+          applied = applyFlightsResult(payload, shouldUpdateTitle);
           break;
         case "hotels":
-          applied = applyHotelsResult(payload);
+          applied = applyHotelsResult(payload, shouldUpdateTitle);
           break;
         case "weather":
           applied = applyWeatherResult(payload, shouldUpdateTitle);
@@ -468,7 +470,7 @@ const SyncTripToolResultsComponent = ({
           break;
         }
         case "selectBookings":
-          applied = applySelectBookingsResult(payload);
+          applied = applySelectBookingsResult(payload, shouldUpdateTitle);
           break;
         default:
           break;
