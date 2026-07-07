@@ -23,6 +23,7 @@ import type {
   HotelsToolResult,
   ToolDrivenCanvasPatch,
   CopilotMessage,
+  MastraThreadMessage,
   TripBookingsToolResult,
   TripSketchToolResult,
   CheckPlacesToolResult,
@@ -40,10 +41,14 @@ import {
   mapWeatherToolResult,
   isWeatherToolResult,
   collectToolResultMessages,
+  collectToolResultsFromMastraMessages,
+  extractDestinationLabel,
+  fetchMemoryThreadMessages,
   getToolRenderPayload,
   parseToolResult,
   resolveToolSyncKind,
 } from "@/utils";
+import { useConversationHistory } from "@/hooks";
 
 type SyncTripToolResultsProps = {
   setToolPatch: Dispatch<SetStateAction<ToolDrivenCanvasPatch>>;
@@ -119,9 +124,95 @@ const SyncTripToolResultsComponent = ({
   onRegisterSyncAgentToolMessages,
 }: SyncTripToolResultsProps): null => {
   const syncedPayloadKeysRef = useRef<Set<string>>(new Set());
+  const { activeConversationId, setConversationLocationTitle } =
+    useConversationHistory();
+
+  const toMastraMessageText = useCallback(
+    (message: MastraThreadMessage): string => {
+      const content: unknown = message.content;
+
+      if (typeof content === "string") {
+        return content.trim();
+      }
+
+      if (!content || typeof content !== "object" || Array.isArray(content)) {
+        return "";
+      }
+
+      const parts = (
+        content as { parts?: Array<{ type?: string; text?: string }> }
+      ).parts;
+
+      if (!Array.isArray(parts)) {
+        return "";
+      }
+
+      return parts
+        .filter(
+          (part: { type?: string; text?: string }) =>
+            part.type === "text" && typeof part.text === "string",
+        )
+        .map((part: { text?: string }) => part.text?.trim() ?? "")
+        .filter(Boolean)
+        .join(" ");
+    },
+    [],
+  );
+
+  const toCopilotMessagesFromMastra = useCallback(
+    (messages: readonly MastraThreadMessage[]): CopilotMessage[] => {
+      const mapped: CopilotMessage[] = [];
+
+      const sorted = [...messages].sort(
+        (left: MastraThreadMessage, right: MastraThreadMessage): number => {
+          const leftTime: number = left.createdAt
+            ? Date.parse(left.createdAt)
+            : 0;
+          const rightTime: number = right.createdAt
+            ? Date.parse(right.createdAt)
+            : 0;
+          return leftTime - rightTime;
+        },
+      );
+
+      for (const message of sorted) {
+        const roleRaw: string = String(message.role ?? "").toLowerCase();
+        const role: string =
+          roleRaw === "user" || roleRaw === "assistant" || roleRaw === "tool"
+            ? roleRaw
+            : "assistant";
+
+        const text: string = toMastraMessageText(message);
+
+        if (!text) {
+          continue;
+        }
+
+        mapped.push({
+          id: message.id ?? crypto.randomUUID(),
+          role,
+          content: text,
+        } as unknown as CopilotMessage);
+      }
+
+      return mapped;
+    },
+    [toMastraMessageText],
+  );
+
+  const notifyDestinationFromTool = useCallback(
+    (result: unknown): void => {
+      const destination = extractDestinationLabel(result);
+
+      if (destination) {
+        setConversationLocationTitle(activeConversationId, destination);
+      }
+    },
+    [activeConversationId, setConversationLocationTitle],
+  );
 
   const applyWeatherResult = useCallback(
-    (result: unknown): boolean => {
+    (result: unknown, shouldUpdateTitle: boolean): boolean => {
       const parsed = parseToolResult<WeatherToolResult>(result);
 
       if (!isWeatherToolResult(parsed)) {
@@ -132,9 +223,13 @@ const SyncTripToolResultsComponent = ({
 
       applyToolPatch(setToolPatch, { weather });
 
+      if (shouldUpdateTitle) {
+        notifyDestinationFromTool(parsed);
+      }
+
       return true;
     },
-    [setToolPatch],
+    [notifyDestinationFromTool, setToolPatch],
   );
 
   const applyTripBookingsResult = useCallback(
@@ -204,7 +299,7 @@ const SyncTripToolResultsComponent = ({
   );
 
   const applyPlacesResult = useCallback(
-    (result: unknown): boolean => {
+    (result: unknown, shouldUpdateTitle: boolean): boolean => {
       const parsed = parseToolResult<CheckPlacesToolResult>(result);
 
       if (!isCheckPlacesToolResult(parsed)) {
@@ -216,13 +311,17 @@ const SyncTripToolResultsComponent = ({
         activeTab: "places",
       });
 
+      if (shouldUpdateTitle) {
+        notifyDestinationFromTool(parsed);
+      }
+
       return true;
     },
-    [setToolPatch],
+    [notifyDestinationFromTool, setToolPatch],
   );
 
   const applySketchResult = useCallback(
-    (result: unknown): boolean => {
+    (result: unknown, shouldUpdateTitle: boolean): boolean => {
       const parsed = parseToolResult<TripSketchToolResult>(result);
 
       if (!isTripSketchToolResult(parsed)) {
@@ -235,24 +334,30 @@ const SyncTripToolResultsComponent = ({
         sketch: parsed.sketch,
         expandedDays,
         itineraryPhase: "sketch",
-        fullItinerary: null,
+        ...(shouldUpdateTitle ? { fullItinerary: null } : {}),
         activeTab: "itinerary",
       });
 
+      if (shouldUpdateTitle) {
+        notifyDestinationFromTool(parsed);
+      }
+
       return true;
     },
-    [setToolPatch],
+    [notifyDestinationFromTool, setToolPatch],
   );
 
   const applyFullItineraryResult = useCallback(
-    (result: unknown): ToolApplyOutcome => {
+    (result: unknown, shouldUpdateTitle: boolean): ToolApplyOutcome => {
       const parsed = parseToolResult<GenerateItineraryToolResult>(result);
 
       if (!isGenerateItineraryToolResult(parsed)) {
         return { applied: false, consumed: false };
       }
 
-      if (!allowFullItinerarySyncRef.current) {
+      // When hydrating from persisted thread history, always allow restoring full itineraries.
+      // The generate-confirm modal gate only applies to live tool results.
+      if (shouldUpdateTitle && !allowFullItinerarySyncRef.current) {
         return { applied: false, consumed: false };
       }
 
@@ -267,12 +372,21 @@ const SyncTripToolResultsComponent = ({
         activeTab: "itinerary",
       });
 
+      if (shouldUpdateTitle) {
+        notifyDestinationFromTool(parsed);
+      }
+
       allowFullItinerarySyncRef.current = false;
       fullItineraryAppliedRef.current = true;
 
       return { applied: true, consumed: true };
     },
-    [allowFullItinerarySyncRef, fullItineraryAppliedRef, setToolPatch],
+    [
+      allowFullItinerarySyncRef,
+      fullItineraryAppliedRef,
+      notifyDestinationFromTool,
+      setToolPatch,
+    ],
   );
 
   const applySelectBookingsResult = useCallback(
@@ -314,7 +428,11 @@ const SyncTripToolResultsComponent = ({
   );
 
   const syncToolPayload = useCallback(
-    (toolName: string, payload: unknown) => {
+    (
+      toolName: string,
+      payload: unknown,
+      shouldUpdateTitle: boolean = false,
+    ) => {
       const payloadKey = `${toolName}:${JSON.stringify(payload)}`;
 
       if (syncedPayloadKeysRef.current.has(payloadKey)) {
@@ -335,16 +453,16 @@ const SyncTripToolResultsComponent = ({
           applied = applyHotelsResult(payload);
           break;
         case "weather":
-          applied = applyWeatherResult(payload);
+          applied = applyWeatherResult(payload, shouldUpdateTitle);
           break;
         case "places":
-          applied = applyPlacesResult(payload);
+          applied = applyPlacesResult(payload, shouldUpdateTitle);
           break;
         case "sketch":
-          applied = applySketchResult(payload);
+          applied = applySketchResult(payload, shouldUpdateTitle);
           break;
         case "fullItinerary": {
-          const outcome = applyFullItineraryResult(payload);
+          const outcome = applyFullItineraryResult(payload, shouldUpdateTitle);
           applied = outcome.applied;
           consumed = outcome.consumed;
           break;
@@ -386,7 +504,7 @@ const SyncTripToolResultsComponent = ({
       }
 
       queueMicrotask(() => {
-        syncToolPayload(toolName, payload);
+        syncToolPayload(toolName, payload, true);
       });
 
       return <></>;
@@ -401,12 +519,27 @@ const SyncTripToolResultsComponent = ({
   });
 
   const { agent } = useAgent({ agentId: copilotAgent });
+  const lastSyncedMessagesRef = useRef<string>("");
 
-  /** v2 agent stream — not legacy useCopilotMessagesContext (stays empty in agent mode). */
+  /** v2 agent stream — only sync live messages for the active thread. */
   const syncAgentToolMessages = useCallback((): void => {
+    if (agent.threadId !== activeConversationId) {
+      return;
+    }
+
     if (!agent.messages.length) {
       return;
     }
+
+    const messageFingerprint = agent.messages
+      .map((message) => message.id)
+      .join("|");
+
+    if (messageFingerprint === lastSyncedMessagesRef.current) {
+      return;
+    }
+
+    lastSyncedMessagesRef.current = messageFingerprint;
 
     const toolResults = collectToolResultMessages(
       agent.messages as CopilotMessage[],
@@ -415,7 +548,76 @@ const SyncTripToolResultsComponent = ({
     for (const { toolName, payload } of toolResults) {
       syncToolPayload(toolName, payload);
     }
-  }, [agent.messages, syncToolPayload]);
+  }, [activeConversationId, agent.messages, agent.threadId, syncToolPayload]);
+
+  /** Restore canvas from persisted Mastra messages when switching threads. */
+  useEffect(() => {
+    let cancelled = false;
+
+    syncedPayloadKeysRef.current.clear();
+    lastSyncedMessagesRef.current = "";
+
+    const hydrateCanvasFromThread = async (): Promise<void> => {
+      try {
+        const messages = await fetchMemoryThreadMessages(activeConversationId);
+
+        if (cancelled) {
+          return;
+        }
+
+        const toolResults = collectToolResultsFromMastraMessages(messages);
+        const chatMessages = toCopilotMessagesFromMastra(messages);
+
+        if (typeof agent.setMessages === "function") {
+          try {
+            type AgentSetMessages = typeof agent.setMessages;
+            type AgentMessagesArg = AgentSetMessages extends (
+              arg: infer Arg,
+            ) => unknown
+              ? Arg
+              : never;
+
+            const nextMessages: AgentMessagesArg =
+              chatMessages as unknown as AgentMessagesArg;
+
+            agent.setMessages(nextMessages);
+          } catch {
+            // ignore hydrate failures
+          }
+        }
+
+        for (const { toolName, payload } of toolResults) {
+          const kind = resolveToolSyncKind(toolName);
+
+          // Full itinerary should be restorable when switching threads.
+          // The generate-confirm modal gate only applies to live tool runs.
+          if (kind === "fullItinerary") {
+            allowFullItinerarySyncRef.current = true;
+          }
+
+          syncToolPayload(toolName, payload, false);
+        }
+
+        lastSyncedMessagesRef.current = agent.messages
+          .map((message) => message.id)
+          .join("|");
+      } catch {
+        // ignore hydrate failures
+      }
+    };
+
+    hydrateCanvasFromThread();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    activeConversationId,
+    agent,
+    allowFullItinerarySyncRef,
+    syncToolPayload,
+    toCopilotMessagesFromMastra,
+  ]);
 
   useEffect(() => {
     onRegisterSyncAgentToolMessages?.(syncAgentToolMessages);
@@ -426,6 +628,7 @@ const SyncTripToolResultsComponent = ({
       return;
     }
 
+    lastSyncedMessagesRef.current = "";
     syncAgentToolMessages();
   }, [fullItineraryResyncNonce, syncAgentToolMessages]);
 
@@ -436,10 +639,6 @@ const SyncTripToolResultsComponent = ({
 
     clearSuggestGenerateSelectBookingsCache(syncedPayloadKeysRef.current);
   }, [suggestGenerateResyncNonce]);
-
-  useEffect(() => {
-    syncAgentToolMessages();
-  }, [syncAgentToolMessages]);
 
   useEffect(() => {
     const subscription = agent.subscribe({

@@ -1,25 +1,16 @@
-import type { ConversationSummary } from "@/types";
+import { copilotAgent, copilotRuntimeUrl } from "./copilot";
 
-export const MOCK_CONVERSATIONS: ConversationSummary[] = [
-  {
-    id: "conv-tokyo-5d",
-    title: "Tokyo · 5 days",
-    preview: "Find flights and hotels near Shibuya for April.",
-    updatedAt: Date.now() - 60 * 60 * 1000,
-  },
-  {
-    id: "conv-paris-weekend",
-    title: "Paris weekend",
-    preview: "Romantic dinner spots and a Louvre day trip.",
-    updatedAt: Date.now() - 24 * 60 * 60 * 1000,
-  },
-  {
-    id: "conv-bali-family",
-    title: "Bali family trip",
-    preview: "Kid-friendly beaches and villa with pool.",
-    updatedAt: Date.now() - 3 * 24 * 60 * 60 * 1000,
-  },
-];
+const mastraServerOrigin = copilotRuntimeUrl.replace(/\/chat\/?$/, "");
 
-export const NEW_CONVERSATION_TITLE = "New trip";
+export const mastraApiUrl = `${mastraServerOrigin}/api`;
+
+export const MEMORY_AGENT_ID = copilotAgent;
+export const MEMORY_RESOURCE_ID = copilotAgent;
+
+export const ACTIVE_THREAD_STORAGE_KEY = "travel-planner-active-thread-id";
+
+export const DEFAULT_CONVERSATION_TITLE = "New trip";
 export const NEW_CONVERSATION_PREVIEW = "No messages yet";
+
+export const CONVERSATION_LIST_PAGE_SIZE = 50;
+export const CONVERSATION_PREVIEW_FETCH_LIMIT = 20;

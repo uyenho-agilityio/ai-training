@@ -29,16 +29,25 @@ const DisplayOnlyChatContext =
 
 type DisplayOnlyChatProviderProps = {
   children: ReactNode;
+  threadId: string;
 };
+
+type DisplayOnlyChatStore = Record<string, DisplayOnlyChatMessage[]>;
+
+const EMPTY_DISPLAY_MESSAGES: DisplayOnlyChatMessage[] = [];
 
 export const getDisplayInsertIndex = (
   agentMessages: ReadonlyArray<unknown>,
 ): number => agentMessages.length;
 
+/** Canvas-only user bubbles stored per Mastra thread (not in agent memory). */
 export const DisplayOnlyChatProvider = ({
   children,
+  threadId,
 }: DisplayOnlyChatProviderProps): ReactElement => {
-  const [messages, setMessages] = useState<DisplayOnlyChatMessage[]>([]);
+  const [store, setStore] = useState<DisplayOnlyChatStore>({});
+
+  const messages = store[threadId] ?? EMPTY_DISPLAY_MESSAGES;
 
   const appendDisplayOnlyMessage = useCallback(
     (text: string, insertAfterMessageCount: number): void => {
@@ -48,14 +57,23 @@ export const DisplayOnlyChatProvider = ({
         return;
       }
 
-      setMessages(
-        (previous: DisplayOnlyChatMessage[]): DisplayOnlyChatMessage[] => [
-          ...previous,
-          { id: crypto.randomUUID(), text: trimmed, insertAfterMessageCount },
-        ],
-      );
+      setStore((current: DisplayOnlyChatStore): DisplayOnlyChatStore => {
+        const threadMessages = current[threadId] ?? [];
+
+        return {
+          ...current,
+          [threadId]: [
+            ...threadMessages,
+            {
+              id: crypto.randomUUID(),
+              text: trimmed,
+              insertAfterMessageCount,
+            },
+          ],
+        };
+      });
     },
-    [],
+    [threadId],
   );
 
   const value = useMemo(

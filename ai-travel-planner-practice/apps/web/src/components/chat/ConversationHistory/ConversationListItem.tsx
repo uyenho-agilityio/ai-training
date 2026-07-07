@@ -10,7 +10,7 @@ import { Button } from "../../commons";
 type ConversationListItemProps = {
   conversation: ConversationSummary;
   isActive: boolean;
-  canDelete: boolean;
+  isDeleting: boolean;
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
 };
@@ -18,7 +18,7 @@ type ConversationListItemProps = {
 const ConversationListItemComponent = ({
   conversation,
   isActive,
-  canDelete,
+  isDeleting,
   onSelect,
   onDelete,
 }: ConversationListItemProps): ReactElement => {
@@ -31,7 +31,7 @@ const ConversationListItemComponent = ({
       event.stopPropagation();
       onDelete(conversation.id);
     },
-    [conversation.id, onDelete]
+    [conversation.id, onDelete],
   );
 
   return (
@@ -40,7 +40,7 @@ const ConversationListItemComponent = ({
         "group flex w-full items-start gap-2 rounded-lg p-0.5 text-left transition-colors",
         isActive
           ? "bg-orange-50 ring-1 ring-orange-200"
-          : "hover:bg-orange-50/70"
+          : "hover:bg-orange-50/70",
       )}
       role="presentation"
     >
@@ -56,7 +56,7 @@ const ConversationListItemComponent = ({
           <p
             className={cn(
               "truncate text-sm font-medium",
-              isActive ? "text-orange-900" : "text-stone-800"
+              isActive ? "text-orange-900" : "text-stone-800",
             )}
           >
             {conversation.title}
@@ -75,17 +75,16 @@ const ConversationListItemComponent = ({
         </p>
       </Button>
 
-      {canDelete && (
-        <Button
-          variant="secondary"
-          size="xs"
-          onClick={handleDelete}
-          aria-label={`Delete ${conversation.title}`}
-          className="mt-1 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-500"
-        >
-          <CloseIcon className="text-xs" />
-        </Button>
-      )}
+      <Button
+        variant="secondary"
+        size="xs"
+        disabled={isDeleting}
+        onClick={handleDelete}
+        aria-label={`Delete ${conversation.title}`}
+        className="mt-1 shrink-0 text-stone-400 hover:text-red-500"
+      >
+        <CloseIcon className="text-xs" />
+      </Button>
     </div>
   );
 };

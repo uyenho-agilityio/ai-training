@@ -50,9 +50,12 @@ import {
   registerTravelCanvasBridge,
   resolveBookingSelectionIds,
   togglePlaceStar,
+  updateMemoryThreadWorkingMemory,
+  parseWorkingMemoryFromMetadata,
+  fetchMemoryThread,
 } from "@/utils";
 import { CANVAS_TABS } from "@/constants";
-import { useRunAgentMessage } from "@/hooks";
+import { useConversationHistory, useRunAgentMessage } from "@/hooks";
 import { WeatherCard } from "../WeatherCard";
 import { BookSection } from "./BookSection";
 import { ItinerarySection } from "./ItinerarySection";
@@ -73,6 +76,7 @@ const TOOL_PATCH_MIRROR_KEYS = [
 ] as const satisfies ReadonlyArray<keyof ToolDrivenCanvasPatch>;
 
 const TravelCanvasComponent = (): ReactElement => {
+  const { activeConversationId } = useConversationHistory();
   const {
     state,
     setState,
@@ -81,6 +85,12 @@ const TravelCanvasComponent = (): ReactElement => {
     name: copilotAgent,
     initialState: INITIAL_TRIP_STATE,
   });
+
+  const setCoAgentStateRef = useRef<typeof setState>(setState);
+
+  useEffect((): void => {
+    setCoAgentStateRef.current = setState;
+  }, [setState]);
 
   const { appendUserChatMessage, runAgentMessage } = useRunAgentMessage();
 
@@ -97,7 +107,7 @@ const TravelCanvasComponent = (): ReactElement => {
   const fullItineraryAppliedRef = useRef<boolean>(false);
   const generateConfirmSourceRef = useRef<"chat" | "button">("button");
   /** False after modal cancel — blocks stale agent sync from reopening until user retries. */
-  const allowNextGenerateConfirmRef = useRef<boolean>(true);
+  const allowNextGenerateConfirmRef = useRef<boolean>(false);
   /** Ref mirror of isConfirmOpen — avoids stale bridge closures in chat input. */
   const isConfirmOpenRef = useRef<boolean>(false);
   /** True from make-it-real / modal open until user confirms or cancels. */
@@ -117,6 +127,27 @@ const TravelCanvasComponent = (): ReactElement => {
       setIsGeneratePending(false);
     }
   }, [isAgentRunning]);
+
+  /** Block generate-confirm modal from stale co-agent memory or replayed tool results on load. */
+  useEffect(() => {
+    allowNextGenerateConfirmRef.current = false;
+    generateConfirmPendingRef.current = false;
+    setToolPatch(
+      (previous: ToolDrivenCanvasPatch): ToolDrivenCanvasPatch =>
+        previous.isGenerateConfirm
+          ? { ...previous, isGenerateConfirm: false }
+          : previous,
+    );
+    setCoAgentStateRef.current(
+      (previous: TripCanvasState | undefined): TripCanvasState => {
+        if (!previous?.isGenerateConfirm) {
+          return previous ?? INITIAL_TRIP_STATE;
+        }
+
+        return { ...previous, isGenerateConfirm: false };
+      },
+    );
+  }, []);
 
   const canvasState = useMemo(
     (): TripCanvasState => mergeCanvasState(state, toolPatch),
@@ -213,15 +244,12 @@ const TravelCanvasComponent = (): ReactElement => {
     return `Add ${missingLabels.join(", ")} to generate your full itinerary.`;
   }, [itineraryReadiness]);
 
-  const patchState = useCallback(
-    (patch: Partial<TripCanvasState>) => {
-      setState((prev: TripCanvasState | undefined) => ({
-        ...(prev ?? INITIAL_TRIP_STATE),
-        ...patch,
-      }));
-    },
-    [setState],
-  );
+  const patchState = useCallback((patch: Partial<TripCanvasState>) => {
+    setCoAgentStateRef.current((prev: TripCanvasState | undefined) => ({
+      ...(prev ?? INITIAL_TRIP_STATE),
+      ...patch,
+    }));
+  }, []);
 
   const patchCanvasState = useCallback(
     (patch: Partial<TripCanvasState>) => {
@@ -273,8 +301,9 @@ const TravelCanvasComponent = (): ReactElement => {
         return prev;
       }
 
-      const { activeTab: _removed, ...rest } = prev;
-      return rest;
+      const next: ToolDrivenCanvasPatch = { ...prev };
+      delete next.activeTab;
+      return next;
     });
   }, []);
 
@@ -363,6 +392,68 @@ const TravelCanvasComponent = (): ReactElement => {
     },
     [patchCanvasState, selectedHotelId],
   );
+
+  /**
+   * Hydrate co-agent state from Mastra thread workingMemory.
+   * This avoids any window/localStorage dependency and persists across devices.
+   */
+  useEffect(() => {
+    let didCancel = false;
+
+    const hydrateWorkingMemory = async (): Promise<void> => {
+      try {
+        const thread = await fetchMemoryThread(activeConversationId);
+        const workingMemory = parseWorkingMemoryFromMetadata(thread.metadata);
+
+        if (didCancel || !workingMemory) {
+          return;
+        }
+
+        setCoAgentStateRef.current(workingMemory);
+      } catch {
+        // If hydration fails, keep the current in-memory state.
+      }
+    };
+
+    hydrateWorkingMemory();
+
+    return (): void => {
+      didCancel = true;
+    };
+  }, [activeConversationId]);
+
+  /**
+   * Persist the booking selections to Mastra thread metadata.
+   * Debounced to avoid hammering the memory API during fast UI updates.
+   */
+  useEffect(() => {
+    const timeoutMs: number = 400;
+
+    const timeoutId: ReturnType<typeof setTimeout> = setTimeout(() => {
+      const persist = async (): Promise<void> => {
+        try {
+          const nextWorkingMemory: TripCanvasState = {
+            ...(state ?? INITIAL_TRIP_STATE),
+            selectedFlightId,
+            selectedHotelId,
+          };
+
+          await updateMemoryThreadWorkingMemory(
+            activeConversationId,
+            nextWorkingMemory,
+          );
+        } catch {
+          // Ignore persistence failures; selection will still work in-session.
+        }
+      };
+
+      persist();
+    }, timeoutMs);
+
+    return (): void => {
+      clearTimeout(timeoutId);
+    };
+  }, [activeConversationId, selectedFlightId, selectedHotelId, state]);
 
   const handleEditBookings = useCallback(() => {
     navigateToTab("book");
@@ -547,7 +638,7 @@ const TravelCanvasComponent = (): ReactElement => {
       isGenerateConfirmPending: (): boolean =>
         generateConfirmPendingRef.current,
       confirmGenerateItineraryModalFromChat: (): void => {
-        void handleConfirmGenerateItinerary();
+        handleConfirmGenerateItinerary();
       },
       reopenGenerateItineraryConfirm: (): boolean =>
         handleReopenGenerateItineraryConfirm(),

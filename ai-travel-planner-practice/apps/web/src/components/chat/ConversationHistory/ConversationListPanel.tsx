@@ -27,6 +27,7 @@ const ConversationListPanelComponent = ({
     conversations,
     activeConversationId,
     isLoading,
+    deletingConversationId,
     error,
     selectConversation,
     deleteConversation,
@@ -37,14 +38,14 @@ const ConversationListPanelComponent = ({
       selectConversation(id);
       onClose();
     },
-    [onClose, selectConversation]
+    [onClose, selectConversation],
   );
 
   const handleDelete = useCallback(
     (id: string) => {
       deleteConversation(id);
     },
-    [deleteConversation]
+    [deleteConversation],
   );
 
   const handleKeyDown = useCallback(
@@ -53,7 +54,7 @@ const ConversationListPanelComponent = ({
         onClose();
       }
     },
-    [onClose]
+    [onClose],
   );
 
   useEffect(() => {
@@ -68,7 +69,8 @@ const ConversationListPanelComponent = ({
     return null;
   }
 
-  const canDelete = conversations.length > 1;
+  const shouldShowLoadingIndicator: boolean =
+    isLoading && !conversations.length;
 
   return (
     <div
@@ -85,7 +87,7 @@ const ConversationListPanelComponent = ({
         </Text>
       )}
 
-      {isLoading && (
+      {shouldShowLoadingIndicator && (
         <LoadingIndicator size="sm" layout="inline" className="px-2 py-3" />
       )}
 
@@ -100,7 +102,7 @@ const ConversationListPanelComponent = ({
           key={conversation.id}
           conversation={conversation}
           isActive={conversation.id === activeConversationId}
-          canDelete={canDelete}
+          isDeleting={deletingConversationId === conversation.id}
           onSelect={handleSelect}
           onDelete={handleDelete}
         />

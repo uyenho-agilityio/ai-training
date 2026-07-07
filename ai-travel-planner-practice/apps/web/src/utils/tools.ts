@@ -41,7 +41,7 @@ const isToolPayload = (value: unknown): boolean => {
  * Unwrap nested CopilotKit / Mastra tool payloads until a tool result object is found.
  * Handles JSON strings, content arrays, and wrapper keys (result, output, data).
  */
-const unwrapToolResult = (payload: unknown): unknown => {
+export const unwrapToolResult = (payload: unknown): unknown => {
   if (payload === null || payload === undefined) {
     return null;
   }

@@ -14,3 +14,4 @@ export * from "./TabNav";
 export * from "./TripAccordion";
 export * from "./WeatherCard";
 export * from "./ToolConfirmation";
+export * from "./TravelAppShell";

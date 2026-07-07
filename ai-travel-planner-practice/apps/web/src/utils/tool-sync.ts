@@ -1,4 +1,4 @@
-import type { CopilotMessage } from "@/types";
+import type { CopilotMessage, MastraThreadMessage } from "@/types";
 
 type ToolResultMessage = {
   toolName: string;
@@ -79,6 +79,56 @@ export const collectToolResultMessages = (
       }
 
       results.push({ toolName, payload: toolMessage.content });
+    }
+  }
+
+  return results;
+};
+
+type MastraToolInvocationPart = {
+  type?: string;
+  toolInvocation?: {
+    state?: string;
+    toolName?: string;
+    result?: unknown;
+  };
+};
+
+/** Collect tool name + payload pairs from Mastra memory thread messages. */
+export const collectToolResultsFromMastraMessages = (
+  messages: readonly MastraThreadMessage[],
+): ToolResultMessage[] => {
+  const results: ToolResultMessage[] = [];
+
+  for (const message of [...messages].reverse()) {
+    const content = message.content;
+
+    if (!content || typeof content !== "object" || Array.isArray(content)) {
+      continue;
+    }
+
+    const parts = (content as { parts?: MastraToolInvocationPart[] }).parts;
+
+    if (!Array.isArray(parts)) {
+      continue;
+    }
+
+    for (const part of parts) {
+      const invocation = part.toolInvocation;
+
+      if (
+        part.type !== "tool-invocation" ||
+        invocation?.state !== "result" ||
+        !invocation.toolName ||
+        invocation.result == null
+      ) {
+        continue;
+      }
+
+      results.push({
+        toolName: invocation.toolName,
+        payload: invocation.result,
+      });
     }
   }
 
