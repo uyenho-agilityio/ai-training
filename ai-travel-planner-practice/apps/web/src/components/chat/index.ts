@@ -9,3 +9,6 @@ export {
   copilotSidebarClasses,
   copilotThemeClasses,
 } from "./styles";
+export * from "./ConversationHistory/ConversationHistoryHeader";
+export * from "./ConversationHistory/ConversationListItem";
+export * from "./ConversationHistory/ConversationListPanel";
