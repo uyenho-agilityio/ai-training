@@ -4,7 +4,12 @@ import { memo, useMemo, type ReactElement } from "react";
 
 import type { MessagesProps } from "@copilotkit/react-ui";
 
-import { useDisplayOnlyChat, type DisplayOnlyChatMessage } from "@/hooks";
+import {
+  useDisplayOnlyChat,
+  useScrollToBottom,
+  type DisplayOnlyChatMessage,
+  type ScrollToBottomMessage,
+} from "@/hooks";
 import { cn } from "@/utils";
 import { userMessageBubbleClasses, userMessageRowClasses } from "../styles";
 
@@ -23,7 +28,6 @@ const renderDisplayOnlyBubble = (
   </div>
 );
 
-/** Agent thread messages interleaved with canvas-intercept user bubbles. */
 const ChatMessagesComponent = ({
   messages,
   inProgress,
@@ -136,8 +140,23 @@ const ChatMessagesComponent = ({
     sortedDisplayOnlyMessages,
   ]);
 
+  const scrollAnchorMessages = useMemo(
+    (): ScrollToBottomMessage[] => [
+      ...messages,
+      ...sortedDisplayOnlyMessages.map(
+        (): ScrollToBottomMessage => ({ role: "user" }),
+      ),
+    ],
+    [messages, sortedDisplayOnlyMessages],
+  );
+
+  const { messagesContainerRef, messagesEndRef } = useScrollToBottom(
+    scrollAnchorMessages,
+    { inProgress },
+  );
+
   return (
-    <div className="copilotKitMessages">
+    <div className="copilotKitMessages" ref={messagesContainerRef}>
       <div className="copilotKitMessagesContainer">
         {interleavedMessages}
 
@@ -150,7 +169,9 @@ const ChatMessagesComponent = ({
         ) : null}
       </div>
 
-      <footer className="copilotKitMessagesFooter">{children}</footer>
+      <footer className="copilotKitMessagesFooter" ref={messagesEndRef}>
+        {children}
+      </footer>
     </div>
   );
 };
