@@ -25,10 +25,18 @@ const hotelResultSchema = bookingItemSchema.extend({
 export const searchTripBookingsTool = createTool({
   id: "search-trip-bookings",
   description:
-    "ONLY when the user explicitly wants flights AND hotels together in one request. Never use for hotels-only or flights-only. Returns both sections on the Book tab; empty arrays when a search finds nothing.",
+    "ONLY when the user explicitly wants flights AND hotels together in one request. Never use for hotels-only or flights-only. Call only after the user provided check-in/check-out dates and departure city — ask first if missing. Returns both sections on the Book tab.",
   inputSchema: z.object({
-    origin: z.string().describe("Departure airport IATA code (e.g. SGN)"),
-    destination: z.string().describe("Arrival airport IATA code (e.g. DAD)"),
+    origin: z
+      .string()
+      .describe(
+        "Departure airport IATA — only after user stated where they fly from; ask if missing",
+      ),
+    destination: z
+      .string()
+      .describe(
+        "Arrival airport IATA for the current trip stay city — resolve from city name; must match hotel location",
+      ),
     departureDate: z
       .string()
       .describe(
@@ -43,12 +51,12 @@ export const searchTripBookingsTool = createTool({
     checkIn: z
       .string()
       .describe(
-        "Hotel check-in date in YYYY-MM-DD (infer year when user omits it)",
+        "Hotel check-in YYYY-MM-DD — must come from user; ask if missing",
       ),
     checkOut: z
       .string()
       .describe(
-        "Hotel check-out date in YYYY-MM-DD (infer year when user omits it)",
+        "Hotel check-out YYYY-MM-DD — must come from user; may derive from checkIn + sketch.days.length only when user gave check-in",
       ),
     returnDate: z
       .string()

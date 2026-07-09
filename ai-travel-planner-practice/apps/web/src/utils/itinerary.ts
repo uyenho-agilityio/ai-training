@@ -3,6 +3,7 @@ import {
   isGenerateItineraryChatIntent,
   isRetryChatMessage,
 } from "./travel";
+import type { AuthoritativeTripContext } from "./booking";
 
 type TravelCanvasBridgeHandlers = {
   isGenerateItineraryReady: () => boolean;
@@ -13,6 +14,7 @@ type TravelCanvasBridgeHandlers = {
   confirmGenerateItineraryModalFromChat: () => void;
   reopenGenerateItineraryConfirm: () => boolean;
   stopActiveAgentRun: () => void;
+  getAuthoritativeTripContext: () => AuthoritativeTripContext;
 };
 
 let bridgeHandlers: TravelCanvasBridgeHandlers | null = null;
@@ -53,6 +55,21 @@ export const tryReopenGenerateItineraryConfirm = (): boolean =>
 /** Reset canvas pending UI immediately after the user stops an agent run. */
 export const stopActiveAgentRun = (): void => {
   bridgeHandlers?.stopActiveAgentRun();
+};
+
+/** Canvas trip length/destination the agent must treat as authoritative after stop. */
+export const getAuthoritativeTripContext = (): AuthoritativeTripContext => {
+  if (!bridgeHandlers) {
+    return {
+      tripDays: 0,
+      destination: "",
+      sketchTitle: "",
+      sketch: null,
+      places: [],
+    };
+  }
+
+  return bridgeHandlers.getAuthoritativeTripContext();
 };
 
 /**

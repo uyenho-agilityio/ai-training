@@ -15,14 +15,21 @@ import type { InputProps } from "@copilotkit/react-ui";
 import { useChatContext } from "@copilotkit/react-ui";
 
 import { copilotAgent, PLANNING_IN_PROGRESS_MESSAGE } from "@/constants";
-import { useRunAgentMessage } from "@/hooks";
-import { SendArrowIcon } from "@/icons";
 import {
   isGenerateItineraryChatIntent,
   isRetryChatMessage,
   tryConsumeGenerateItineraryFromChat,
   tryHandleGenerateConfirmChatIntent,
+  buildBookingPrerequisitesUserPrompt,
+  clearBookingPrerequisitesPending,
+  getBookingSearchMissingPrerequisites,
+  getFollowUpBookingMissingPrerequisites,
+  getAuthoritativeTripContext,
+  isBookingPrerequisitesPending,
+  markBookingPrerequisitesPending,
 } from "@/utils";
+import { useRunAgentMessage } from "@/hooks";
+import { SendArrowIcon } from "@/icons";
 import { Button, Text } from "../../commons";
 import { TypingIndicator } from "../TypingIndicator";
 import { chatInputContainerClasses, chatInputTextareaClasses } from "../styles";
@@ -69,6 +76,31 @@ const ChatInputComponent = ({
 
     const trimmed: string = text.trim();
 
+    const appendBookingPrerequisitesPrompt = (
+      userMessage: string,
+      missing: ReturnType<typeof getBookingSearchMissingPrerequisites>,
+    ): void => {
+      const tripContext = getAuthoritativeTripContext();
+
+      agent.addMessage({
+        id: crypto.randomUUID(),
+        role: "user",
+        content: userMessage,
+      });
+
+      agent.addMessage({
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: buildBookingPrerequisitesUserPrompt(
+          missing,
+          tripContext.destination,
+        ),
+      });
+
+      setText("");
+      textareaRef.current?.focus();
+    };
+
     if (tryHandleGenerateConfirmChatIntent(trimmed)) {
       appendCanvasChatOnlyUserMessage(trimmed);
       setText("");
@@ -94,10 +126,42 @@ const ChatInputComponent = ({
       return;
     }
 
+    if (isBookingPrerequisitesPending()) {
+      const followUpMissing = getFollowUpBookingMissingPrerequisites(
+        trimmed,
+        agent.messages,
+      );
+
+      if (followUpMissing.length > 0) {
+        appendBookingPrerequisitesPrompt(trimmed, followUpMissing);
+        return;
+      }
+
+      clearBookingPrerequisitesPending();
+
+      onSend(trimmed);
+      setText("");
+      textareaRef.current?.focus();
+      return;
+    }
+
+    const missingPrerequisites = getBookingSearchMissingPrerequisites(
+      trimmed,
+      agent.messages,
+    );
+
+    if (missingPrerequisites.length > 0) {
+      markBookingPrerequisitesPending(missingPrerequisites);
+      appendBookingPrerequisitesPrompt(trimmed, missingPrerequisites);
+      return;
+    }
+
     onSend(trimmed);
     setText("");
     textareaRef.current?.focus();
   }, [
+    agent,
+    agent.messages,
     appendCanvasChatOnlyUserMessage,
     canStop,
     chatReady,

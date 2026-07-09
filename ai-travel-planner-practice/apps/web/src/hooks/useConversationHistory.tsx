@@ -26,6 +26,7 @@ import {
   fetchConversationSummaries,
   formatLocationTripTitle,
   updateMemoryThreadTitle,
+  clearBookingPrerequisitesPending,
 } from "@/utils";
 
 const ConversationHistoryContext =
@@ -55,6 +56,10 @@ const ConversationHistoryProviderComponent = ({
   const [error, setError] = useState<string | null>(null);
 
   const activeConversationId = threadId;
+
+  useEffect(() => {
+    clearBookingPrerequisitesPending();
+  }, [activeConversationId]);
 
   useEffect(() => {
     setConversations(initialConversations);

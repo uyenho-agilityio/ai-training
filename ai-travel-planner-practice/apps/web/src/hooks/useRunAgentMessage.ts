@@ -4,7 +4,11 @@ import { useCallback } from "react";
 import { useAgent, useCopilotKit } from "@copilotkit/react-core/v2";
 
 import { copilotAgent } from "@/constants";
-import { stopActiveAgentRun } from "@/utils";
+import {
+  buildAgentStoppedMessage,
+  getAuthoritativeTripContext,
+  stopActiveAgentRun,
+} from "@/utils";
 
 import {
   getDisplayInsertIndex,
@@ -92,7 +96,24 @@ export const useRunAgentMessage = (): UseRunAgentMessageReturn => {
     }
 
     stopActiveAgentRun();
-  }, [agent, copilotkit]);
+
+    const tripContext = getAuthoritativeTripContext();
+
+    if (tripContext.sketch && tripContext.tripDays > 0) {
+      agent.setState({
+        ...agent.state,
+        sketch: tripContext.sketch,
+        places: tripContext.places,
+      });
+    }
+
+    appendUserChatMessage(
+      buildAgentStoppedMessage({
+        tripDays: tripContext.tripDays,
+        destination: tripContext.destination,
+      }),
+    );
+  }, [agent, appendUserChatMessage, copilotkit]);
 
   return {
     appendUserChatMessage,

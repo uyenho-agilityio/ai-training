@@ -17,6 +17,13 @@ export const CANVAS_DECLINED_PREFIX: string = "__canvas_declined__:";
 /** User messages shown in chat but excluded from agent context (e.g. intercepted make-it-real). */
 export const CANVAS_CHAT_ONLY_PREFIX: string = "__canvas_chat_only__:";
 
+/** Hidden user message after the user stops an in-flight agent run. */
+export const AGENT_STOPPED_PREFIX: string = "__agent_stopped__:";
+
+/** Hidden gate message when booking search lacks dates or departure city. */
+export const BOOKING_PREREQUISITES_PREFIX: string =
+  "__booking_prerequisites__:";
+
 export const SKETCH_FROM_STARRED_USER_MESSAGE: string =
   "Sketch from my starred places on the canvas.";
 

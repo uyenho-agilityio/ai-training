@@ -208,7 +208,7 @@ const searchHotelsViaSerpApi = async (input: {
 export const searchHotelsTool = createTool({
   id: "search-hotels",
   description:
-    "ONLY for hotels-only requests. Call when the user wants hotels/accommodation/stays and does NOT also ask for flights. Do not ask for flight origin. Never use for flights-only or combined flights+hotels requests. Uses Google Hotels via SerpAPI.",
+    "ONLY for hotels-only requests. Call only after the user provided check-in and check-out dates — ask first if missing. Do not ask for flight origin. Never use for flights-only or combined flights+hotels requests.",
   inputSchema: z.object({
     location: z
       .string()
@@ -218,12 +218,12 @@ export const searchHotelsTool = createTool({
     checkIn: z
       .string()
       .describe(
-        "Check-in date in YYYY-MM-DD (infer year from current date when user omits it)",
+        "Check-in date YYYY-MM-DD — must come from user; ask if missing",
       ),
     checkOut: z
       .string()
       .describe(
-        "Check-out date in YYYY-MM-DD (infer year from current date when user omits it)",
+        "Check-out date YYYY-MM-DD — must come from user; may derive from checkIn + sketch.days.length only when user gave check-in",
       ),
     adults: z
       .number()

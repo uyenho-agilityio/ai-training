@@ -53,6 +53,7 @@ import {
   updateMemoryThreadWorkingMemory,
   parseWorkingMemoryFromMetadata,
   fetchMemoryThread,
+  extractDestinationFromSketch,
 } from "@/utils";
 import { CANVAS_TABS } from "@/constants";
 import { useConversationHistory, useRunAgentMessage } from "@/hooks";
@@ -646,7 +647,7 @@ const TravelCanvasComponent = (): ReactElement => {
         };
       },
     );
-  }, []);
+  }, [itineraryPhase, places.length, sketch?.days?.length, sketch?.title]);
 
   useEffect(() => {
     registerTravelCanvasBridge({
@@ -678,6 +679,13 @@ const TravelCanvasComponent = (): ReactElement => {
       stopActiveAgentRun: (): void => {
         handleStopActiveAgentRun();
       },
+      getAuthoritativeTripContext: () => ({
+        tripDays: sketch?.days?.length ?? 0,
+        destination: extractDestinationFromSketch(sketch),
+        sketchTitle: sketch?.title ?? "",
+        sketch: sketch ?? null,
+        places,
+      }),
     });
 
     return (): void => {
@@ -690,6 +698,8 @@ const TravelCanvasComponent = (): ReactElement => {
     handleReopenGenerateItineraryConfirm,
     handleStopActiveAgentRun,
     itineraryReadiness.isReady,
+    places,
+    sketch,
   ]);
 
   const generateConfirmMessage = useMemo((): string => {

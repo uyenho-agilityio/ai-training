@@ -163,22 +163,22 @@ const searchFlightsViaSerpApi = async (input: {
 export const searchFlightsTool = createTool({
   id: "search-flights",
   description:
-    "ONLY for flights-only requests. Call when the user wants flights/airfare/tickets and does NOT also ask for hotels. Never use for hotels-only or combined flights+hotels requests. Uses Google Flights via SerpAPI.",
+    "ONLY for flights-only requests. Call only after the user provided departure city, travel date(s), and the trip destination — ask first if any are missing. Never use for hotels-only or combined flights+hotels requests.",
   inputSchema: z.object({
     origin: z
       .string()
       .describe(
-        "Departure airport IATA code (e.g. SGN) or Google Flights location id",
+        "Departure airport IATA — only after user stated where they fly from; ask if missing",
       ),
     destination: z
       .string()
       .describe(
-        "Arrival airport IATA code (e.g. DAD) or Google Flights location id",
+        "Arrival airport IATA for the current trip stay city — resolve from city name using geographic knowledge",
       ),
     departureDate: z
       .string()
       .describe(
-        "Outbound travel date in YYYY-MM-DD (infer year from current date when user omits it)",
+        "Outbound travel date YYYY-MM-DD — must come from user; ask if missing",
       ),
     returnDate: z
       .string()
