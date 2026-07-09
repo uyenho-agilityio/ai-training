@@ -15,6 +15,7 @@ export const checkPlacesTool = createTool({
 
     return {
       destination,
+      appendToExisting: inputData.appendToExisting === true,
       places,
     };
   },

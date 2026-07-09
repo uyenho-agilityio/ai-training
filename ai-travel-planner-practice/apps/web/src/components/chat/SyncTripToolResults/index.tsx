@@ -27,6 +27,7 @@ import type {
   TripBookingsToolResult,
   TripSketchToolResult,
   CheckPlacesToolResult,
+  PlaceBrief,
   GenerateItineraryToolResult,
   SelectBookingsToolResult,
   WeatherToolResult,
@@ -45,6 +46,7 @@ import {
   extractDestinationLabel,
   fetchMemoryThreadMessages,
   getToolRenderPayload,
+  mergePlaces,
   parseToolResult,
   resolveToolSyncKind,
 } from "@/utils";
@@ -124,6 +126,7 @@ const SyncTripToolResultsComponent = ({
   onRegisterSyncAgentToolMessages,
 }: SyncTripToolResultsProps): null => {
   const syncedPayloadKeysRef = useRef<Set<string>>(new Set());
+  const { agent } = useAgent({ agentId: copilotAgent });
   const { activeConversationId, setConversationLocationTitle } =
     useConversationHistory();
 
@@ -306,9 +309,19 @@ const SyncTripToolResultsComponent = ({
         return false;
       }
 
-      applyToolPatch(setToolPatch, {
-        places: parsed.places,
-        ...(shouldUpdateUi ? { activeTab: "places" as const } : {}),
+      setToolPatch((prev: ToolDrivenCanvasPatch) => {
+        const agentState = agent.state as { places?: PlaceBrief[] };
+        const existingPlaces: PlaceBrief[] =
+          prev.places ?? agentState.places ?? [];
+        const nextPlaces: PlaceBrief[] = parsed.appendToExisting
+          ? mergePlaces(existingPlaces, parsed.places)
+          : parsed.places;
+
+        return {
+          ...prev,
+          places: nextPlaces,
+          ...(shouldUpdateUi ? { activeTab: "places" as const } : {}),
+        };
       });
 
       if (shouldUpdateUi) {
@@ -317,7 +330,7 @@ const SyncTripToolResultsComponent = ({
 
       return true;
     },
-    [notifyDestinationFromTool, setToolPatch],
+    [agent, notifyDestinationFromTool, setToolPatch],
   );
 
   const applySketchResult = useCallback(
@@ -520,7 +533,6 @@ const SyncTripToolResultsComponent = ({
     render: handleWildcardToolRender,
   });
 
-  const { agent } = useAgent({ agentId: copilotAgent });
   const lastSyncedMessagesRef = useRef<string>("");
 
   /** v2 agent stream — only sync live messages for the active thread. */

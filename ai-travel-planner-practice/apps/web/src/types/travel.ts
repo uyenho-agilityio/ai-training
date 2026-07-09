@@ -132,6 +132,7 @@ export type TripBookingsToolResult = FlightsToolResult & HotelsToolResult;
 
 export interface CheckPlacesToolResult {
   destination: string;
+  appendToExisting?: boolean;
   places: PlaceBrief[];
 }
 

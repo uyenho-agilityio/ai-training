@@ -5,6 +5,7 @@ import {
   CANVAS_CHAT_ONLY_PREFIX,
   CANVAS_CONFIRM_PREFIX,
   CANVAS_DECLINED_PREFIX,
+  AGENT_STOPPED_PREFIX,
   TOOL_NAME_PATTERNS,
 } from "@/constants";
 import type {
@@ -23,6 +24,10 @@ import type {
   TextMessagePart,
 } from "@/types";
 import { matchesToolName } from "./tools";
+import {
+  isHiddenAgentStoppedChatMessage,
+  isHiddenBookingPrerequisitesChatMessage,
+} from "./booking";
 
 /** Tool-synced value wins when present; otherwise fall back to co-agent state. */
 const pickSynced = <T>(
@@ -61,6 +66,39 @@ export const dismissPlace = (places: PlaceBrief[], id: string): PlaceBrief[] =>
   places?.map((place: PlaceBrief) =>
     place.id === id ? { ...place, status: "dismissed" } : place,
   );
+
+const normalizePlaceKey = (place: PlaceBrief): string =>
+  place.id.trim().toLowerCase() || place.title.trim().toLowerCase();
+
+/** Merge new place cards onto the canvas list without dropping existing entries. */
+export const mergePlaces = (
+  existing: PlaceBrief[],
+  incoming: PlaceBrief[],
+): PlaceBrief[] => {
+  const merged: PlaceBrief[] = [...existing];
+  const keys = new Set<string>(existing.map(normalizePlaceKey));
+
+  for (const place of incoming) {
+    const key: string = normalizePlaceKey(place);
+
+    if (keys.has(key)) {
+      const index: number = merged.findIndex(
+        (item: PlaceBrief) => normalizePlaceKey(item) === key,
+      );
+
+      if (index >= 0) {
+        merged[index] = { ...merged[index], ...place, id: merged[index].id };
+      }
+
+      continue;
+    }
+
+    keys.add(key);
+    merged.push(place);
+  }
+
+  return merged;
+};
 
 /** User message for sketch-from-starred — lists starred titles only; agent reads trip length from canvas. */
 export const buildSketchFromStarredMessage = (
@@ -123,7 +161,9 @@ export const stripCanvasChatOnlyPrefix = (text: string): string => {
 /** True when the message should not render in the chat sidebar. */
 export const isHiddenCanvasChatMessage = (text: string): boolean =>
   isHiddenCanvasConfirmChatMessage(text) ||
-  isHiddenCanvasDeclinedChatMessage(text);
+  isHiddenCanvasDeclinedChatMessage(text) ||
+  isHiddenAgentStoppedChatMessage(text) ||
+  isHiddenBookingPrerequisitesChatMessage(text);
 
 /** True when text is the post-modal full-itinerary confirm (visible or hidden). */
 export const isGenerateFullItineraryConfirmMessage = (

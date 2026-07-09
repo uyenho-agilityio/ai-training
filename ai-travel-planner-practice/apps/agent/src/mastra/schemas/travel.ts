@@ -65,17 +65,24 @@ export const checkPlacesInputSchema = z.object({
     .describe(
       "User's trip length in days — required when sizing places; never assume a default",
     ),
+  appendToExisting: z
+    .boolean()
+    .optional()
+    .describe(
+      "Set true when the user asks for more/additional places. Return ONLY the new place cards; the canvas merges them onto the existing list (e.g. 6 existing + 2 new → 8 total).",
+    ),
   places: z
     .array(placeBriefSchema)
     .min(1)
     .max(36)
     .describe(
-      `Suggested places for the Places tab — length must equal suggestPlaceCount(tripDays): ${PLACE_COUNT_RULE}. Every entry must be in the destination only.`,
+      `Suggested places for the Places tab. When appendToExisting is false/omitted, length must equal suggestPlaceCount(tripDays): ${PLACE_COUNT_RULE}. When appendToExisting is true, pass only the NEW places to add (count from user request, e.g. "2 more" → 2 places). Every entry must be in the destination only.`,
     ),
 });
 
 export const checkPlacesOutputSchema = z.object({
   destination: z.string(),
+  appendToExisting: z.boolean().optional(),
   places: z.array(placeBriefSchema),
 });
 
