@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { useAgent, useCopilotKit } from "@copilotkit/react-core/v2";
 
 import { copilotAgent } from "@/constants";
+import { stopActiveAgentRun } from "@/utils";
 
 import {
   getDisplayInsertIndex,
@@ -21,6 +22,7 @@ type UseRunAgentMessageReturn = {
     content: string,
     options?: RunAgentMessageOptions,
   ) => Promise<void>;
+  stopAgentMessage: () => void;
 };
 
 export const useRunAgentMessage = (): UseRunAgentMessageReturn => {
@@ -72,9 +74,30 @@ export const useRunAgentMessage = (): UseRunAgentMessageReturn => {
     [agent, appendUserChatMessage, copilotkit],
   );
 
+  const stopAgentMessage = useCallback((): void => {
+    try {
+      copilotkit.stopAgent({ agent });
+    } catch {
+      try {
+        agent.abortRun();
+      } catch {
+        // Ignore stop failures when no active run exists.
+      }
+    }
+
+    try {
+      agent.detachActiveRun();
+    } catch {
+      // Ignore detach failures when no active run exists.
+    }
+
+    stopActiveAgentRun();
+  }, [agent, copilotkit]);
+
   return {
     appendUserChatMessage,
     appendCanvasChatOnlyUserMessage,
     runAgentMessage,
+    stopAgentMessage,
   };
 };

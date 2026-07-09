@@ -10,7 +10,7 @@ import {
   type ReactElement,
 } from "react";
 
-import { useCoAgent } from "@copilotkit/react-core";
+import { useAgent } from "@copilotkit/react-core/v2";
 import type { InputProps } from "@copilotkit/react-ui";
 import { useChatContext } from "@copilotkit/react-ui";
 
@@ -35,12 +35,20 @@ const ChatInputComponent = ({
   onStop,
 }: InputProps): ReactElement => {
   const { labels } = useChatContext();
-  const { running: isAgentRunning } = useCoAgent({ name: copilotAgent });
-  const { appendCanvasChatOnlyUserMessage } = useRunAgentMessage();
+  const { agent } = useAgent({ agentId: copilotAgent });
+  const { appendCanvasChatOnlyUserMessage, stopAgentMessage } =
+    useRunAgentMessage();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [text, setText] = useState<string>("");
   const [isComposing, setIsComposing] = useState<boolean>(false);
+  const isAgentRunning: boolean = agent.isRunning;
   const showAgentWorking: boolean = isAgentRunning && !inProgress;
+  const canStop: boolean = !hideStopButton && (inProgress || isAgentRunning);
+
+  const handleStop = useCallback((): void => {
+    onStop?.();
+    stopAgentMessage();
+  }, [onStop, stopAgentMessage]);
 
   const handleChange = useCallback(
     (event: ChangeEvent<HTMLTextAreaElement>) => {
@@ -50,12 +58,12 @@ const ChatInputComponent = ({
   );
 
   const handleSend = useCallback(() => {
-    if (inProgress && !hideStopButton) {
-      onStop?.();
+    if (canStop) {
+      handleStop();
       return;
     }
 
-    if (!chatReady || inProgress || !text.trim()) {
+    if (!chatReady || !text.trim()) {
       return;
     }
 
@@ -91,11 +99,10 @@ const ChatInputComponent = ({
     textareaRef.current?.focus();
   }, [
     appendCanvasChatOnlyUserMessage,
+    canStop,
     chatReady,
-    hideStopButton,
-    inProgress,
+    handleStop,
     onSend,
-    onStop,
     text,
   ]);
 
@@ -111,20 +118,32 @@ const ChatInputComponent = ({
     [handleSend, isComposing],
   );
 
-  const isStopping = inProgress && !hideStopButton;
-
   return (
     <div className="px-4 pb-3 pt-2">
       {showAgentWorking && (
-        <div className="mb-2">
-          <TypingIndicator />
-          <Text
-            size="xs"
-            color="muted"
-            className="mt-1 px-1 text-xs font-medium text-amber-900"
-          >
-            {PLANNING_IN_PROGRESS_MESSAGE}
-          </Text>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <TypingIndicator />
+            <Text
+              size="xs"
+              color="muted"
+              className="mt-1 px-1 text-xs font-medium text-amber-900"
+            >
+              {PLANNING_IN_PROGRESS_MESSAGE}
+            </Text>
+          </div>
+
+          {!hideStopButton && (
+            <Button
+              variant="outline"
+              size="xs"
+              className="shrink-0 border-orange-200 text-orange-700 hover:bg-orange-50"
+              aria-label="Stop agent"
+              onClick={handleStop}
+            >
+              Stop
+            </Button>
+          )}
         </div>
       )}
 
@@ -146,13 +165,11 @@ const ChatInputComponent = ({
           variant="soft"
           size="xs"
           className="h-8 w-8 shrink-0 self-center p-0"
-          aria-label={isStopping ? "Stop" : "Send message"}
-          disabled={
-            isStopping ? false : !chatReady || inProgress || !text.trim()
-          }
+          aria-label={canStop ? "Stop" : "Send message"}
+          disabled={canStop ? false : !chatReady || !text.trim()}
           onClick={handleSend}
         >
-          {isStopping ? (
+          {canStop ? (
             <span className="block h-2.5 w-2.5 rounded-sm bg-slate-700" />
           ) : (
             <SendArrowIcon className="text-orange-600" />

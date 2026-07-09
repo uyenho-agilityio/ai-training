@@ -626,6 +626,28 @@ const TravelCanvasComponent = (): ReactElement => {
     itineraryReadiness.isReady,
   ]);
 
+  /** Clear sketch/generate spinners and exit generating phase when the user stops the agent. */
+  const handleStopActiveAgentRun = useCallback((): void => {
+    setIsSketchPending(false);
+    setIsGeneratePending(false);
+    allowFullItinerarySyncRef.current = false;
+
+    setCoAgentStateRef.current(
+      (previous: TripCanvasState | undefined): TripCanvasState => {
+        const current: TripCanvasState = previous ?? INITIAL_TRIP_STATE;
+
+        if (current.itineraryPhase !== "generating") {
+          return current;
+        }
+
+        return {
+          ...current,
+          itineraryPhase: current.fullItinerary ? "full" : "sketch",
+        };
+      },
+    );
+  }, []);
+
   useEffect(() => {
     registerTravelCanvasBridge({
       isGenerateItineraryReady: (): boolean => {
@@ -653,6 +675,9 @@ const TravelCanvasComponent = (): ReactElement => {
       },
       reopenGenerateItineraryConfirm: (): boolean =>
         handleReopenGenerateItineraryConfirm(),
+      stopActiveAgentRun: (): void => {
+        handleStopActiveAgentRun();
+      },
     });
 
     return (): void => {
@@ -663,6 +688,7 @@ const TravelCanvasComponent = (): ReactElement => {
     handleConfirmGenerateItinerary,
     handleOpenGenerateItineraryConfirm,
     handleReopenGenerateItineraryConfirm,
+    handleStopActiveAgentRun,
     itineraryReadiness.isReady,
   ]);
 

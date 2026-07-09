@@ -12,6 +12,7 @@ type TravelCanvasBridgeHandlers = {
   isGenerateConfirmPending: () => boolean;
   confirmGenerateItineraryModalFromChat: () => void;
   reopenGenerateItineraryConfirm: () => boolean;
+  stopActiveAgentRun: () => void;
 };
 
 let bridgeHandlers: TravelCanvasBridgeHandlers | null = null;
@@ -48,6 +49,11 @@ export const confirmGenerateItineraryModalFromChat = (): void => {
 /** Re-open the generate-itinerary modal when the user affirms after cancel (e.g. "go"). */
 export const tryReopenGenerateItineraryConfirm = (): boolean =>
   bridgeHandlers?.reopenGenerateItineraryConfirm() ?? false;
+
+/** Reset canvas pending UI immediately after the user stops an agent run. */
+export const stopActiveAgentRun = (): void => {
+  bridgeHandlers?.stopActiveAgentRun();
+};
 
 /**
  * Handle short chat confirmations ("go", "yes") for the generate-itinerary modal.
