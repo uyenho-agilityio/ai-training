@@ -62,7 +62,7 @@ const ConversationListPanelComponent = ({
       return;
     }
 
-    panelRef.current?.focus();
+    panelRef.current?.focus({ preventScroll: true });
   }, [isOpen]);
 
   if (!isOpen) {
@@ -76,7 +76,7 @@ const ConversationListPanelComponent = ({
     <div
       ref={panelRef}
       tabIndex={-1}
-      className="absolute left-0 right-0 top-full z-50 mt-1 max-h-80 overflow-y-auto rounded-xl border border-orange-100 bg-white p-1.5 shadow-lg shadow-orange-100/60 focus:outline-none"
+      className="absolute left-0 right-0 top-full z-50 max-h-80 overflow-y-auto rounded-b-xl border border-t-0 border-orange-300 bg-white p-1.5 shadow-lg shadow-orange-100/60 focus:outline-none"
       role="listbox"
       aria-label="Conversation history"
       onKeyDown={handleKeyDown}

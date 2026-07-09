@@ -59,38 +59,42 @@ const ConversationHistoryHeaderComponent = (): ReactElement => {
       ) : null}
 
       <div className="relative z-50 flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={isBusy}
-          aria-expanded={isListOpen}
-          aria-haspopup="listbox"
-          className={cn(
-            "h-auto min-w-0 flex-1 justify-between gap-2 px-3 py-2 text-left font-semibold",
-            isListOpen
-              ? "border-orange-300 bg-orange-50"
-              : "border-orange-100 bg-orange-50/40 hover:border-orange-200 hover:bg-orange-50",
-          )}
-          onClick={handleToggleList}
-        >
-          <span className="min-w-0 flex-1 truncate text-sm text-stone-800">
-            {isBusy ? (
-              <LoadingIndicator
-                size="xs"
-                layout="inline"
-                aria-label="Loading"
-              />
-            ) : (
-              title
-            )}
-          </span>
-          <ChevronDownIcon
+        <div className="relative min-w-0 flex-1">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isBusy}
+            aria-expanded={isListOpen}
+            aria-haspopup="listbox"
             className={cn(
-              "shrink-0 text-[10px] text-orange-500 transition-transform",
-              isListOpen ? "rotate-180" : "",
+              "h-auto w-full justify-between gap-2 border px-3 py-2 text-left font-semibold shadow-none ring-0",
+              isListOpen
+                ? "rounded-b-none rounded-t-xl border-orange-300 border-b-transparent bg-orange-50 hover:bg-orange-50"
+                : "rounded-xl border-orange-100 bg-orange-50/40 hover:border-orange-200 hover:bg-orange-50",
             )}
-          />
-        </Button>
+            onClick={handleToggleList}
+          >
+            <span className="min-w-0 flex-1 truncate text-sm text-stone-800">
+              {isBusy ? (
+                <LoadingIndicator
+                  size="xs"
+                  layout="inline"
+                  aria-label="Loading"
+                />
+              ) : (
+                title
+              )}
+            </span>
+            <ChevronDownIcon
+              className={cn(
+                "shrink-0 text-[10px] text-orange-500 transition-transform",
+                isListOpen ? "rotate-180" : "",
+              )}
+            />
+          </Button>
+
+          <ConversationListPanel isOpen={isListOpen} onClose={closeList} />
+        </div>
 
         <Button
           variant="outline"
@@ -112,8 +116,6 @@ const ConversationHistoryHeaderComponent = (): ReactElement => {
           {icons.headerCloseIcon}
         </Button>
       </div>
-
-      <ConversationListPanel isOpen={isListOpen} onClose={closeList} />
     </div>
   );
 };
