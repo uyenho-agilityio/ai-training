@@ -32,3 +32,6 @@ export const PLANNING_IN_PROGRESS_MESSAGE: string =
 
 export const SKETCH_READY_ON_PLACES_MESSAGE: string =
   "Your itinerary sketch is ready — open the Itinerary tab to review it. Places stay here.";
+
+export const TOPIC_DECLINE_MESSAGE: string =
+  "I'm your travel planner — I can help with destinations, places, flights, hotels, weather, and building your itinerary on the canvas. Ask me something about your trip!";

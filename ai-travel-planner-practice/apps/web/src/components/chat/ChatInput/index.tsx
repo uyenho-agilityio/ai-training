@@ -21,11 +21,13 @@ import {
   tryConsumeGenerateItineraryFromChat,
   tryHandleGenerateConfirmChatIntent,
   buildBookingPrerequisitesUserPrompt,
+  buildTopicDeclinePrompt,
   clearBookingPrerequisitesPending,
   getBookingSearchMissingPrerequisites,
   getFollowUpBookingMissingPrerequisites,
   getAuthoritativeTripContext,
   isBookingPrerequisitesPending,
+  isTravelPlannerRelatedMessage,
   markBookingPrerequisitesPending,
 } from "@/utils";
 import { useRunAgentMessage } from "@/hooks";
@@ -153,6 +155,24 @@ const ChatInputComponent = ({
     if (missingPrerequisites.length > 0) {
       markBookingPrerequisitesPending(missingPrerequisites);
       appendBookingPrerequisitesPrompt(trimmed, missingPrerequisites);
+      return;
+    }
+
+    if (!isTravelPlannerRelatedMessage(trimmed, agent.messages)) {
+      agent.addMessage({
+        id: crypto.randomUUID(),
+        role: "user",
+        content: trimmed,
+      });
+
+      agent.addMessage({
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: buildTopicDeclinePrompt(),
+      });
+
+      setText("");
+      textareaRef.current?.focus();
       return;
     }
 

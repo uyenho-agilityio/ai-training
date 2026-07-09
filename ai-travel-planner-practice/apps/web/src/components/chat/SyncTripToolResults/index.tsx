@@ -6,7 +6,7 @@ import {
   useEffect,
   useRef,
   type Dispatch,
-  type MutableRefObject,
+  type RefObject,
   type ReactElement,
   type SetStateAction,
 } from "react";
@@ -54,13 +54,10 @@ import { useConversationHistory } from "@/hooks";
 
 type SyncTripToolResultsProps = {
   setToolPatch: Dispatch<SetStateAction<ToolDrivenCanvasPatch>>;
-  allowFullItinerarySyncRef: MutableRefObject<boolean>;
-  fullItineraryAppliedRef: MutableRefObject<boolean>;
-  /** When false, blocks suggest-generate selectBookings from reopening the modal after cancel. */
-  allowNextGenerateConfirmRef: MutableRefObject<boolean>;
-  /** Increment after modal confirm to re-sync generate-itinerary tool results. */
+  allowFullItinerarySyncRef: RefObject<boolean>;
+  fullItineraryAppliedRef: RefObject<boolean>;
+  allowNextGenerateConfirmRef: RefObject<boolean>;
   fullItineraryResyncNonce: number;
-  /** Increment when the generate modal is canceled so cached selectBookings can reopen it. */
   suggestGenerateResyncNonce: number;
   onRegisterSyncAgentToolMessages?: (sync: () => void) => void;
 };
@@ -127,6 +124,12 @@ const SyncTripToolResultsComponent = ({
 }: SyncTripToolResultsProps): null => {
   const syncedPayloadKeysRef = useRef<Set<string>>(new Set());
   const { agent } = useAgent({ agentId: copilotAgent });
+  const agentRef = useRef(agent);
+
+  useEffect((): void => {
+    agentRef.current = agent;
+  }, [agent]);
+
   const { activeConversationId, setConversationLocationTitle } =
     useConversationHistory();
 
@@ -564,7 +567,7 @@ const SyncTripToolResultsComponent = ({
     }
   }, [activeConversationId, agent.messages, agent.threadId, syncToolPayload]);
 
-  /** Restore canvas from persisted Mastra messages when switching threads. */
+  /** Restore canvas from persisted Mastra messages when switching threads only. */
   useEffect(() => {
     let cancelled = false;
 
@@ -581,10 +584,11 @@ const SyncTripToolResultsComponent = ({
 
         const toolResults = collectToolResultsFromMastraMessages(messages);
         const chatMessages = toCopilotMessagesFromMastra(messages);
+        const liveAgent = agentRef.current;
 
-        if (typeof agent.setMessages === "function") {
+        if (typeof liveAgent.setMessages === "function") {
           try {
-            type AgentSetMessages = typeof agent.setMessages;
+            type AgentSetMessages = typeof liveAgent.setMessages;
             type AgentMessagesArg = AgentSetMessages extends (
               arg: infer Arg,
             ) => unknown
@@ -594,7 +598,7 @@ const SyncTripToolResultsComponent = ({
             const nextMessages: AgentMessagesArg =
               chatMessages as unknown as AgentMessagesArg;
 
-            agent.setMessages(nextMessages);
+            liveAgent.setMessages(nextMessages);
           } catch {
             // ignore hydrate failures
           }
@@ -603,8 +607,6 @@ const SyncTripToolResultsComponent = ({
         for (const { toolName, payload } of toolResults) {
           const kind = resolveToolSyncKind(toolName);
 
-          // Full itinerary should be restorable when switching threads.
-          // The generate-confirm modal gate only applies to live tool runs.
           if (kind === "fullItinerary") {
             allowFullItinerarySyncRef.current = true;
           }
@@ -612,7 +614,7 @@ const SyncTripToolResultsComponent = ({
           syncToolPayload(toolName, payload, false);
         }
 
-        lastSyncedMessagesRef.current = agent.messages
+        lastSyncedMessagesRef.current = liveAgent.messages
           .map((message) => message.id)
           .join("|");
       } catch {
@@ -627,7 +629,6 @@ const SyncTripToolResultsComponent = ({
     };
   }, [
     activeConversationId,
-    agent,
     allowFullItinerarySyncRef,
     syncToolPayload,
     toCopilotMessagesFromMastra,

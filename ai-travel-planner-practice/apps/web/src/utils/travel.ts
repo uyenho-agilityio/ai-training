@@ -87,7 +87,11 @@ export const mergePlaces = (
       );
 
       if (index >= 0) {
-        merged[index] = { ...merged[index], ...place, id: merged[index].id };
+        const existing = merged[index];
+
+        if (existing) {
+          merged[index] = { ...existing, ...place, id: existing.id };
+        }
       }
 
       continue;
