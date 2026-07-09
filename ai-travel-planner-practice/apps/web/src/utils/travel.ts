@@ -104,6 +104,72 @@ export const mergePlaces = (
   return merged;
 };
 
+/** True when a new sketch is the next city segment of a two-city trip. */
+export const shouldMergeTripSketchSegment = (
+  existing: TripSketch,
+  segmentDestinations: readonly string[],
+  incomingDestination: string,
+): boolean => {
+  const incomingDest: string = incomingDestination.trim().toLowerCase();
+
+  if (!existing.days.length || !incomingDest) {
+    return false;
+  }
+
+  if (
+    segmentDestinations.some(
+      (destination: string) =>
+        destination.trim().toLowerCase() === incomingDest,
+    )
+  ) {
+    return false;
+  }
+
+  return segmentDestinations.length === 1;
+};
+
+/** Append a city-segment sketch onto the existing route (multi-city trips). */
+export const mergeTripSketches = (
+  base: TripSketch,
+  addition: TripSketch,
+  baseDestination: string,
+  additionDestination: string,
+): TripSketch => {
+  const mergedDays = [...base.days, ...addition.days].map((day, index) => ({
+    ...day,
+    day: index + 1,
+  }));
+  const totalDays: number = mergedDays.length;
+
+  const title: string =
+    baseDestination.trim() && additionDestination.trim()
+      ? `${totalDays} Days in ${baseDestination.trim()} & ${additionDestination.trim()}`
+      : addition.title || base.title;
+
+  const seenTips = new Set<string>();
+  const localTips: string[] = [...base.localTips, ...addition.localTips].filter(
+    (tip: string) => {
+      const key: string = tip.trim().toLowerCase();
+
+      if (!key || seenTips.has(key)) {
+        return false;
+      }
+
+      seenTips.add(key);
+
+      return true;
+    },
+  );
+
+  return {
+    title,
+    atAGlance: [base.atAGlance, addition.atAGlance].filter(Boolean).join(" "),
+    days: mergedDays,
+    localTips: localTips.length > 0 ? localTips : base.localTips,
+    isStale: false,
+  };
+};
+
 /** User message for sketch-from-starred — lists starred titles only; agent reads trip length from canvas. */
 export const buildSketchFromStarredMessage = (
   starredPlaces: PlaceBrief[],

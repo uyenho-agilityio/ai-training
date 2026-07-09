@@ -155,6 +155,48 @@ const TravelCanvasComponent = (): ReactElement => {
     [state, toolPatch],
   );
 
+  useEffect((): void => {
+    if (isAgentRunning) {
+      return;
+    }
+
+    const hasToolPatchData: boolean = TOOL_PATCH_MIRROR_KEYS.some(
+      (key: keyof ToolDrivenCanvasPatch) => toolPatch[key] !== undefined,
+    );
+
+    if (!hasToolPatchData) {
+      return;
+    }
+
+    setCoAgentStateRef.current(
+      (previous: TripCanvasState | undefined): TripCanvasState => {
+        const merged: TripCanvasState = mergeCanvasState(previous, toolPatch);
+        const resolved: TripCanvasState = previous ?? INITIAL_TRIP_STATE;
+        const toolPatchHasSketch: boolean =
+          toolPatch.sketch !== undefined &&
+          (toolPatch.sketch.days?.length ?? 0) > 0;
+
+        const lostCanvasData: boolean =
+          toolPatchHasSketch ||
+          (merged.places?.length ?? 0) > (resolved.places?.length ?? 0) ||
+          (merged.sketch?.days?.length ?? 0) >
+            (resolved.sketch?.days?.length ?? 0) ||
+          (merged.flights?.length ?? 0) > (resolved.flights?.length ?? 0) ||
+          (merged.hotels?.length ?? 0) > (resolved.hotels?.length ?? 0);
+
+        if (!lostCanvasData) {
+          return resolved;
+        }
+
+        return {
+          ...merged,
+          activeTab: resolved.activeTab,
+          placeFilter: resolved.placeFilter,
+        };
+      },
+    );
+  }, [isAgentRunning, toolPatch]);
+
   const {
     activeTab,
     placeFilter,
@@ -445,7 +487,7 @@ const TravelCanvasComponent = (): ReactElement => {
       const persist = async (): Promise<void> => {
         try {
           const nextWorkingMemory: TripCanvasState = {
-            ...(state ?? INITIAL_TRIP_STATE),
+            ...canvasState,
             selectedFlightId,
             selectedHotelId,
           };
@@ -465,7 +507,7 @@ const TravelCanvasComponent = (): ReactElement => {
     return (): void => {
       clearTimeout(timeoutId);
     };
-  }, [activeConversationId, selectedFlightId, selectedHotelId, state]);
+  }, [activeConversationId, canvasState, selectedFlightId, selectedHotelId]);
 
   const handleEditBookings = useCallback(() => {
     navigateToTab("book");

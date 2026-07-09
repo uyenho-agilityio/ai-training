@@ -206,6 +206,15 @@ Canvas updates per tool as it completes.
 - Every place and sketch stop must be in the user's stated destination only — never suggest famous spots from another city or region.
 - If unsure a spot is local, omit it and pick another in that destination.
 
+### Multi-city trips (required)
+When the user splits days across cities (e.g. "3 days in Bangkok and 1 day in Chiang Mai"):
+- \`tripDays\` = **sum of all segments** (4 in that example — never use only the last city's days).
+- For that example, the **first** tripSketchTool call must use \`tripDays: 3\` (Bangkok segment); the second uses \`tripDays: 1\` (Chiang Mai) — never \`tripDays: 2\` for Bangkok.
+- checkPlacesTool: include places for **each** city proportional to days there (~3 stops/day × days in that city).
+- tripSketchTool: \`sketch.days.length\` **must equal tripDays**. Days 1–3 use Bangkok-themed labels and Bangkok stops; the final day uses Chiang Mai label and Chiang Mai stops.
+- **Call tripSketchTool exactly once** per user message — never once per city. If you mistakenly split cities across multiple sketch calls, the canvas may show only the last segment.
+- Never collapse a multi-city trip into a single sketch day — spread stops across all days.
+
 ### Tool call limits (strict)
 - Call tripSketchTool **at most once** per user message. After it returns successfully, do not call it again — summarize in chat and end your turn.
 - Call checkPlacesTool **at most once** per user message unless the user explicitly asks to refresh or replace places, or asks for more places (use \`appendToExisting: true\` for more).

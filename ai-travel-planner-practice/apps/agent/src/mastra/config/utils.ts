@@ -168,13 +168,10 @@ export const filterSketchToStarredPlaces = (
     }))
     .filter((day) => day.stops.length > 0);
 
-  return normalizeTripSketch(
-    {
-      ...sketch,
-      days,
-    },
-    places,
-  );
+  return {
+    ...sketch,
+    days,
+  };
 };
 
 /** Drop duplicate venue names across the sketch (keep first occurrence). */
@@ -200,6 +197,97 @@ export const dedupeSketchStopNames = (sketch: TripSketch): TripSketch => {
     ...sketch,
     days,
   };
+};
+
+/** Spread clustered stops across tripDays or pad empty days so the canvas shows every day. */
+export const expandSketchToTripDays = (
+  days: TripSketch["days"],
+  targetDays: number,
+  places?: readonly PlaceBrief[],
+): TripSketch["days"] => {
+  const daysCount: number = Math.max(1, Math.round(targetDays));
+  const paddedDays: TripSketch["days"] = [];
+
+  for (let index = 0; index < daysCount; index += 1) {
+    paddedDays.push(
+      days[index] ?? {
+        day: index + 1,
+        label: "Explore",
+        stops: [],
+      },
+    );
+  }
+
+  const allStops = paddedDays.flatMap((day) => day.stops);
+  const daysWithStops: number = paddedDays.filter(
+    (day) => day.stops.length > 0,
+  ).length;
+  const maxStopsOnDay: number = Math.max(
+    ...paddedDays.map((day) => day.stops.length),
+    0,
+  );
+  const evenStopsPerDay: number =
+    allStops.length > 0 ? Math.ceil(allStops.length / daysCount) : 0;
+  const shouldRedistribute: boolean =
+    allStops.length > 0 &&
+    (daysWithStops === 1 ||
+      (daysWithStops < daysCount &&
+        maxStopsOnDay > evenStopsPerDay &&
+        daysWithStops < daysCount));
+
+  if (shouldRedistribute) {
+    const stopsPerDay: number = Math.ceil(allStops.length / daysCount);
+    const redistributed: TripSketch["days"] = [];
+    let stopIndex = 0;
+
+    for (let dayIndex = 0; dayIndex < daysCount; dayIndex += 1) {
+      const chunk = allStops.slice(stopIndex, stopIndex + stopsPerDay);
+      stopIndex += stopsPerDay;
+
+      redistributed.push({
+        day: dayIndex + 1,
+        label: paddedDays[dayIndex]?.label || "Explore",
+        stops:
+          chunk.length > 0
+            ? chunk.map((stop, index) => ({ ...stop, order: index + 1 }))
+            : [
+                {
+                  order: 1,
+                  place: "Explore the area",
+                  detail: resolveSketchStopDetail(
+                    "Explore the area",
+                    "Flexible time for local sights and meals.",
+                    places,
+                  ),
+                },
+              ],
+      });
+    }
+
+    return redistributed;
+  }
+
+  return paddedDays.map((day, index) => {
+    if (day.stops.length > 0) {
+      return { ...day, day: index + 1 };
+    }
+
+    return {
+      day: index + 1,
+      label: day.label,
+      stops: [
+        {
+          order: 1,
+          place: "Explore the area",
+          detail: resolveSketchStopDetail(
+            "Explore the area",
+            "Flexible time for local sights and meals.",
+            places,
+          ),
+        },
+      ],
+    };
+  });
 };
 
 /** Add any missing starred titles to the sketch — one stop each, spread across days. */
@@ -248,33 +336,45 @@ export const ensureAllStarredInSketch = (
     });
   }
 
-  return normalizeTripSketch(
-    {
-      ...sketch,
-      days: days.map((day, index) => ({ ...day, day: index + 1 })),
-    },
-    places,
-  );
+  return {
+    ...sketch,
+    days: days.map((day, index) => ({ ...day, day: index + 1 })),
+  };
 };
 
-/** Normalizes sketch day order, labels, fills stop details, and drops empty days. */
+/** Normalizes sketch day order, labels, fills stop details, and enforces trip length. */
 export const normalizeTripSketch = (
   sketch: TripSketch,
   places?: readonly PlaceBrief[],
+  tripDays?: number,
 ): TripSketch => {
-  const days = sketch.days
-    .map((day) => ({
-      ...day,
-      label: day.label?.trim() || "Explore",
-      stops: [...day.stops]
-        .sort((left, right) => (left.order ?? 0) - (right.order ?? 0))
-        .map((stop, index) => ({
-          ...stop,
-          order: index + 1,
-          place: stop.place.trim(),
-          detail: resolveSketchStopDetail(stop.place, stop.detail, places),
-        })),
-    }))
+  const mappedDays = sketch.days.map((day) => ({
+    ...day,
+    label: day.label?.trim() || "Explore",
+    stops: [...day.stops]
+      .sort((left, right) => (left.order ?? 0) - (right.order ?? 0))
+      .map((stop, index) => ({
+        ...stop,
+        order: index + 1,
+        place: stop.place.trim(),
+        detail: resolveSketchStopDetail(stop.place, stop.detail, places),
+      })),
+  }));
+
+  const targetDays: number | undefined =
+    tripDays !== undefined ? Math.max(1, Math.round(tripDays)) : undefined;
+
+  if (targetDays !== undefined) {
+    const expandedDays = expandSketchToTripDays(mappedDays, targetDays, places);
+
+    return {
+      ...sketch,
+      isStale: false,
+      days: expandedDays.map((day, index) => ({ ...day, day: index + 1 })),
+    };
+  }
+
+  const days = mappedDays
     .filter((day) => day.stops.length > 0)
     .map((day, index) => ({ ...day, day: index + 1 }));
 

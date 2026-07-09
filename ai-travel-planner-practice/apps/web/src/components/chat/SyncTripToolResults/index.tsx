@@ -26,6 +26,7 @@ import type {
   MastraThreadMessage,
   TripBookingsToolResult,
   TripSketchToolResult,
+  TripSketch,
   CheckPlacesToolResult,
   PlaceBrief,
   GenerateItineraryToolResult,
@@ -49,6 +50,8 @@ import {
   mergePlaces,
   parseToolResult,
   resolveToolSyncKind,
+  mergeTripSketches,
+  shouldMergeTripSketchSegment,
 } from "@/utils";
 import { useConversationHistory } from "@/hooks";
 
@@ -113,6 +116,11 @@ const clearSuggestGenerateSelectBookingsCache = (
   return removedCount;
 };
 
+type SketchSegmentState = {
+  sketch: TripSketch | null;
+  destinations: string[];
+};
+
 const SyncTripToolResultsComponent = ({
   setToolPatch,
   allowFullItinerarySyncRef,
@@ -123,6 +131,10 @@ const SyncTripToolResultsComponent = ({
   onRegisterSyncAgentToolMessages,
 }: SyncTripToolResultsProps): null => {
   const syncedPayloadKeysRef = useRef<Set<string>>(new Set());
+  const sketchSegmentRef = useRef<SketchSegmentState>({
+    sketch: null,
+    destinations: [],
+  });
   const { agent } = useAgent({ agentId: copilotAgent });
   const agentRef = useRef(agent);
 
@@ -132,6 +144,10 @@ const SyncTripToolResultsComponent = ({
 
   const { activeConversationId, setConversationLocationTitle } =
     useConversationHistory();
+
+  useEffect((): void => {
+    sketchSegmentRef.current = { sketch: null, destinations: [] };
+  }, [activeConversationId]);
 
   const toMastraMessageText = useCallback(
     (message: MastraThreadMessage): string => {
@@ -344,18 +360,55 @@ const SyncTripToolResultsComponent = ({
         return false;
       }
 
-      const expandedDays = getDefaultExpandedSketchDays(parsed.sketch);
+      let mergedSketch: TripSketch = parsed.sketch;
+      let didMerge = false;
+      const incomingDestination: string = parsed.destination.trim();
+      const segmentState = sketchSegmentRef.current;
+      const segmentSketch = segmentState.sketch;
+      const segmentDestinations = segmentState.destinations;
 
-      applyToolPatch(setToolPatch, {
-        sketch: parsed.sketch,
+      if (
+        segmentSketch &&
+        shouldMergeTripSketchSegment(
+          segmentSketch,
+          segmentDestinations,
+          incomingDestination,
+        )
+      ) {
+        const baseDestination: string =
+          segmentDestinations[0] ?? incomingDestination;
+        mergedSketch = mergeTripSketches(
+          segmentSketch,
+          parsed.sketch,
+          baseDestination,
+          incomingDestination,
+        );
+        didMerge = true;
+      }
+
+      sketchSegmentRef.current = {
+        sketch: mergedSketch,
+        destinations: didMerge
+          ? [...segmentDestinations, incomingDestination]
+          : [incomingDestination],
+      };
+
+      const expandedDays = getDefaultExpandedSketchDays(mergedSketch);
+
+      setToolPatch((prev: ToolDrivenCanvasPatch) => ({
+        ...prev,
+        sketch: mergedSketch,
         expandedDays,
         itineraryPhase: "sketch",
         ...(shouldUpdateUi ? { fullItinerary: null } : {}),
         ...(shouldUpdateUi ? { activeTab: "itinerary" as const } : {}),
-      });
+      }));
 
       if (shouldUpdateUi) {
-        notifyDestinationFromTool(parsed);
+        notifyDestinationFromTool({
+          ...parsed,
+          sketch: mergedSketch,
+        });
       }
 
       return true;
@@ -538,6 +591,25 @@ const SyncTripToolResultsComponent = ({
 
   const lastSyncedMessagesRef = useRef<string>("");
 
+  /** Reset sketch segment tracking before replaying tool history. */
+  const resetSketchSegmentReplay = useCallback((): void => {
+    sketchSegmentRef.current = { sketch: null, destinations: [] };
+
+    for (const key of [...syncedPayloadKeysRef.current]) {
+      const separatorIndex: number = key.indexOf(":");
+
+      if (separatorIndex === -1) {
+        continue;
+      }
+
+      const toolName: string = key.slice(0, separatorIndex);
+
+      if (resolveToolSyncKind(toolName) === "sketch") {
+        syncedPayloadKeysRef.current.delete(key);
+      }
+    }
+  }, []);
+
   /** v2 agent stream — only sync live messages for the active thread. */
   const syncAgentToolMessages = useCallback((): void => {
     if (agent.threadId !== activeConversationId) {
@@ -562,10 +634,18 @@ const SyncTripToolResultsComponent = ({
       agent.messages as CopilotMessage[],
     );
 
+    resetSketchSegmentReplay();
+
     for (const { toolName, payload } of toolResults) {
       syncToolPayload(toolName, payload);
     }
-  }, [activeConversationId, agent.messages, agent.threadId, syncToolPayload]);
+  }, [
+    activeConversationId,
+    agent.messages,
+    agent.threadId,
+    resetSketchSegmentReplay,
+    syncToolPayload,
+  ]);
 
   /** Restore canvas from persisted Mastra messages when switching threads only. */
   useEffect(() => {
@@ -604,6 +684,8 @@ const SyncTripToolResultsComponent = ({
           }
         }
 
+        resetSketchSegmentReplay();
+
         for (const { toolName, payload } of toolResults) {
           const kind = resolveToolSyncKind(toolName);
 
@@ -630,6 +712,7 @@ const SyncTripToolResultsComponent = ({
   }, [
     activeConversationId,
     allowFullItinerarySyncRef,
+    resetSketchSegmentReplay,
     syncToolPayload,
     toCopilotMessagesFromMastra,
   ]);
