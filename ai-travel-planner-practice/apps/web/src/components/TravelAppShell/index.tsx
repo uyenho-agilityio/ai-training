@@ -25,35 +25,22 @@ import {
   ToolConfirmation,
 } from "@/components";
 import {
-  ACTIVE_THREAD_STORAGE_KEY,
   NEW_CONVERSATION_PREVIEW,
   DEFAULT_CONVERSATION_TITLE,
-} from "@/constants/history";
+} from "@/constants";
 import { ConversationHistoryProvider, DisplayOnlyChatProvider } from "@/hooks";
-import type { ConversationSummary } from "@/types/history";
+import type { ConversationSummary } from "@/types";
 import {
   createMemoryThread,
   fetchConversationSummaries,
-} from "@/utils/history";
+  resolveBootErrorMessage,
+} from "@/utils";
 
 type BootState = {
   threadId: string;
   conversations: ConversationSummary[];
 };
 
-const readStoredThreadId = (): string | null => {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  return window.sessionStorage.getItem(ACTIVE_THREAD_STORAGE_KEY);
-};
-
-const writeStoredThreadId = (threadId: string): void => {
-  window.sessionStorage.setItem(ACTIVE_THREAD_STORAGE_KEY, threadId);
-};
-
-/** Resolves the initial Mastra thread before mounting CopilotKit with a stable threadId. */
 const TravelAppShellComponent = (): ReactElement => {
   const [bootState, setBootState] = useState<BootState | null>(null);
   const [bootError, setBootError] = useState<string | null>(null);
@@ -79,18 +66,11 @@ const TravelAppShellComponent = (): ReactElement => {
           ];
         }
 
-        const storedThreadId = readStoredThreadId();
-        const nextThreadId =
-          storedThreadId &&
-          summaries.some((summary) => summary.id === storedThreadId)
-            ? storedThreadId
-            : summaries[0]?.id;
+        const nextThreadId = summaries[0]?.id;
 
         if (!nextThreadId || cancelled) {
           return;
         }
-
-        writeStoredThreadId(nextThreadId);
 
         if (!cancelled) {
           setBootState({
@@ -103,11 +83,7 @@ const TravelAppShellComponent = (): ReactElement => {
           return;
         }
 
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Failed to load conversation history.";
-        setBootError(message);
+        setBootError(resolveBootErrorMessage(error));
       }
     };
 
@@ -127,7 +103,6 @@ const TravelAppShellComponent = (): ReactElement => {
           }
         : current,
     );
-    writeStoredThreadId(nextThreadId);
   }, []);
 
   const bootContent = useMemo((): ReactElement => {

@@ -3,19 +3,26 @@ import {
   CONVERSATION_PREVIEW_FETCH_LIMIT,
   DEFAULT_CONVERSATION_TITLE,
   MEMORY_AGENT_ID,
+  MEMORY_REQUEST_MAX_ATTEMPTS,
+  MEMORY_REQUEST_RETRY_DELAY_MS,
+  BOOT_AGENT_UNREACHABLE_MESSAGE,
+  BOOT_CONVERSATION_HISTORY_FAILED_MESSAGE,
+  MEMORY_REQUEST_RETRY_EXHAUSTED_MESSAGE,
   MEMORY_RESOURCE_ID,
   NEW_CONVERSATION_PREVIEW,
+  TRANSIENT_HTTP_STATUS_CODES,
+  TRANSIENT_NETWORK_ERROR_PATTERN,
   mastraApiUrl,
-} from "@/constants/history";
+} from "@/constants";
 import type {
   ConversationSummary,
   MastraMemoryThread,
   MastraThreadListResponse,
   MastraThreadMessage,
   MastraThreadMessagesResponse,
-} from "@/types/history";
-import type { TripCanvasState } from "@/types/travel";
-import { unwrapToolResult } from "@/utils/tools";
+} from "@/types";
+import type { TripCanvasState } from "@/types";
+import { unwrapToolResult } from "@/utils";
 
 type MemoryQueryParams = Record<string, string>;
 
@@ -24,7 +31,28 @@ const buildMemoryQuery = (params: MemoryQueryParams): string => {
   return searchParams.toString();
 };
 
-const memoryRequest = async <T>(
+const delay = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+/** True for connection errors while the Mastra dev server is still starting. */
+const isTransientMemoryFetchError = (error: unknown): boolean => {
+  if (error instanceof TypeError) {
+    return true;
+  }
+
+  if (error instanceof Error) {
+    return TRANSIENT_NETWORK_ERROR_PATTERN.test(error.message);
+  }
+
+  return false;
+};
+
+const isTransientMemoryStatus = (status: number): boolean =>
+  TRANSIENT_HTTP_STATUS_CODES.includes(status);
+
+const executeMemoryRequest = async <T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> => {
@@ -40,9 +68,15 @@ const memoryRequest = async <T>(
   const body = await response.text();
 
   if (!response.ok) {
-    throw new Error(
+    const error = new Error(
       body.trim() || `Mastra memory request failed (${response.status})`,
     );
+
+    if (isTransientMemoryStatus(response.status)) {
+      (error as Error & { transient?: boolean }).transient = true;
+    }
+
+    throw error;
   }
 
   if (response.status === 204 || body.length === 0) {
@@ -56,6 +90,52 @@ const memoryRequest = async <T>(
   }
 
   return JSON.parse(body) as T;
+};
+
+const memoryRequest = async <T>(
+  path: string,
+  init?: RequestInit,
+): Promise<T> => {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < MEMORY_REQUEST_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      return await executeMemoryRequest<T>(path, init);
+    } catch (error) {
+      lastError = error;
+
+      const isTransientStatusError =
+        error instanceof Error &&
+        (error as Error & { transient?: boolean }).transient === true;
+
+      const shouldRetry =
+        isTransientMemoryFetchError(error) || isTransientStatusError;
+
+      const isLastAttempt = attempt === MEMORY_REQUEST_MAX_ATTEMPTS - 1;
+
+      if (!shouldRetry || isLastAttempt) {
+        throw error;
+      }
+
+      await delay(MEMORY_REQUEST_RETRY_DELAY_MS);
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error(MEMORY_REQUEST_RETRY_EXHAUSTED_MESSAGE);
+};
+
+export const resolveBootErrorMessage = (error: unknown): string => {
+  if (!(error instanceof Error)) {
+    return BOOT_CONVERSATION_HISTORY_FAILED_MESSAGE;
+  }
+
+  if (TRANSIENT_NETWORK_ERROR_PATTERN.test(error.message)) {
+    return BOOT_AGENT_UNREACHABLE_MESSAGE;
+  }
+
+  return error.message;
 };
 
 const extractMessageText = (message: MastraThreadMessage): string => {
