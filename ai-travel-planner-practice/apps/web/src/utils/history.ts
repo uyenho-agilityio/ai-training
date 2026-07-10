@@ -138,16 +138,27 @@ export const resolveBootErrorMessage = (error: unknown): string => {
   return error.message;
 };
 
+type MastraMessageTextPart = { type?: string; text?: string };
+
+/** Extract plain text from Mastra memory message content (string, array, or { parts }). */
 const extractMessageText = (message: MastraThreadMessage): string => {
-  if (typeof message.content === "string") {
-    return message.content.trim();
+  const content: unknown = message.content;
+
+  if (typeof content === "string") {
+    return content.trim();
   }
 
-  if (!Array.isArray(message.content)) {
+  const parts: MastraMessageTextPart[] | undefined = Array.isArray(content)
+    ? content
+    : content && typeof content === "object" && "parts" in content
+      ? (content as { parts?: MastraMessageTextPart[] }).parts
+      : undefined;
+
+  if (!Array.isArray(parts)) {
     return "";
   }
 
-  return message.content
+  return parts
     .filter((part) => part.type === "text" && typeof part.text === "string")
     .map((part) => part.text?.trim() ?? "")
     .filter(Boolean)
@@ -403,12 +414,13 @@ const mapThreadToSummary = async (
   if (fetchPreview) {
     try {
       messages = await fetchMemoryThreadMessages(thread.id);
-      const previewMessage = [...messages]
-        .reverse()
-        .find(
-          (message) =>
-            message.role === "user" && extractMessageText(message).length > 0,
+      const previewMessage = [...messages].reverse().find((message) => {
+        const role = message.role?.toLowerCase() ?? "";
+        return (
+          (role === "user" || role === "assistant") &&
+          extractMessageText(message).length > 0
         );
+      });
 
       preview = previewMessage
         ? extractMessageText(previewMessage)

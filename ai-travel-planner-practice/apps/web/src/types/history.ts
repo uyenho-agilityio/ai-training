@@ -27,7 +27,10 @@ export type MastraThreadListResponse = {
 export type MastraThreadMessage = {
   id?: string;
   role?: string;
-  content?: string | Array<{ type?: string; text?: string }>;
+  content?:
+    | string
+    | Array<{ type?: string; text?: string }>
+    | { parts?: Array<{ type?: string; text?: string }> };
   createdAt?: string;
 };
 
