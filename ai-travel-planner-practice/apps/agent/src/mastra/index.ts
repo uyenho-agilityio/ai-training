@@ -15,7 +15,7 @@ import {
   completenessScorer,
   translationScorer,
 } from "./scorers";
-import { createStorage } from "./config";
+import { storage } from "./storage";
 
 export const mastra = new Mastra({
   workflows: { weatherWorkflow },
@@ -25,7 +25,7 @@ export const mastra = new Mastra({
     completenessScorer,
     translationScorer,
   },
-  storage: createStorage(),
+  storage,
   logger: new PinoLogger({
     name: "Mastra",
     level: "info",

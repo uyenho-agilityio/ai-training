@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "mastra dev",
-    "build": "mastra build",
+    "build": "mastra build && node scripts/fix-deploy-preflight.mjs",
     "start": "mastra start",
     "lint": "eslint src",
     "check-types": "tsc -p tsconfig.json --noEmit"
