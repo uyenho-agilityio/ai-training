@@ -84,18 +84,12 @@ const searchFlights = async (input: {
   };
 
   if (!hasSerpApiKey()) {
-    console.warn("[search-flights] No SERPAPI_API_KEY — returning mock data");
     return buildMockFlightsResult(normalizedInput);
   }
 
   try {
     return await searchFlightsViaSerpApi(normalizedInput);
   } catch (error) {
-    console.warn(
-      "[search-flights] SerpAPI failed — returning mock data",
-      error,
-    );
-
     return buildMockFlightsResult(normalizedInput);
   }
 };

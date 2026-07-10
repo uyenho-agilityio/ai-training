@@ -100,7 +100,7 @@ export const collectToolResultsFromMastraMessages = (
 ): ToolResultMessage[] => {
   const results: ToolResultMessage[] = [];
 
-  for (const message of [...messages].reverse()) {
+  for (const message of messages) {
     const content = message.content;
 
     if (!content || typeof content !== "object" || Array.isArray(content)) {

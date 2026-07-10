@@ -5,7 +5,6 @@ import {
   CANVAS_CHAT_ONLY_PREFIX,
   CANVAS_CONFIRM_PREFIX,
   CANVAS_DECLINED_PREFIX,
-  AGENT_STOPPED_PREFIX,
   TOOL_NAME_PATTERNS,
 } from "@/constants";
 import type {
@@ -15,6 +14,7 @@ import type {
   HotelData,
   PlaceBrief,
   PlaceFilter,
+  RouteStop,
   ToolDrivenCanvasPatch,
   ToolRenderPayloadSource,
   ToolSyncKind,
@@ -102,6 +102,71 @@ export const mergePlaces = (
   }
 
   return merged;
+};
+
+const GENERIC_SKETCH_STOP_PATTERN: RegExp = /^explore the area$/i;
+
+const slugifyPlaceTitle = (title: string): string =>
+  title
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "stop";
+
+const isSketchStopAlreadyOnCanvas = (
+  existing: readonly PlaceBrief[],
+  stopTitle: string,
+): boolean => {
+  const stopKey: string = stopTitle.trim().toLowerCase();
+
+  return existing.some((place: PlaceBrief) => {
+    const titleKey: string = place.title.trim().toLowerCase();
+
+    return (
+      titleKey === stopKey ||
+      normalizePlaceKey(place) === stopKey ||
+      titleKey.includes(stopKey) ||
+      stopKey.includes(titleKey)
+    );
+  });
+};
+
+/** Build a minimal starred place card from a sketch route stop. */
+export const buildPlaceBriefFromSketchStop = (stop: RouteStop): PlaceBrief => {
+  const title: string = stop.place.trim();
+  const slug: string = slugifyPlaceTitle(title);
+
+  return {
+    id: `p-${slug}`,
+    title,
+    tagline: "On your route",
+    summary: stop.detail.trim() || title,
+    status: "starred",
+  };
+};
+
+/** Add place cards for sketch stops missing from the Places tab. */
+export const mergeSketchStopsIntoPlaces = (
+  existing: PlaceBrief[],
+  sketch: TripSketch,
+): PlaceBrief[] => {
+  const incoming: PlaceBrief[] = [];
+
+  for (const stop of sketch.days.flatMap((day) => day.stops)) {
+    const title: string = stop.place.trim();
+
+    if (!title || GENERIC_SKETCH_STOP_PATTERN.test(title)) {
+      continue;
+    }
+
+    if (isSketchStopAlreadyOnCanvas(existing, title)) {
+      continue;
+    }
+
+    incoming.push(buildPlaceBriefFromSketchStop(stop));
+  }
+
+  return incoming.length > 0 ? mergePlaces(existing, incoming) : existing;
 };
 
 /** True when a new sketch is the next city segment of a two-city trip. */

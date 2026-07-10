@@ -14,6 +14,14 @@ export const buildTravelAgentInstructions = (): string => {
 - **Never write a full day-by-day itinerary, place list, or booking list as chat prose instead of calling the tool** — that leaves the canvas empty. Always call the tool; keep chat to a short summary.
 - "Plan N days in [city]…" → in the **same turn**: call checkPlacesTool, then tripSketchTool. No extra questions if destination + tripDays + interests are clear.
 
+## Trip edits
+When the user edits an existing trip (not starting from scratch), you MUST still call the tools so the canvas updates.
+- **Trip length changes** (e.g. "make it 3 days", "only 3 days", "extend to 5 days", "day 3 is too much") → in the same turn:
+  - Call checkPlacesTool to refresh the Places browse pool to match the new trip length:
+    - Replace the list (appendToExisting false/omitted) with exactly suggestPlaceCount(newTripDays) places (${PLACE_COUNT_RULE}).
+  - Then call tripSketchTool once with days.length === newTripDays using the refreshed places/starred titles.
+- Never respond with only chat text like "Updated to 3 days" — that does NOT change the UI.
+
 ## Current date
 - Today is ${todayIso}. The current year is ${currentYear}.
 
@@ -68,7 +76,7 @@ Do **not** call confirmToolAction or any booking search tool until every require
 - Read the stay city from synced canvas sketch title, places, or \`__agent_stopped__:\` authoritative destination.
 - Do not reuse airport codes from instruction examples unless the user's **current** trip is actually between those cities.
 
-## Booking prerequisite gate (__booking_prerequisites__)
+## Booking prerequisite gate
 - If the latest user message starts with \`__booking_prerequisites__:\`, the user asked to search bookings but has **not** provided required details yet.
 - Reply with **one short question** asking only for the missing fields listed in that message.
 - **Do NOT** call confirmToolAction or any booking search tool in that turn.
@@ -219,6 +227,13 @@ When the user splits days across cities (e.g. "3 days in Bangkok and 1 day in Ch
 - Call tripSketchTool **at most once** per user message. After it returns successfully, do not call it again — summarize in chat and end your turn.
 - Call checkPlacesTool **at most once** per user message unless the user explicitly asks to refresh or replace places, or asks for more places (use \`appendToExisting: true\` for more).
 - Never call the same planning tool repeatedly with similar payloads in one turn.
+
+### Trip length changes (required)
+When the user changes how many days the trip should be (e.g. "make it 5 days", "extend to 5 days", "day 3 is too much"):
+- Treat the **new** \`tripDays\` from the user message as authoritative — ignore the old \`sketch.days.length\`.
+- Call checkPlacesTool with the **full** \`suggestPlaceCount(newTripDays)\` place list (${PLACE_COUNT_RULE}) — replace the browse pool unless the user only asked to tweak pacing without new spots.
+- Then call tripSketchTool **once** with \`days.length === newTripDays\`, every starred title in \`starredPlaceTitles\`, and the same \`places\` array from checkPlacesTool.
+- Never refresh only the sketch while leaving the Places tab at the old shorter-trip count — every sketch stop must have a matching place card on the canvas.
 
 ### checkPlacesTool (check-places)
 - Call when the user wants destination ideas or a browseable place list.

@@ -80,13 +80,6 @@ const normalizeStayDates = (
   const fallbackCheckOut = new Date(fallbackCheckIn);
   fallbackCheckOut.setDate(fallbackCheckOut.getDate() + 3);
 
-  console.warn("[search-hotels] Adjusted invalid or past stay dates", {
-    checkIn,
-    checkOut,
-    fallbackCheckIn: formatDateOnly(fallbackCheckIn),
-    fallbackCheckOut: formatDateOnly(fallbackCheckOut),
-  });
-
   return {
     checkIn: formatDateOnly(fallbackCheckIn),
     checkOut: formatDateOnly(fallbackCheckOut),
@@ -150,15 +143,12 @@ const searchHotels = async (
   };
 
   if (!hasSerpApiKey()) {
-    console.warn("[search-hotels] No SERPAPI_API_KEY — returning mock data");
     return buildMockHotelsResult(normalizedInput);
   }
 
   try {
     return await searchHotelsViaSerpApi(normalizedInput);
   } catch (error) {
-    console.warn("[search-hotels] SerpAPI failed — returning mock data", error);
-
     return buildMockHotelsResult(normalizedInput);
   }
 };

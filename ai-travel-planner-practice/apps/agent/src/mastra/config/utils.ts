@@ -31,13 +31,6 @@ export const fetchSerpApi = async <T>(params: SerpApiParams): Promise<T> => {
 
   const response = await fetch(url.toString());
 
-  if (process.env.NODE_ENV !== "production") {
-    const safeParams = Object.fromEntries(
-      [...url.searchParams.entries()].filter(([key]) => key !== "api_key"),
-    );
-    console.info("[SerpAPI] request", safeParams);
-  }
-
   if (!response.ok) {
     throw new Error(`SerpAPI request failed (${response.status})`);
   }

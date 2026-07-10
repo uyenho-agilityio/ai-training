@@ -48,6 +48,7 @@ import {
   fetchMemoryThreadMessages,
   getToolRenderPayload,
   mergePlaces,
+  mergeSketchStopsIntoPlaces,
   parseToolResult,
   resolveToolSyncKind,
   mergeTripSketches,
@@ -394,15 +395,30 @@ const SyncTripToolResultsComponent = ({
       };
 
       const expandedDays = getDefaultExpandedSketchDays(mergedSketch);
+      const sketchStopCount: number = mergedSketch.days.reduce(
+        (total: number, day) => total + day.stops.length,
+        0,
+      );
 
-      setToolPatch((prev: ToolDrivenCanvasPatch) => ({
-        ...prev,
-        sketch: mergedSketch,
-        expandedDays,
-        itineraryPhase: "sketch",
-        ...(shouldUpdateUi ? { fullItinerary: null } : {}),
-        ...(shouldUpdateUi ? { activeTab: "itinerary" as const } : {}),
-      }));
+      setToolPatch((prev: ToolDrivenCanvasPatch) => {
+        const agentState = agent.state as { places?: PlaceBrief[] };
+        const existingPlaces: PlaceBrief[] =
+          prev.places ?? agentState.places ?? [];
+        const syncedPlaces: PlaceBrief[] = mergeSketchStopsIntoPlaces(
+          existingPlaces,
+          mergedSketch,
+        );
+
+        return {
+          ...prev,
+          sketch: mergedSketch,
+          places: syncedPlaces,
+          expandedDays,
+          itineraryPhase: "sketch",
+          ...(shouldUpdateUi ? { fullItinerary: null } : {}),
+          ...(shouldUpdateUi ? { activeTab: "itinerary" as const } : {}),
+        };
+      });
 
       if (shouldUpdateUi) {
         notifyDestinationFromTool({
@@ -413,7 +429,7 @@ const SyncTripToolResultsComponent = ({
 
       return true;
     },
-    [notifyDestinationFromTool, setToolPatch],
+    [agent, notifyDestinationFromTool, setToolPatch],
   );
 
   const applyFullItineraryResult = useCallback(
@@ -432,6 +448,10 @@ const SyncTripToolResultsComponent = ({
 
       const expandedDays = getDefaultExpandedFullItineraryDays(
         parsed.itinerary,
+      );
+      const itinerarySegmentCount: number = parsed.itinerary.days.reduce(
+        (total: number, day) => total + day.segments.length,
+        0,
       );
 
       applyToolPatch(setToolPatch, {
@@ -504,7 +524,12 @@ const SyncTripToolResultsComponent = ({
       payload: unknown,
       shouldUpdateTitle: boolean = false,
     ) => {
-      const payloadKey = `${toolName}:${JSON.stringify(payload)}`;
+      // Important: the same tool payload can appear in both:
+      // - thread hydration / replay (shouldUpdateTitle=false)
+      // - live tool renders (shouldUpdateTitle=true)
+      // If we dedupe only by toolName+payload, live updates can be skipped even when the user expects
+      // the canvas to refresh (e.g. "make it 3 days").
+      const payloadKey = `${shouldUpdateTitle ? "live" : "replay"}:${toolName}:${JSON.stringify(payload)}`;
 
       if (syncedPayloadKeysRef.current.has(payloadKey)) {
         return;
@@ -512,8 +537,9 @@ const SyncTripToolResultsComponent = ({
 
       let applied = false;
       let consumed = false;
+      const syncKind = resolveToolSyncKind(toolName);
 
-      switch (resolveToolSyncKind(toolName)) {
+      switch (syncKind) {
         case "tripBookings":
           applied = applyTripBookingsResult(payload, shouldUpdateTitle);
           break;
@@ -637,7 +663,9 @@ const SyncTripToolResultsComponent = ({
     resetSketchSegmentReplay();
 
     for (const { toolName, payload } of toolResults) {
-      syncToolPayload(toolName, payload);
+      // Agent messages are the live stream for the active thread, so treat them as live updates.
+      // Otherwise, replay-mode syncing can overwrite the latest live tool render state.
+      syncToolPayload(toolName, payload, true);
     }
   }, [
     activeConversationId,
