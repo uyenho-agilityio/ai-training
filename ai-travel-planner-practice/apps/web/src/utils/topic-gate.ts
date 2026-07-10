@@ -1,4 +1,8 @@
-import { TOPIC_DECLINE_MESSAGE } from "@/constants";
+import {
+  TOPIC_DECLINE_MESSAGE,
+  TRAVEL_TOPIC_PATTERN,
+  normalizeTopicText,
+} from "@/constants";
 import type { AssistantMessageContent, TextMessagePart } from "@/types";
 
 import {
@@ -13,48 +17,21 @@ import {
   isRetryChatMessage,
 } from "./travel";
 
+export { normalizeTopicText };
+
 type ChatMessageLike = {
   role?: string;
   content?: unknown;
 };
 
-/** Lowercase + strip diacritics so one pattern covers typed accents (e.g. VI → ASCII). */
-export const normalizeTopicText = (message: string): string =>
-  message.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
-
-/**
- * International travel loanwords + locale-neutral duration hints (not per-language lists).
- * Also matches original text for CJK travel terms.
- */
-const TRAVEL_PLANNER_FEATURE_PATTERN: RegExp = new RegExp(
-  String.raw`(?:` +
-    String.raw`trip|travel(?:ing|er)?|vacation|holiday|getaway|itinerar(?:y)?|destination|destinations|` +
-    String.raw`flight|flights|airfare|airline|ticket|tickets|fly(?:ing)?|` +
-    String.raw`hotel|hotels|hostel|resort|accommodation|stay|booking|bookings|reserve|reservation|` +
-    String.raw`weather|forecast|` +
-    String.raw`place|places|spot|spots|attraction|attractions|sightseeing|landmark|landmarks|` +
-    String.raw`visit|visiting|tourist|tourism|tour|explore|exploring|` +
-    String.raw`airport|passport|visa|taxi|metro|transfer|` +
-    String.raw`check-?in|check-?out|depart(?:ure)?|arrival|` +
-    String.raw`sketch|star(?:red)?|canvas|` +
-    String.raw`local tips?|day-?by-?day|route|routes|schedule|` +
-    String.raw`beach(?:es)?|food|restaurant|museum|hiking|adventure|` +
-    String.raw`plan(?:ning)?|suggest(?:ion)?s?|recommend(?:ation)?s?|` +
-    String.raw`what to (?:see|do|visit)|where to (?:go|stay|eat)|` +
-    String.raw`\d+\s*(?:days?|nights?|weeks?|ngay|jour|jours|nuits?|semaines?)` +
-    String.raw`)|` +
-    String.raw`[\u4e00-\u9fff]{2,}|` + // CJK place/activity phrases (e.g. 东京, 景点)
-    String.raw`\d+\s*[\u65e5\u5929\u665a\u5bbf]|` + // e.g. 3日, 3天
-    String.raw`[\u3040-\u30ff]{2,}|` + // Japanese kana/kanji clusters
-    String.raw`[\uac00-\ud7af]{2,}`, // Korean hangul clusters
-  "iu",
-);
-
-/** High-confidence off-topic intents (Latin / normalized ASCII only). */
+/** Language-neutral arithmetic — decline on the client without calling the agent. */
 const CLEARLY_OFF_TOPIC_PATTERN: RegExp =
-  /(?:tell me (?:a )?joke|jokes?|funny story|make me laugh|write (?:me )?(?:a )?(?:code|poem|story|essay|song)|who (?:are|is) you|what(?:'s| is) (?:your|the) purpose|solve (?:this )?math|homework|recipe for|politics|election|stock market|crypto(?:currency)?|bitcoin|translate (?:this )?(?:sentence|text)|programming help|debug (?:my )?code)/i;
+  /(?:what(?:'s|'s| is)\s+\d+\s*[+*/×÷-]\s*\d+|^\d+\s*[+*/×÷-]\s*\d+\s*[=?]?\s*$)/i;
 
 const SHORT_FOLLOW_UP_MAX_LENGTH: number = 120;
+
+const isClearlyOffTopic = (message: string): boolean =>
+  CLEARLY_OFF_TOPIC_PATTERN.test(message.trim());
 
 const isAssistantMessageContent = (
   content: unknown,
@@ -110,17 +87,15 @@ const getLastAssistantMessageText = (
   return "";
 };
 
-const isClearlyOffTopic = (normalizedMessage: string): boolean =>
-  CLEARLY_OFF_TOPIC_PATTERN.test(normalizedMessage);
+/** True when the message matches the multilingual travel-topic allowlist. */
+const hasOnTopicSignal = (message: string): boolean => {
+  const trimmed: string = message.trim();
+  const normalized: string = normalizeTopicText(trimmed);
 
-const hasTravelFeatureSignal = (message: string): boolean =>
-  TRAVEL_PLANNER_FEATURE_PATTERN.test(message) ||
-  TRAVEL_PLANNER_FEATURE_PATTERN.test(normalizeTopicText(message));
-
-const isShortTravelFollowUp = (normalizedMessage: string): boolean =>
-  normalizedMessage.length > 0 &&
-  normalizedMessage.length <= SHORT_FOLLOW_UP_MAX_LENGTH &&
-  !isClearlyOffTopic(normalizedMessage);
+  return (
+    TRAVEL_TOPIC_PATTERN.test(trimmed) || TRAVEL_TOPIC_PATTERN.test(normalized)
+  );
+};
 
 const isAssistantAwaitingReply = (
   messages: ReadonlyArray<ChatMessageLike>,
@@ -131,13 +106,13 @@ const isAssistantAwaitingReply = (
     return false;
   }
 
-  return /[?？]\s*$/.test(lastAssistantText);
+  return /[?？]/.test(lastAssistantText);
 };
 
 /**
- * True when the message should reach the travel agent or its tools.
- * Policy: block only high-confidence off-topic; allow travel signals and uncertain
- * messages so the LLM can understand any language (agent declines off-topic without tools).
+ * True when the message should reach the travel agent.
+ * Allowlist: multilingual travel keywords / tier-1 intents / in-thread follow-ups.
+ * Place names are not guessed here — the agent validates locations after the gate.
  */
 export const isTravelPlannerRelatedMessage = (
   message: string,
@@ -149,11 +124,11 @@ export const isTravelPlannerRelatedMessage = (
     return false;
   }
 
-  const normalized: string = normalizeTopicText(trimmed);
-
-  if (isClearlyOffTopic(normalized)) {
+  if (isClearlyOffTopic(trimmed)) {
     return false;
   }
+
+  const normalized: string = normalizeTopicText(trimmed);
 
   const tier1Match: boolean =
     isRetryChatMessage(trimmed) ||
@@ -167,20 +142,21 @@ export const isTravelPlannerRelatedMessage = (
     return true;
   }
 
-  if (hasTravelFeatureSignal(trimmed)) {
+  if (hasOnTopicSignal(trimmed)) {
     return true;
   }
 
   const followUpAllowed: boolean =
-    isShortTravelFollowUp(normalized) &&
+    normalized.length > 0 &&
+    normalized.length <= SHORT_FOLLOW_UP_MAX_LENGTH &&
     isAssistantAwaitingReply(agentMessages);
 
   if (followUpAllowed) {
     return true;
   }
 
-  return true;
+  return false;
 };
 
-/** Static assistant reply for clearly off-topic chat — no agent or tool calls. */
+/** Static assistant reply for off-topic chat — no agent or tool calls. */
 export const buildTopicDeclinePrompt = (): string => TOPIC_DECLINE_MESSAGE;
