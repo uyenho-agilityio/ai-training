@@ -27,3 +27,6 @@ export const BOOT_CONVERSATION_HISTORY_FAILED_MESSAGE: string =
 
 export const MEMORY_REQUEST_RETRY_EXHAUSTED_MESSAGE: string =
   "Mastra memory request failed after retries.";
+
+export const BOOT_HISTORY_DEGRADED_MESSAGE: string =
+  "Conversation history is unavailable. You can still chat, but trips will not be saved across refresh.";

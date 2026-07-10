@@ -483,6 +483,29 @@ export const createMemoryThread = async (
   });
 };
 
+type OfflineBootState = {
+  threadId: string;
+  conversations: ConversationSummary[];
+};
+
+/** Local-only boot when Mastra memory API is unreachable (chat still works). */
+export const createOfflineBootState = (): OfflineBootState => {
+  const threadId = crypto.randomUUID();
+
+  return {
+    threadId,
+    conversations: [
+      {
+        id: threadId,
+        title: DEFAULT_CONVERSATION_TITLE,
+        preview: NEW_CONVERSATION_PREVIEW,
+        updatedAt: Date.now(),
+        isNewTrip: true,
+      },
+    ],
+  };
+};
+
 /** Persist a location-based title on a Mastra memory thread. */
 export const updateMemoryThreadTitle = async (
   threadId: string,

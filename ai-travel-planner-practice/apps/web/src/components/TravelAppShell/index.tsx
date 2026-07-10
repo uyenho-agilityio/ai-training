@@ -27,13 +27,14 @@ import {
 import {
   NEW_CONVERSATION_PREVIEW,
   DEFAULT_CONVERSATION_TITLE,
+  BOOT_HISTORY_DEGRADED_MESSAGE,
 } from "@/constants";
 import { ConversationHistoryProvider, DisplayOnlyChatProvider } from "@/hooks";
 import type { ConversationSummary } from "@/types";
 import {
   createMemoryThread,
+  createOfflineBootState,
   fetchConversationSummaries,
-  resolveBootErrorMessage,
 } from "@/utils";
 
 type BootState = {
@@ -43,7 +44,9 @@ type BootState = {
 
 const TravelAppShellComponent = (): ReactElement => {
   const [bootState, setBootState] = useState<BootState | null>(null);
-  const [bootError, setBootError] = useState<string | null>(null);
+  const [bootHistoryWarning, setBootHistoryWarning] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -78,12 +81,13 @@ const TravelAppShellComponent = (): ReactElement => {
             conversations: summaries,
           });
         }
-      } catch (error) {
+      } catch {
         if (cancelled) {
           return;
         }
 
-        setBootError(resolveBootErrorMessage(error));
+        setBootHistoryWarning(BOOT_HISTORY_DEGRADED_MESSAGE);
+        setBootState(createOfflineBootState());
       }
     };
 
@@ -106,14 +110,6 @@ const TravelAppShellComponent = (): ReactElement => {
   }, []);
 
   const bootContent = useMemo((): ReactElement => {
-    if (bootError) {
-      return (
-        <div className="flex min-h-screen items-center justify-center p-6 text-sm text-red-600">
-          {bootError}
-        </div>
-      );
-    }
-
     if (!bootState) {
       return (
         <div className="flex min-h-screen items-center justify-center p-6">
@@ -138,34 +134,42 @@ const TravelAppShellComponent = (): ReactElement => {
           onThreadIdChange={handleThreadIdChange}
         >
           <DisplayOnlyChatProvider threadId={bootState.threadId}>
-            <div className="flex min-h-screen w-full flex-col sm:flex-row">
-              <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
-                <TravelCanvas key={bootState.threadId} />
-              </div>
+            <div className="flex min-h-screen w-full flex-col">
+              {bootHistoryWarning && (
+                <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-900">
+                  {bootHistoryWarning}
+                </div>
+              )}
+              <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
+                <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+                  <TravelCanvas key={bootState.threadId} />
+                </div>
 
-              <CopilotSidebar
-                key={bootState.threadId}
-                defaultOpen
-                clickOutsideToClose={false}
-                className={copilotSidebarClasses}
-                Header={ConversationHistoryHeader}
-                labels={{
-                  title: "AI Assistant",
-                  initial: "Hi! 👋 How can I help you with your travel plans?",
-                  placeholder: "Tell me about your trip...",
-                }}
-                Messages={ChatMessages}
-                UserMessage={UserMessage}
-                AssistantMessage={SystemMessage}
-                Input={ChatInput}
-              />
-              <ToolConfirmation />
+                <CopilotSidebar
+                  key={bootState.threadId}
+                  defaultOpen
+                  clickOutsideToClose={false}
+                  className={copilotSidebarClasses}
+                  Header={ConversationHistoryHeader}
+                  labels={{
+                    title: "AI Assistant",
+                    initial:
+                      "Hi! 👋 How can I help you with your travel plans?",
+                    placeholder: "Tell me about your trip...",
+                  }}
+                  Messages={ChatMessages}
+                  UserMessage={UserMessage}
+                  AssistantMessage={SystemMessage}
+                  Input={ChatInput}
+                />
+                <ToolConfirmation />
+              </div>
             </div>
           </DisplayOnlyChatProvider>
         </ConversationHistoryProvider>
       </CopilotKit>
     );
-  }, [bootError, bootState, handleThreadIdChange]);
+  }, [bootHistoryWarning, bootState, handleThreadIdChange]);
 
   return bootContent;
 };
