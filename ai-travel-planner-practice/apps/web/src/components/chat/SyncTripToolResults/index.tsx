@@ -333,9 +333,15 @@ const SyncTripToolResultsComponent = ({
         const agentState = agent.state as { places?: PlaceBrief[] };
         const existingPlaces: PlaceBrief[] =
           prev.places ?? agentState.places ?? [];
-        const nextPlaces: PlaceBrief[] = parsed.appendToExisting
-          ? mergePlaces(existingPlaces, parsed.places)
-          : parsed.places;
+        // Trip-length refreshes often REPLACE with a smaller pool and wipe
+        // places the user added via "find more". Keep the richer canvas list.
+        const wouldShrinkReplace: boolean =
+          parsed.appendToExisting !== true &&
+          existingPlaces.length > parsed.places.length;
+        const nextPlaces: PlaceBrief[] =
+          parsed.appendToExisting === true || wouldShrinkReplace
+            ? mergePlaces(existingPlaces, parsed.places)
+            : parsed.places;
 
         return {
           ...prev,

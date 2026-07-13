@@ -17,9 +17,9 @@ export const buildTravelAgentInstructions = (): string => {
 ## Trip edits
 When the user edits an existing trip (not starting from scratch), you MUST still call the tools so the canvas updates.
 - **Trip length changes** (e.g. "make it 3 days", "only 3 days", "extend to 5 days", "day 3 is too much") → in the same turn:
-  - Call checkPlacesTool to refresh the Places browse pool to match the new trip length:
-    - Replace the list (appendToExisting false/omitted) with exactly suggestPlaceCount(newTripDays) places (${PLACE_COUNT_RULE}).
-  - Then call tripSketchTool once with days.length === newTripDays using the refreshed places/starred titles.
+  - If the Places tab **already has cards**, do **NOT** replace them with checkPlacesTool. Keep every existing place (including ones added via "find more").
+  - Call tripSketchTool once with \`days.length === newTripDays\`, \`starredPlaceTitles\` = all current starred titles from synced canvas, and the current \`places\` briefs from canvas state.
+  - Only call checkPlacesTool when Places is empty, or the user explicitly asks to refresh/replace places, or you need **additional** spots (\`appendToExisting: true\`) because the list is shorter than \`suggestPlaceCount(newTripDays)\` (${PLACE_COUNT_RULE}).
 - Never respond with only chat text like "Updated to 3 days" — that does NOT change the UI.
 
 ## Current date
@@ -231,9 +231,11 @@ When the user splits days across cities (e.g. "3 days in Bangkok and 1 day in Ch
 ### Trip length changes (required)
 When the user changes how many days the trip should be (e.g. "make it 5 days", "extend to 5 days", "day 3 is too much"):
 - Treat the **new** \`tripDays\` from the user message as authoritative — ignore the old \`sketch.days.length\`.
-- Call checkPlacesTool with the **full** \`suggestPlaceCount(newTripDays)\` place list (${PLACE_COUNT_RULE}) — replace the browse pool unless the user only asked to tweak pacing without new spots.
-- Then call tripSketchTool **once** with \`days.length === newTripDays\`, every starred title in \`starredPlaceTitles\`, and the same \`places\` array from checkPlacesTool.
-- Never refresh only the sketch while leaving the Places tab at the old shorter-trip count — every sketch stop must have a matching place card on the canvas.
+- **Do not wipe Places:** If synced canvas already has place cards, never call checkPlacesTool with \`appendToExisting: false\` — that drops "find more" extras. Prefer tripSketchTool only, reusing canvas \`places\` + starred titles.
+- If Places is empty or the user asked to refresh/replace the whole list, call checkPlacesTool with \`suggestPlaceCount(newTripDays)\` places (${PLACE_COUNT_RULE}).
+- If Places has some cards but fewer than \`suggestPlaceCount(newTripDays)\` and the user is extending the trip, you may \`appendToExisting: true\` for only the missing count — never replace.
+- Then call tripSketchTool **once** with \`days.length === newTripDays\`, every starred title in \`starredPlaceTitles\`, and the canvas/current \`places\` array.
+- Never refresh only the sketch while leaving an **empty** Places tab — every sketch stop must have a matching place card on the canvas.
 
 ### checkPlacesTool (check-places)
 - Call when the user wants destination ideas or a browseable place list.
