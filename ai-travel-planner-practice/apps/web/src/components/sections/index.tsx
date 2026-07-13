@@ -114,6 +114,13 @@ const TravelCanvasComponent = (): ReactElement => {
   /** True from make-it-real / modal open until user confirms or cancels. */
   const generateConfirmPendingRef = useRef<boolean>(false);
   const syncAgentToolMessagesRef = useRef<(() => void) | null>(null);
+  /** True after first workingMemory hydrate attempt for the active thread. */
+  const hasHydratedWorkingMemoryRef = useRef<boolean>(false);
+  /** Last non-null booking picks — survives co-agent state resets during agent runs. */
+  const lastBookingSelectionRef = useRef<{
+    flightId: string | null;
+    hotelId: string | null;
+  }>({ flightId: null, hotelId: null });
 
   const handleRegisterSyncAgentToolMessages = useCallback(
     (sync: () => void): void => {
@@ -442,14 +449,31 @@ const TravelCanvasComponent = (): ReactElement => {
    */
   useEffect(() => {
     let didCancel = false;
+    hasHydratedWorkingMemoryRef.current = false;
+    lastBookingSelectionRef.current = { flightId: null, hotelId: null };
 
     const hydrateWorkingMemory = async (): Promise<void> => {
       try {
         const thread = await fetchMemoryThread(activeConversationId);
         const workingMemory = parseWorkingMemoryFromMetadata(thread.metadata);
 
-        if (didCancel || !workingMemory) {
+        if (didCancel) {
           return;
+        }
+
+        if (!workingMemory) {
+          hasHydratedWorkingMemoryRef.current = true;
+          return;
+        }
+
+        if (workingMemory.selectedFlightId) {
+          lastBookingSelectionRef.current.flightId =
+            workingMemory.selectedFlightId;
+        }
+
+        if (workingMemory.selectedHotelId) {
+          lastBookingSelectionRef.current.hotelId =
+            workingMemory.selectedHotelId;
         }
 
         setCoAgentStateRef.current(
@@ -466,6 +490,10 @@ const TravelCanvasComponent = (): ReactElement => {
         );
       } catch {
         // If hydration fails, keep the current in-memory state.
+      } finally {
+        if (!didCancel) {
+          hasHydratedWorkingMemoryRef.current = true;
+        }
       }
     };
 
@@ -481,6 +509,23 @@ const TravelCanvasComponent = (): ReactElement => {
    * Debounced to avoid hammering the memory API during fast UI updates.
    */
   useEffect(() => {
+    if (!hasHydratedWorkingMemoryRef.current) {
+      return;
+    }
+
+    const isBlankCanvas: boolean =
+      selectedFlightId == null &&
+      selectedHotelId == null &&
+      (canvasState.flights?.length ?? 0) === 0 &&
+      (canvasState.hotels?.length ?? 0) === 0 &&
+      (canvasState.places?.length ?? 0) === 0 &&
+      !canvasState.fullItinerary;
+
+    // Avoid wiping richer thread memory with the INITIAL empty canvas on boot.
+    if (isBlankCanvas) {
+      return;
+    }
+
     const timeoutMs: number = 400;
 
     const timeoutId: ReturnType<typeof setTimeout> = setTimeout(() => {
@@ -509,6 +554,58 @@ const TravelCanvasComponent = (): ReactElement => {
     };
   }, [activeConversationId, canvasState, selectedFlightId, selectedHotelId]);
 
+  /** Remember non-null booking picks so agent runs cannot lose them permanently. */
+  useEffect(() => {
+    if (selectedFlightId) {
+      lastBookingSelectionRef.current.flightId = selectedFlightId;
+    }
+
+    if (selectedHotelId) {
+      lastBookingSelectionRef.current.hotelId = selectedHotelId;
+    }
+  }, [selectedFlightId, selectedHotelId]);
+
+  /** Restore booking picks cleared when CopilotKit replaces co-agent state mid-run. */
+  useEffect(() => {
+    if (isAgentRunning) {
+      return;
+    }
+
+    const rememberedFlightId = lastBookingSelectionRef.current.flightId;
+    const rememberedHotelId = lastBookingSelectionRef.current.hotelId;
+    const nextFlightId =
+      selectedFlightId ??
+      (rememberedFlightId &&
+      flights.some((flight) => flight.id === rememberedFlightId)
+        ? rememberedFlightId
+        : null);
+    const nextHotelId =
+      selectedHotelId ??
+      (rememberedHotelId &&
+      hotels.some((hotel) => hotel.id === rememberedHotelId)
+        ? rememberedHotelId
+        : null);
+
+    if (nextFlightId === selectedFlightId && nextHotelId === selectedHotelId) {
+      return;
+    }
+
+    if (!nextFlightId && !nextHotelId) {
+      return;
+    }
+
+    patchCanvasState({
+      selectedFlightId: nextFlightId,
+      selectedHotelId: nextHotelId,
+    });
+  }, [
+    flights,
+    hotels,
+    isAgentRunning,
+    patchCanvasState,
+    selectedFlightId,
+    selectedHotelId,
+  ]);
   const handleEditBookings = useCallback(() => {
     navigateToTab("book");
   }, [navigateToTab]);
@@ -618,6 +715,11 @@ const TravelCanvasComponent = (): ReactElement => {
         });
       });
 
+      lastBookingSelectionRef.current = {
+        flightId,
+        hotelId,
+      };
+
       // Chat confirm: append hidden prefixed message to agent thread (filtered from UI).
       // Button confirm: visible message already appended above — skip duplicate.
       await runAgentMessage(
@@ -626,6 +728,12 @@ const TravelCanvasComponent = (): ReactElement => {
           appendUserMessage: !visibleInChat,
         },
       );
+
+      // Agent runs can reset co-agent state — re-apply booking picks after the run.
+      patchCanvasState({
+        selectedFlightId: flightId,
+        selectedHotelId: hotelId,
+      });
 
       allowFullItinerarySyncRef.current = true;
       syncAgentToolMessagesRef.current?.();
