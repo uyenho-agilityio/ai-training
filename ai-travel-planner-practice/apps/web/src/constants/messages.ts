@@ -24,6 +24,9 @@ export const AGENT_STOPPED_PREFIX: string = "__agent_stopped__:";
 export const BOOKING_PREREQUISITES_PREFIX: string =
   "__booking_prerequisites__:";
 
+/** Hidden user message that injects existing Places titles for append requests. */
+export const MORE_PLACES_EXCLUDE_PREFIX: string = "__more_places_exclude__:";
+
 export const SKETCH_FROM_STARRED_USER_MESSAGE: string =
   "Sketch from my starred places on the canvas.";
 

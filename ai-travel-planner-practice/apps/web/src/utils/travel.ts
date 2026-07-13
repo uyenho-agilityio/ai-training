@@ -5,6 +5,7 @@ import {
   CANVAS_CHAT_ONLY_PREFIX,
   CANVAS_CONFIRM_PREFIX,
   CANVAS_DECLINED_PREFIX,
+  MORE_PLACES_EXCLUDE_PREFIX,
   TOOL_NAME_PATTERNS,
 } from "@/constants";
 import type {
@@ -67,8 +68,24 @@ export const dismissPlace = (places: PlaceBrief[], id: string): PlaceBrief[] =>
     place.id === id ? { ...place, status: "dismissed" } : place,
   );
 
-const normalizePlaceKey = (place: PlaceBrief): string =>
-  place.id.trim().toLowerCase() || place.title.trim().toLowerCase();
+/** Fold accents so ASCII/diacritic title variants share one merge key. */
+const foldPlaceText = (value: string): string =>
+  value.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
+
+/** True when two place cards refer to the same venue (id or folded title). */
+const placesReferToSameVenue = (
+  left: PlaceBrief,
+  right: PlaceBrief,
+): boolean => {
+  const leftId: string = left.id.trim().toLowerCase();
+  const rightId: string = right.id.trim().toLowerCase();
+
+  if (leftId && rightId && leftId === rightId) {
+    return true;
+  }
+
+  return foldPlaceText(left.title) === foldPlaceText(right.title);
+};
 
 /** Merge new place cards onto the canvas list without dropping existing entries. */
 export const mergePlaces = (
@@ -76,28 +93,22 @@ export const mergePlaces = (
   incoming: PlaceBrief[],
 ): PlaceBrief[] => {
   const merged: PlaceBrief[] = [...existing];
-  const keys = new Set<string>(existing.map(normalizePlaceKey));
 
   for (const place of incoming) {
-    const key: string = normalizePlaceKey(place);
+    const index: number = merged.findIndex((item: PlaceBrief) =>
+      placesReferToSameVenue(item, place),
+    );
 
-    if (keys.has(key)) {
-      const index: number = merged.findIndex(
-        (item: PlaceBrief) => normalizePlaceKey(item) === key,
-      );
+    if (index >= 0) {
+      const current = merged[index];
 
-      if (index >= 0) {
-        const existing = merged[index];
-
-        if (existing) {
-          merged[index] = { ...existing, ...place, id: existing.id };
-        }
+      if (current) {
+        merged[index] = { ...current, ...place, id: current.id };
       }
 
       continue;
     }
 
-    keys.add(key);
     merged.push(place);
   }
 
@@ -107,9 +118,7 @@ export const mergePlaces = (
 const GENERIC_SKETCH_STOP_PATTERN: RegExp = /^explore the area$/i;
 
 const slugifyPlaceTitle = (title: string): string =>
-  title
-    .trim()
-    .toLowerCase()
+  foldPlaceText(title)
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "") || "stop";
 
@@ -117,14 +126,13 @@ const isSketchStopAlreadyOnCanvas = (
   existing: readonly PlaceBrief[],
   stopTitle: string,
 ): boolean => {
-  const stopKey: string = stopTitle.trim().toLowerCase();
+  const stopKey: string = foldPlaceText(stopTitle);
 
   return existing.some((place: PlaceBrief) => {
-    const titleKey: string = place.title.trim().toLowerCase();
+    const titleKey: string = foldPlaceText(place.title);
 
     return (
       titleKey === stopKey ||
-      normalizePlaceKey(place) === stopKey ||
       titleKey.includes(stopKey) ||
       stopKey.includes(titleKey)
     );
@@ -293,12 +301,17 @@ export const stripCanvasChatOnlyPrefix = (text: string): string => {
   return trimmed.slice(CANVAS_CHAT_ONLY_PREFIX.length).trim();
 };
 
+/** True for hidden "more places" payloads that carry excludePlaceTitles. */
+export const isHiddenMorePlacesExcludeChatMessage = (text: string): boolean =>
+  text.trim().startsWith(MORE_PLACES_EXCLUDE_PREFIX);
+
 /** True when the message should not render in the chat sidebar. */
 export const isHiddenCanvasChatMessage = (text: string): boolean =>
   isHiddenCanvasConfirmChatMessage(text) ||
   isHiddenCanvasDeclinedChatMessage(text) ||
   isHiddenAgentStoppedChatMessage(text) ||
-  isHiddenBookingPrerequisitesChatMessage(text);
+  isHiddenBookingPrerequisitesChatMessage(text) ||
+  isHiddenMorePlacesExcludeChatMessage(text);
 
 /** True when text is the post-modal full-itinerary confirm (visible or hidden). */
 export const isGenerateFullItineraryConfirmMessage = (

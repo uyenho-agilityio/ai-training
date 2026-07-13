@@ -71,12 +71,18 @@ export const checkPlacesInputSchema = z.object({
     .describe(
       "Set true when the user asks for more/additional places. Return ONLY the new place cards; the canvas merges them onto the existing list (e.g. 6 existing + 2 new → 8 total).",
     ),
+  excludePlaceTitles: z
+    .array(z.string().min(1))
+    .optional()
+    .describe(
+      "When appendToExisting is true, pass EVERY places[].title currently on the Places tab (synced canvas). New places MUST NOT match any of these titles.",
+    ),
   places: z
     .array(placeBriefSchema)
     .min(1)
     .max(36)
     .describe(
-      `Suggested places for the Places tab. When appendToExisting is false/omitted, length must equal suggestPlaceCount(tripDays): ${PLACE_COUNT_RULE}. When appendToExisting is true, pass only the NEW places to add (count from user request, e.g. "2 more" → 2 places). Every entry must be in the destination only.`,
+      `Suggested places for the Places tab. When appendToExisting is false/omitted, length must equal suggestPlaceCount(tripDays): ${PLACE_COUNT_RULE}. When appendToExisting is true, pass only the NEW places to add (count from user request, e.g. "2 more" → 2 places) — titles must not appear in excludePlaceTitles. Every entry must be in the destination only.`,
     ),
 });
 

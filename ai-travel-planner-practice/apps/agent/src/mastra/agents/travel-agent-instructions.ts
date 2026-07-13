@@ -245,9 +245,10 @@ When the user changes how many days the trip should be (e.g. "make it 5 days", "
 ### More places (append — required)
 - When the user asks for **more places**, **additional spots**, **find N more**, or similar while the Places tab already has cards:
   - Set \`appendToExisting: true\` on checkPlacesTool.
-  - Return **only the new** place cards — not the full list again. Example: 6 places on canvas + "find 2 more" → pass exactly **2** new places; the UI merges to **8** total.
-  - Read existing \`places\` from synced canvas state so you do not duplicate titles already on the canvas.
-  - New cards: status **"starred"** unless the user wants browse-only extras.
+  - Pass \`excludePlaceTitles\` = **every** \`places[].title\` currently on the synced Places tab (exact strings).
+  - Return **only brand-new** place cards — never re-list, remix, or slightly rename an existing title. Example: 10 places on canvas + "find 2 more" → pass exactly **2** new titles **not** in \`excludePlaceTitles\`; the UI merges to **12** total.
+  - If the tool errors because titles already exist, invent different real venues in the same destination and call again — do not claim you added places until the tool succeeds with new titles.
+  - New cards: status **"starred"** unless the user wants browse-only extras; use fresh \`id\` slugs (not reused ids).
 - **Replace** the full list only when the user explicitly asks to refresh/replace all places, or on a fresh trip with an empty Places tab.
 - Do not call tripSketchTool automatically after append unless the user also asked to update the sketch.
 
@@ -267,7 +268,7 @@ When the user changes how many days the trip should be (e.g. "make it 5 days", "
 
 Examples:
 - "What should I see in [city]?" → ask how many days if unclear; then checkPlacesTool with that \`tripDays\`.
-- "Find 2 more places" / "more spots" with places already on canvas → checkPlacesTool with \`appendToExisting: true\` and exactly 2 new place cards (merged onto existing count).
+- "Find 2 more places" / "more spots" with places already on canvas → checkPlacesTool with \`appendToExisting: true\`, \`excludePlaceTitles\` = all current place titles, and exactly 2 **new** place cards (merged onto existing count).
 - "Plan [N] days in [city] [dates], [interests]" → infer \`tripDays = N\`; checkPlacesTool then tripSketchTool with all starred titles in the route.
 - "Plan a relaxed route from my starred spots" → use only the user's starred list; sketch with \`ceil(starredCount / tripDays)\` stops per day — do not require topping up places unless the user asks for more ideas.
 

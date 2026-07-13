@@ -78,6 +78,8 @@ export const formatLocalDate = (date: Date): string => {
 /** Formats a place ID based on its title and index. */
 const formatPlaceId = (title: string, index: number): string => {
   const slug = title
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
@@ -94,13 +96,17 @@ export const normalizePlaces = (places: PlaceBrief[]): PlaceBrief[] =>
     status: place.status === "dismissed" ? "dismissed" : "starred",
   }));
 
+/** Fold accents so "Vân Phong Bay" matches "Van Phong Bay". */
+const foldPlaceText = (value: string): string =>
+  value.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
+
 /** Case-insensitive loose match for place titles in sketch stops. */
 export const placeNamesMatch = (
   stopPlace: string,
   starredTitle: string,
 ): boolean => {
-  const stop: string = stopPlace.toLowerCase().trim();
-  const title: string = starredTitle.toLowerCase().trim();
+  const stop: string = foldPlaceText(stopPlace);
+  const title: string = foldPlaceText(starredTitle);
 
   return stop === title || stop.includes(title) || title.includes(stop);
 };

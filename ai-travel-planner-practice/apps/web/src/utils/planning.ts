@@ -14,7 +14,7 @@ import type {
   TripSketch,
   TripSketchToolResult,
 } from "@/types";
-import { PLACE_STATUSES } from "@/constants";
+import { MORE_PLACES_EXCLUDE_PREFIX, PLACE_STATUSES } from "@/constants";
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -221,4 +221,40 @@ export const isSelectBookingsToolResult = (
   }
 
   return true;
+};
+
+/** Detect chat asks to append more place cards onto an existing Places list. */
+export const isMorePlacesRequest = (text: string): boolean => {
+  const lower: string = text.toLowerCase().trim();
+
+  return (
+    /\b(more|additional|extra)\s+(places?|spots?|attractions?|venues?)\b/.test(
+      lower,
+    ) ||
+    /\bfind\s+\d+\s+more\b/.test(lower) ||
+    /\b\d+\s+more\s+(places?|spots?|attractions?)\b/.test(lower) ||
+    /\bthêm\s+\d*\s*(địa điểm|chỗ|nơi)\b/.test(lower)
+  );
+};
+
+/**
+ * Hidden agent payload for append-places turns — carries canvas titles the tool
+ * must not reuse. Pair with a chat-only visible user message.
+ */
+export const buildMorePlacesExcludeMessage = (
+  userText: string,
+  placeTitles: readonly string[],
+): string => {
+  const titlesBlock: string = placeTitles
+    .map((title: string) => title.trim())
+    .filter((title: string) => title.length > 0)
+    .map((title: string) => `- ${title}`)
+    .join("\n");
+
+  return [
+    `${MORE_PLACES_EXCLUDE_PREFIX}${userText.trim()}`,
+    "Call checkPlacesTool with appendToExisting: true and excludePlaceTitles from EXCLUDE_TITLES below. Return ONLY brand-new places — never reuse these titles.",
+    "EXCLUDE_TITLES:",
+    titlesBlock,
+  ].join("\n");
 };

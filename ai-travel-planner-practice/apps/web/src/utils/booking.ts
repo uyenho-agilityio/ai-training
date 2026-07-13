@@ -3,6 +3,7 @@ import {
   BOOKING_PREREQUISITES_PREFIX,
   CANVAS_CONFIRM_PREFIX,
   CANVAS_DECLINED_PREFIX,
+  MORE_PLACES_EXCLUDE_PREFIX,
 } from "@/constants";
 import type { PlaceBrief, TripSketch } from "@/types";
 
@@ -181,7 +182,8 @@ const isHiddenAgentUserMessage = (text: string): boolean => {
     trimmed.startsWith(AGENT_STOPPED_PREFIX) ||
     trimmed.startsWith(BOOKING_PREREQUISITES_PREFIX) ||
     trimmed.startsWith(CANVAS_CONFIRM_PREFIX) ||
-    trimmed.startsWith(CANVAS_DECLINED_PREFIX)
+    trimmed.startsWith(CANVAS_DECLINED_PREFIX) ||
+    trimmed.startsWith(MORE_PLACES_EXCLUDE_PREFIX)
   );
 };
 

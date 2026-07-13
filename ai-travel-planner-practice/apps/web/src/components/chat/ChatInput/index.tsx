@@ -29,6 +29,8 @@ import {
   isBookingPrerequisitesPending,
   isTravelPlannerRelatedMessage,
   markBookingPrerequisitesPending,
+  isMorePlacesRequest,
+  buildMorePlacesExcludeMessage,
 } from "@/utils";
 import { useRunAgentMessage } from "@/hooks";
 import { SendArrowIcon } from "@/icons";
@@ -171,6 +173,19 @@ const ChatInputComponent = ({
         content: buildTopicDeclinePrompt(),
       });
 
+      setText("");
+      textareaRef.current?.focus();
+      return;
+    }
+
+    const tripContext = getAuthoritativeTripContext();
+    const existingPlaceTitles: string[] = tripContext.places
+      .map((place) => place.title.trim())
+      .filter((title: string) => title.length > 0);
+
+    if (isMorePlacesRequest(trimmed) && existingPlaceTitles.length > 0) {
+      appendCanvasChatOnlyUserMessage(trimmed);
+      onSend(buildMorePlacesExcludeMessage(trimmed, existingPlaceTitles));
       setText("");
       textareaRef.current?.focus();
       return;
