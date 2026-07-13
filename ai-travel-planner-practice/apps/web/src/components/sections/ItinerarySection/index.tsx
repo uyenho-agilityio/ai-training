@@ -2,6 +2,7 @@
 
 import { memo, type ReactElement } from "react";
 
+import { DotIcon } from "@/icons";
 import type {
   FlightData,
   FullItinerary,
@@ -159,9 +160,9 @@ const ItinerarySectionComponent = ({
                     as="span"
                     size="xs"
                     color="accent"
-                    className="text-orange-500"
+                    className="inline-flex shrink-0 text-orange-500"
                   >
-                    •
+                    <DotIcon size={12} />
                   </Text>
 
                   {tip}
@@ -172,9 +173,9 @@ const ItinerarySectionComponent = ({
         </>
       ) : null}
 
-      {showFullItinerary && fullItinerary ? (
+      {showFullItinerary && fullItinerary && (
         <FullItineraryBlock itinerary={fullItinerary} />
-      ) : null}
+      )}
 
       <Button
         variant="outline"

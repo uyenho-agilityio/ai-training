@@ -2,6 +2,7 @@
 
 import { memo, type ReactElement } from "react";
 
+import { HotelIcon, PlaneIcon } from "@/icons";
 import { BookingCard } from "../../BookingCard";
 import { Button, Heading, Text } from "../../commons";
 import type { FlightData, HotelData } from "@/types";
@@ -40,7 +41,6 @@ const BookSectionComponent = ({
       >
         Logistics on Itinerary
       </Button>
-      .
     </Text>
 
     <div className="space-y-3">
@@ -48,9 +48,10 @@ const BookSectionComponent = ({
         variant="h3"
         size="xs"
         color="muted"
-        className="text-sm uppercase tracking-wider"
+        className="flex items-center gap-1.5 text-sm uppercase tracking-wider"
       >
-        ✈️ Flights
+        <PlaneIcon size={14} />
+        Flights
       </Heading>
 
       {!flights?.length ? (
@@ -77,9 +78,10 @@ const BookSectionComponent = ({
         variant="h3"
         size="xs"
         color="muted"
-        className="text-sm uppercase tracking-wider"
+        className="flex items-center gap-1.5 text-sm uppercase tracking-wider"
       >
-        🏨 Hotels
+        <HotelIcon size={14} />
+        Hotels
       </Heading>
 
       {!hotels?.length ? (

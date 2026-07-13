@@ -2,6 +2,7 @@
 
 import { memo, type ReactElement } from "react";
 
+import { HotelIcon, PlaneIcon, StarIcon } from "@/icons";
 import type { FlightData, HotelData } from "@/types";
 import { Button, Heading, Text } from "../../../commons";
 
@@ -40,14 +41,20 @@ const SketchLogisticsBlockComponent = ({
     {flight || hotel ? (
       <ul className="space-y-2 text-sm font-semibold text-slate-700">
         {flight && (
-          <li>
-            ✈️ {flight.airline} · {flight.route} · {flight.time}
+          <li className="flex items-center gap-1.5">
+            <PlaneIcon size={14} />
+            <span>
+              {flight.airline} · {flight.route} · {flight.time}
+            </span>
           </li>
         )}
 
         {hotel && (
-          <li>
-            🏨 {hotel.name} · ⭐ {hotel.rating}
+          <li className="flex items-center gap-1.5">
+            <HotelIcon size={14} />
+            <span className="inline-flex items-center gap-1">
+              {hotel.name} · <StarIcon size={14} /> {hotel.rating}
+            </span>
           </li>
         )}
       </ul>

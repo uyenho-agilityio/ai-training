@@ -4,6 +4,7 @@ import { memo, type ReactElement } from "react";
 
 import { Button, Text } from "../../../commons";
 import type { RouteStop, SketchDay } from "@/types";
+import { ChevronDownIcon, ChevronUpIcon } from "@/icons";
 
 type SketchDayBlockProps = {
   day: SketchDay;
@@ -27,8 +28,18 @@ const SketchDayBlockComponent = ({
         Day {day.day} — {day.label}
       </Text>
 
-      <Text as="span" size="xs" color="accent" isBold className="text-xs">
-        {isExpanded ? "▲" : "▼"}
+      <Text
+        as="span"
+        size="xs"
+        color="accent"
+        isBold
+        className="inline-flex items-center text-xs"
+      >
+        {isExpanded ? (
+          <ChevronUpIcon size={12} />
+        ) : (
+          <ChevronDownIcon size={12} />
+        )}
       </Text>
     </Button>
 
