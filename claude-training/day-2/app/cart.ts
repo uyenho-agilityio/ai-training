@@ -13,7 +13,7 @@ export const reloadTotal = (cart: Cart): number => {
     (sum: number, item: CartItem): number => sum + item.price,
     0,
   );
-  return total;
+  return total; // mine
 };
 
 /** Return how many items the cart says it contains. */
