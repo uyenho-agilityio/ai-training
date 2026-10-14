@@ -34,3 +34,9 @@ Expected: The total is 3.
 Actual: The total is 0.
 
 Environment: macOS, Chrome browser
+
+## Test assertion
+
+QA: A saved cart with tea priced at 3 reloads to a total of 3.
+
+Dev: `reload-total.test.ts` checks that sentence. The test fails while `reloadTotal` returns 0.
