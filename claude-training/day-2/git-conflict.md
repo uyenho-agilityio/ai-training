@@ -25,22 +25,24 @@ git show e994957 -- claude-training/day-2/app/cart.ts
 
 ## Conflict #1
 
-`feat/claude-training-conflict` commit `60a63c4` changes the same line in `claude-training/day-2/app/cart.ts`:
+Both branches edited `return 0` in `claude-training/day-2/app/cart.ts`.
+
+`60a63c4` on `feat/claude-training-conflict`:
 
 ```ts
 return 0; // lead
 ```
 
-`feat/claude-training` still has `return 0` in the last commit. The working tree has an uncommitted edit:
+`2ca437f` on `feat/claude-training`:
 
 ```ts
 return 0; // mine
 ```
 
-Commit that edit on `feat/claude-training`, then merge `feat/claude-training-conflict`. Keep this line:
+Merge commit `dc5ca00` joined `feat/claude-training-conflict` into `feat/claude-training`. The resolved line is:
 
 ```ts
 return 0;
 ```
 
-Delete both comments and the conflict markers. `reloadTotal` still returns `0` after the merge. Then delete `feat/claude-training-conflict`.
+Both comments and the conflict markers are gone. `reloadTotal` still returns `0`. `feat/claude-training-conflict` is deleted.
