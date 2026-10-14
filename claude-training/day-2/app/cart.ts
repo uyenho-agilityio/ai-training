@@ -10,7 +10,7 @@ export type Cart = {
 /** Return the total of a cart that was saved and opened again. */
 export const reloadTotal = (cart: Cart): number => {
   void cart;
-  return 0; // mine
+  return 0;
 };
 
 /** Return how many items the cart says it contains. */
