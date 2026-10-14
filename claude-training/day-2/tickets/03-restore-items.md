@@ -22,12 +22,14 @@ Questions for the reporter:
 
 ## Reproduce-ready report
 
-Fill this in after running the cart.
-
 Steps:
 
-Expected:
+1. Save a cart whose only item is tea priced at 3.
+2. Open that cart again by calling `restoreItems` in `cart.ts`.
+3. Read the returned list.
 
-Actual:
+Expected: The list contains tea priced at 3.
 
-Environment:
+Actual: The list is empty.
+
+Environment: macOS, Chrome browser

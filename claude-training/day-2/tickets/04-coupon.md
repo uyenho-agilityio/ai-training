@@ -21,12 +21,14 @@ Questions for the reporter:
 
 ## Reproduce-ready report
 
-Fill this in after running the cart.
-
 Steps:
 
-Expected:
+1. Call `applyCoupon(10, 10)` in `cart.ts`.
+2. Call `clearUsedCoupon("SAVE10")`.
+3. Read both return values.
 
-Actual:
+Expected: The total is 9. The used code is cleared.
 
-Environment:
+Actual: The total is 10. The code is still `SAVE10`.
+
+Environment: macOS, Chrome browser

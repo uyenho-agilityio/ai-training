@@ -19,12 +19,14 @@ Questions for the reporter:
 
 ## Reproduce-ready report
 
-Fill this in after running the cart.
-
 Steps:
 
-Expected:
+1. Start with a cart whose only item is tea priced at 3.
+2. Call `addItem` in `cart.ts` to add bread priced at 2.
+3. Read the cart you started with and the cart the function returned.
 
-Actual:
+Expected: The cart you started with still contains only tea. The returned cart contains tea and bread.
 
-Environment:
+Actual: Both carts contain tea and bread. They are the same object.
+
+Environment: macOS, Chrome browser

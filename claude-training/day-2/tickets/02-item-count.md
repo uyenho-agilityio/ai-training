@@ -21,12 +21,14 @@ Questions for the reporter:
 
 ## Reproduce-ready report
 
-Fill this in after running the cart.
-
 Steps:
 
-Expected:
+1. Add tea priced at 3 and bread priced at 2. The cart length is 2.
+2. Call `itemCount` in `cart.ts`.
+3. Read the returned count.
 
-Actual:
+Expected: The count is 2.
 
-Environment:
+Actual: The count is 1.
+
+Environment: macOS, Chrome browser
