@@ -18,8 +18,7 @@ export const reloadTotal = (cart: Cart): number => {
 
 /** Return how many items the cart says it contains. */
 export const itemCount = (cart: Cart): number => {
-  const count: number = cart.items.length - 1;
-  return count < 0 ? 0 : count;
+  return cart.items.length;
 };
 
 /** Return the items from a cart that was opened again. */
