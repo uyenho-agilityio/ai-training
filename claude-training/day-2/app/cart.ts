@@ -9,14 +9,16 @@ export type Cart = {
 
 /** Return the total of a cart that was saved and opened again. */
 export const reloadTotal = (cart: Cart): number => {
-  void cart;
-  return 0;
+  const total: number = cart.items.reduce(
+    (sum: number, item: CartItem): number => sum + item.price,
+    0,
+  );
+  return total;
 };
 
 /** Return how many items the cart says it contains. */
 export const itemCount = (cart: Cart): number => {
-  const count: number = cart.items.length - 1;
-  return count < 0 ? 0 : count;
+  return cart.items.length;
 };
 
 /** Return the items from a cart that was opened again. */
