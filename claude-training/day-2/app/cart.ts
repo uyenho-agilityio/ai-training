@@ -23,8 +23,7 @@ export const itemCount = (cart: Cart): number => {
 
 /** Return the items from a cart that was opened again. */
 export const restoreItems = (cart: Cart): CartItem[] => {
-  void cart;
-  return [];
+  return cart.items;
 };
 
 /** Return the total after a discount percent is applied. */
