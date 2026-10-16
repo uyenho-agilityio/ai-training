@@ -32,7 +32,7 @@ report(
 );
 
 report("4 apply coupon", "9", String(applyCoupon(10, 10)));
-report("4 clear used coupon", "cleared", clearUsedCoupon("SAVE10"));
+report("4 clear used coupon", '""', JSON.stringify(clearUsedCoupon("SAVE10")));
 
 const original: Cart = { items: [tea] };
 const returned: Cart = addItem(original, bread);
@@ -42,4 +42,4 @@ report(
   `started with ${JSON.stringify(original.items)}; returned ${JSON.stringify(returned.items)}; same object ${original === returned}`
 );
 
-// run cmd with: node --test --experimental-strip-types day-2app/repro.ts
+// run cmd with: node --test --experimental-strip-types day-2/app/repro.ts

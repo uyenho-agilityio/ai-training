@@ -28,13 +28,13 @@ export const restoreItems = (cart: Cart): CartItem[] => {
 
 /** Return the total after a discount percent is applied. */
 export const applyCoupon = (total: number, percent: number): number => {
-  void percent;
-  return total;
+  return total * (1 - percent / 100);
 };
 
 /** Return the code that should remain after it has been used. */
 export const clearUsedCoupon = (code: string): string => {
-  return code;
+  void code;
+  return "";
 };
 
 /** Add an item and return the cart the caller should keep. */
