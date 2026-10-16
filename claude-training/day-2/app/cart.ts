@@ -39,6 +39,5 @@ export const clearUsedCoupon = (code: string): string => {
 
 /** Add an item and return the cart the caller should keep. */
 export const addItem = (cart: Cart, item: CartItem): Cart => {
-  cart.items.push(item);
-  return cart;
+  return { ...cart, items: [...cart.items, item] };
 };
