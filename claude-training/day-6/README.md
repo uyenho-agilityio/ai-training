@@ -37,6 +37,32 @@ Click **+ New** again. Send `/effort low`. That command only sets the level, so 
 
 Write both answers, the level you picked, and which levels the picker offered in `day-6/effort.md`.
 
+## Subagents
+
+There is no menu for the three built-in subagents. A subagent is a side session. The main chat only receives its summary. Watch the name under the chat box. Open **⋮** then **Background tasks** to see its output.
+
+**Explore** reads files and does not edit them. Leave the mode on **Manual**, **Accept edits**, or **Auto**. Click **+ New** and send:
+
+```text
+Use an Explore agent to read day-2/tickets and list which ticket each function in day-2/app/cart.ts came from. Do not edit files.
+```
+
+**Plan** runs only in **Plan** mode. Click **+ New**, set the mode to **Plan**, and send:
+
+```text
+Plan a one-line addition to day-6/subagents.md. Do not edit the file until I approve the plan.
+```
+
+The file stays unchanged until you approve.
+
+**General-purpose** searches and edits. Use any mode except **Plan**. Click **+ New** and send:
+
+```text
+Use a general-purpose agent to find the ticket for addItem and add one line about that ticket to day-6/subagents.md.
+```
+
+Write what appeared under the chat box for each one in `day-6/subagents.md`.
+
 ## Exercise screenshots
 
 Three shots for the channel:
