@@ -17,5 +17,5 @@ node --test --experimental-strip-types day-2/app/restore-items.test.ts
 
 ## Never do
 
-- Do not add dependencies.
+- Do not add dependencies, except `typescript` as a local `devDependency` for the Day 7 TypeScript LSP exercise.
 - Do not change `applyCoupon`, `clearUsedCoupon`, or `addItem` unless the ticket says so.
