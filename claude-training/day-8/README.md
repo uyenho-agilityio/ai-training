@@ -54,6 +54,15 @@ The cart has no UI, so do not point Playwright at the cart. Smoke-check the conn
 Using Playwright MCP tools, open https://example.com, take a screenshot, and tell me the page title.
 ```
 
+or
+
+````text
+Use the Playwright MCP tools only.
+Open https://example.com.
+Click the "Learn more" link.
+Tell me the URL you land on and the page title, then take a screenshot.
+```
+
 ## 3. Exercise: one GitHub tool, end to end
 
 Stay in that session. `/mcp` must show `github` connected.
@@ -63,7 +72,7 @@ Use the GitHub MCP tools only. Do not use the shell.
 List open pull requests in uyenho-agilityio/ai-training.
 If one exists, add this comment on it: Day 8 MCP check.
 Then tell me the PR number, the tool names you called, and the comment URL.
-```
+````
 
 or
 
