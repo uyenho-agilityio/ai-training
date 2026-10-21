@@ -65,13 +65,33 @@ If one exists, add this comment on it: Day 8 MCP check.
 Then tell me the PR number, the tool names you called, and the comment URL.
 ```
 
+or
+
+```text
+Use the GitHub MCP tools only. On uyenho-agilityio/ai-training pull request 1, summarize the changed files and the existing comments. Do not post or merge anything.
+```
+
+or
+
+```text
+Use the GitHub MCP tools only. Do not use the shell.
+Read README.md from uyenho-agilityio/ai-training on the default branch and summarize it in three lines.
+```
+
+or
+
+````text
+Use the GitHub MCP tools only. Do not use the shell.
+List GitHub Actions workflows and the latest workflow runs for uyenho-agilityio/ai-training. If there are none, say so. Do not start or rerun anything.
+```
+
 Allow the tool calls when Claude asks.
 
 If the list is empty, the branch `feat/mcp` is not on GitHub yet. Commit the two README files on that branch, push it, and open the pull request:
 
 ```bash
 git push -u github feat/mcp
-```
+````
 
 On GitHub, open a pull request from `feat/mcp` into the default branch. Return to the session and paste the prompt again.
 
