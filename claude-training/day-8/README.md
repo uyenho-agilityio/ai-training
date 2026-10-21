@@ -56,11 +56,23 @@ Using Playwright MCP tools, open https://example.com, take a screenshot, and tel
 
 or
 
-````text
+```text
 Use the Playwright MCP tools only.
 Open https://example.com.
 Click the "Learn more" link.
 Tell me the URL you land on and the page title, then take a screenshot.
+```
+
+or
+
+```text
+Run this journey in the browser and show a screenshot after each step.
+
+Given Open https://example.com
+When User clicks the "Learn more" link
+Then See a page whose address contains iana.org/help/example-domains
+
+After the screenshots, close the browser.
 ```
 
 ## 3. Exercise: one GitHub tool, end to end
@@ -72,7 +84,7 @@ Use the GitHub MCP tools only. Do not use the shell.
 List open pull requests in uyenho-agilityio/ai-training.
 If one exists, add this comment on it: Day 8 MCP check.
 Then tell me the PR number, the tool names you called, and the comment URL.
-````
+```
 
 or
 
