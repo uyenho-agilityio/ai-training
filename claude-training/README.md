@@ -11,3 +11,4 @@ Practice notes and a small cart program. No agent, no API, and no UI.
 | Day 05 | `day-5/` | Memory, compaction, rewind, and context notes    |
 | Day 06 | `day-6/` | Artifact, loop, remote steer, and effort notes   |
 | Day 07 | `day-7/` | Skills, commands, plugins                        |
+| Day 08 | `day-8/` | GitHub and Playwright MCP connectors             |
