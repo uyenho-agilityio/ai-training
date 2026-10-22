@@ -73,3 +73,55 @@ done
 ```
 
 macOS shows a notification titled `Claude Code` with the body `Claude finished`. No shell command and no file edit are required. `Stop` runs because the turn ended.
+
+## Automation ladder
+
+Do these four steps in order. The hook commit is already on `feat/day-9-hook`. Do not push and do not open a pull request until step 4 is finished. `/goal`, the local routine, and the cloud routines page do not install anything on GitHub. Only `/install-github-app` lets `@claude` review a pull request.
+
+### 1. /goal
+
+In a new Claude Code session, from `claude-training`:
+
+```text
+/goal Create day-9/goal.md with one English sentence: The block-forbidden-command hook blocks git push --force and rm -rf. Stop when that file exists and contains that sentence.
+```
+
+Done when `day-9/goal.md` contains that sentence. Commit that file on `feat/day-9-hook`. Leave the pull request closed.
+
+### 2. Local morning routine
+
+In the Claude Desktop app, open the Code tab. In the sidebar, choose Routines, or More then Routines. Choose New routine, then Local. The computer must be on for this routine to run.
+
+Schedule it for the morning. Prompt:
+
+```text
+Morning briefing for /Users/uyenho/Desktop/TRAINING/ai-training. In five lines, say the current branch, whether claude-training/day-9/hooks.md exists, and the last commit subject. Do not edit files.
+```
+
+Run it once. Write the time and the five lines into `claude-training/day-9/routine-local.md`.
+
+### 3. Cloud routines
+
+Open https://claude.ai/code/routines. Write three lines in `claude-training/day-9/routine-cloud.md`: a cloud routine runs while the computer is off, how that differs from the local routine, and whether you created one or only looked.
+
+### 4. @claude on the next pull request
+
+In a Claude Code session at the repo root:
+
+```text
+/install-github-app
+```
+
+Install the app on `uyenho-agilityio/ai-training`. Then:
+
+```bash
+git push -u github feat/day-9-hook
+```
+
+Open a pull request from `feat/day-9-hook` on GitHub. `@claude` reviews that pull request. If no review appears, comment:
+
+```text
+@claude review
+```
+
+Write each review comment in `claude-training/day-9/review.md` as useful, wrong, or out of scope.
