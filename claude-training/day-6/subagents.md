@@ -16,14 +16,14 @@ What appeared:
 
 An **Explore** agent started under the chat. The main session said it was read-only and that no files would change. The agent returned this mapping:
 
-| Function | Ticket |
-| --- | --- |
-| `reloadTotal` | `day-2/tickets/01-reload-total.md` |
-| `itemCount` | `day-2/tickets/02-item-count.md` |
-| `restoreItems` | `day-2/tickets/03-restore-items.md` |
-| `applyCoupon` | `day-2/tickets/04-coupon.md` |
-| `clearUsedCoupon` | `day-2/tickets/04-coupon.md` |
-| `addItem` | `day-2/tickets/05-add-item.md` |
+| Function          | Ticket                              |
+| ----------------- | ----------------------------------- |
+| `reloadTotal`     | `day-2/tickets/01-reload-total.md`  |
+| `itemCount`       | `day-2/tickets/02-item-count.md`    |
+| `restoreItems`    | `day-2/tickets/03-restore-items.md` |
+| `applyCoupon`     | `day-2/tickets/04-coupon.md`        |
+| `clearUsedCoupon` | `day-2/tickets/04-coupon.md`        |
+| `addItem`         | `day-2/tickets/05-add-item.md`      |
 
 ## Plan
 
