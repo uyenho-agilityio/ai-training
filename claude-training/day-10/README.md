@@ -37,20 +37,33 @@ This needs a claude.ai account. Write the findings in `day-10/ultrareview.md`. C
 
 ## 3. Security
 
-`/security-review` is a built-in command. It is not a plugin. Before committing the fixes:
+`/security-review` is a built-in command. It is not a plugin. Run it before the commit:
 
 ```text
 /security-review
 ```
 
-`security-guidance` and Security scan are plugins. Type `/plugin`, open Discover, and install the name the team uses. Write the plugin name and one thing it checks in `day-10/security.md`.
+Nothing met the reporting bar. The notes are in `day-10/security.md`.
+
+`security-guidance` and Claude Security scan are two plugins.
+
+- `security-guidance` has no slash command. After `/plugin install security-guidance@claude-plugins-official`, it warns on edits, at the end of a turn, and on commit.
+- Claude Security scan is `claude-security`. Install it, then `/reload-plugins`. The command is `/claude-security`. The first session had no Workflow tool, so no scan ran. After Dynamic workflows was enabled, a new session ran the scan.
+
+Do not accept the suggested base `origin/HEAD`. That is GitLab `main` and covers about 56 commits back to Day 1. The prompt that scanned the hook work:
+
+```text
+/claude-security:claude-security scan this branch's changes since github/feat/claude-training at medium effort, and I understand it may take a while and use a lot of tokens.
+```
+
+The scan covered 4 commits and reported one low finding: `format-on-edit.js` can run a `node_modules/.bin/prettier` binary the agent could overwrite. This checkout has no Prettier binary, so the hook does not run. One panel voter called it a false positive. Details are in `day-10/security.md`.
 
 ## 4. Exercise
 
-Fix the two `fix` rows in `day-10/review.md`. Leave the false positive and the out-of-scope cart notes unchanged. Run the three cart test commands from `CLAUDE.md` if the diff touches `day-2`.
+The two `fix` rows were fixed on `feat/day-9-hook`. `block-forbidden-command.js` now exits 2 when `JSON.parse` fails. `format-on-edit.js` exits 0 when `CLAUDE_PROJECT_DIR` is unset. `day-2/app/cart.ts` was not changed.
 
-Commit on `feat/day-9-hook` and push to the `github` remote. Pull request #2 should be green.
+`day-10/retro.md` records the two review items that were not fixed: the `reloadTotal` note is out of scope, and the `itemCount` ticket line is a false positive.
 
-Write `day-10/retro.md` with one line for each false positive or out-of-scope finding: what the review said, and why it was not fixed.
+The low scan finding was not fixed. The hook still only runs when a local Prettier binary exists, and this project does not have one.
 
 `/loop`, `ultrathink`, and `/effort` are already practiced in `day-6/README.md`. The review order from Day 3 is correctness, tests, readability, security, then scope.
