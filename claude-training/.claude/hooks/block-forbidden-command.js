@@ -7,7 +7,13 @@ const FORBIDDEN = ['git push --force', 'rm -rf'];
 let input = '';
 process.stdin.on('data', (chunk) => (input += chunk));
 process.stdin.on('end', () => {
-  const command = JSON.parse(input).tool_input?.command ?? '';
+  let command;
+  try {
+    command = JSON.parse(input).tool_input?.command ?? '';
+  } catch {
+    console.error('Blocked by block-forbidden-command hook: could not parse the tool input.');
+    process.exit(2);
+  }
   const hit = FORBIDDEN.find((text) => command.includes(text));
   if (hit) {
     console.error(`Blocked by block-forbidden-command hook: "${hit}" is not allowed.`);

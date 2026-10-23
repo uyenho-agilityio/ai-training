@@ -13,3 +13,4 @@ Practice notes and a small cart program. No agent, no API, and no UI.
 | Day 07 | `day-7/` | Skills, commands, plugins                        |
 | Day 08 | `day-8/` | GitHub and Playwright MCP connectors             |
 | Day 09 | `day-9/` | Hooks and automation                             |
+| Day 10 | `day-10/` | Code review, ultrareview, and security scan     |

@@ -8,6 +8,8 @@ const { spawnSync } = require('node:child_process');
 const path = require('node:path');
 
 const projectDir = process.env.CLAUDE_PROJECT_DIR;
+if (!projectDir) process.exit(0);
+
 const prettier = path.join(projectDir, 'node_modules', '.bin', 'prettier');
 
 let input = '';
