@@ -50,3 +50,19 @@ Take a screenshot after the valid item appears.
 Write the URL, the console result, the count, the total, and the empty-name message in `day-11/web.md`.
 
 Playwright MCP from Day 8 covers the same checks if `/chrome` does not connect. Phase 2 ends there. No second feature, and no planted bug.
+
+### Playwright steps
+
+Use the Playwright MCP tools only. Start the server first, then run each step and take a screenshot where the step says so.
+
+1. Start the server with the Phase 1 command, then open `http://127.0.0.1:4311`.
+2. Read the browser console. Record any errors. Expect none.
+3. Read the page: item count and total. Expect `Items: 0` and `Total: 0` after a fresh start.
+4. Fill Item name with `Day 11 check` and Price with `12`, then click Add item.
+5. Read the page. Expect `Items: 1` and `Total: 12`. Take a screenshot.
+6. Clear Item name, keep Price at `12`, and submit with Enter in the Price field. Add item is disabled only while an error from the last submit is showing. A fresh page with an empty name leaves it enabled. Editing the name or the price enables it again.
+7. Read the page. Expect the alert `Enter an item name.`, with Items still `1` and Total still `12`, and Add item disabled. Take a screenshot.
+8. Write the URL, the console result, the count, the total, and the empty-name message in `day-11/playwright.md`. Leave `day-11/web.md` for the `/chrome` run.
+9. Close the browser.
+
+Note: the cart stays in memory. If it still holds items from an earlier run, restart the server before step 3 so the counts start at zero.

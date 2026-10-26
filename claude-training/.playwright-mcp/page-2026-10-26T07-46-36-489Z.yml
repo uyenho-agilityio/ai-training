@@ -1,0 +1,20 @@
+- main [ref=e2]:
+  - heading "Cart" [level=1] [ref=e3]
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - text: Item name
+      - textbox "Item name" [ref=e6]
+    - generic [ref=e7]:
+      - text: Price
+      - textbox "Price" [ref=e8]
+    - button "Add item" [disabled] [ref=e9]
+  - alert [ref=e10]: Enter an item name.
+  - generic [ref=e11]:
+    - paragraph [ref=e12]:
+      - text: "Items:"
+      - strong [ref=e13]: "1"
+    - paragraph [ref=e14]:
+      - text: "Total:"
+      - strong [ref=e15]: "12"
+  - list [ref=e16]:
+    - listitem [ref=e17]: Day 11 check — 12
