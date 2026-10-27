@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cart</title>
+    <style>
+      body {
+        margin: 2rem;
+        color: #1c1917;
+        background: #fafaf9;
+        font-family: system-ui, sans-serif;
+      }
+
+      main {
+        max-width: 28rem;
+      }
+
+      form {
+        display: grid;
+        gap: 0.75rem;
+        margin: 1.5rem 0;
+      }
+
+      label {
+        display: grid;
+        gap: 0.25rem;
+        font-size: 0.9rem;
+      }
+
+      input {
+        font: inherit;
+        padding: 0.5rem 0.6rem;
+        border: 1px solid #d6d3d1;
+        border-radius: 0.4rem;
+      }
+
+      button {
+        font: inherit;
+        width: fit-content;
+        padding: 0.55rem 0.8rem;
+        border: 0;
+        border-radius: 0.4rem;
+        background: #1c1917;
+        color: #fafaf9;
+      }
+
+      button:hover:not(:disabled) {
+        cursor: pointer;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+      }
+
+      .notice {
+        color: #9f1239;
+      }
+
+      .summary {
+        display: flex;
+        gap: 1.5rem;
+      }
+
+      .empty {
+        color: #78716c;
+        list-style: none;
+        margin-left: -1.2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Cart</h1>
+      <form method="post" action="/add">
+        <label for="name">
+          Item name
+          <input id="name" name="name" type="text" value="{{nameValue}}" />
+        </label>
+        <label for="price">
+          Price
+          <input
+            id="price"
+            name="price"
+            type="text"
+            inputmode="decimal"
+            value="{{priceValue}}"
+          />
+        </label>
+        <button id="add-item" type="submit" {{disabledAttr}}>Add item</button>
+      </form>
+      {{noticeBlock}}
+      <div class="summary">
+        <p>Items: <strong id="item-count">{{count}}</strong></p>
+        <p>Total: <strong id="total">{{total}}</strong></p>
+      </div>
+      <ul id="item-list">{{items}}</ul>
+    </main>
+    <script>
+      const addItemButton = document.querySelector("#add-item");
+      const cartForm = document.querySelector("form");
+
+      const enableAddItem = () => {
+        if (addItemButton instanceof HTMLButtonElement) {
+          addItemButton.disabled = false;
+        }
+      };
+
+      cartForm?.addEventListener("input", enableAddItem);
+    </script>
+  </body>
+</html>
