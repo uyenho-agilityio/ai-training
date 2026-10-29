@@ -1,0 +1,11 @@
+@import "tailwindcss";
+@import "../theme/index.css";
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  @apply bg-background font-sans text-text antialiased;
+}

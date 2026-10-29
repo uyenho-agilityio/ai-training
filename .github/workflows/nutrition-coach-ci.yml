@@ -14,6 +14,9 @@ jobs:
       run:
         working-directory: nutrition-coach
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
       - name: Check that the app is scaffolded
         id: scaffold
         working-directory: .
@@ -25,34 +28,36 @@ jobs:
             echo "nutrition-coach/package.json not found yet (ticket 00b). Skipping checks."
           fi
 
-      - name: Checkout
+      - name: Set up pnpm
         if: steps.scaffold.outputs.ready == 'true'
-        uses: actions/checkout@v6
+        uses: pnpm/action-setup@v4
+        with:
+          package_json_file: nutrition-coach/package.json
 
       - name: Set up Node
         if: steps.scaffold.outputs.ready == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: nutrition-coach/package-lock.json
+          cache: pnpm
+          cache-dependency-path: nutrition-coach/pnpm-lock.yaml
 
       - name: Install
         if: steps.scaffold.outputs.ready == 'true'
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Lint
         if: steps.scaffold.outputs.ready == 'true'
-        run: npm run lint
+        run: pnpm lint
 
       - name: Typecheck
         if: steps.scaffold.outputs.ready == 'true'
-        run: npm run typecheck
+        run: pnpm typecheck
 
       - name: Unit tests
         if: steps.scaffold.outputs.ready == 'true'
-        run: npm run test
+        run: pnpm test
 
       - name: Build
         if: steps.scaffold.outputs.ready == 'true'
-        run: npm run build
+        run: pnpm build

@@ -1,0 +1,25 @@
+@theme {
+  --color-primary: #15803d;
+  --color-on-primary: #ffffff;
+  --color-background: #f6faf7;
+  --color-surface: #ffffff;
+  --color-text: #1f2a22;
+  --color-warning: #d97706;
+
+  --font-sans: var(--font-be-vietnam-pro), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 1.5rem;
+  --radius-button: 1rem;
+  --radius-field: 0.75rem;
+  --radius-chip: 0.5rem;
+
+  --shadow-subtle: 0 1px 3px rgb(30 28 24 / 0.03);
+  --shadow-card: 0 2px 8px rgb(30 28 24 / 0.04);
+  --shadow-raised: 0 4px 24px rgb(30 28 24 / 0.06);
+
+  --breakpoint-xs: 26.25rem;
+  --breakpoint-sm: 40rem;
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 80rem;
+}

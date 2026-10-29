@@ -42,7 +42,7 @@ Fix the real findings. Do not fix findings outside the ticket: list them as foll
 
 ## 5. Checks (no gate)
 
-`npm run lint && npm run typecheck && npm run test && npm run build`. Add `npm run e2e` when the UI changes. Fix loop: at most 3 rounds, then stop and report.
+`pnpm lint && pnpm typecheck && pnpm test && pnpm build`. Add `pnpm e2e` when the UI changes. Fix loop: at most 3 rounds, then stop and report.
 
 ## 6. Gate 2: before push
 
