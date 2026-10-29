@@ -26,7 +26,7 @@ The steps of `plan.md` "Order of work", with the files each one touches.
 
 | File | Purpose |
 |---|---|
-| `package.json`, `package-lock.json` | Next.js 16.4.3, React, TypeScript, Tailwind CSS 4.3 + `@tailwindcss/postcss`, `@supabase/supabase-js`, `@supabase/ssr`, Zustand, Zod, Vitest, `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom`, `jsdom`, Playwright, Prettier (for the format hook). Scripts: `dev`, `build`, `lint`, `typecheck`, `test`, `e2e` |
+| `package.json`, `pnpm-lock.yaml` | Next.js 16.4.3, React, TypeScript, Tailwind CSS 4.3 + `@tailwindcss/postcss`, `@supabase/supabase-js`, `@supabase/ssr`, Zustand, Zod, Vitest, `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom`, `jsdom`, Playwright, Prettier (for the format hook). Scripts: `dev`, `build`, `lint`, `typecheck`, `test`, `e2e` |
 | `tsconfig.json` (strict, `@/` alias to `src/`), `next.config.ts`, `eslint.config.mjs` | Standard Next.js App Router setup |
 | `vitest.config.ts`, `vitest.setup.ts` | Unit tests in `src/**/__tests__/*.test.ts(x)` and `src/components/**/index.test.tsx`; `jsdom` environment for component tests; the setup file loads `@testing-library/jest-dom` matchers |
 | `playwright.config.ts` | `setup` project that saves sign-in state, `chromium` project that reuses it |

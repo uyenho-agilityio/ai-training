@@ -45,11 +45,11 @@ Each ticket starts with its seams agreed (the `/do-task` plan stop), and `/do-td
 ## Commands (all must pass before a ticket is marked `done`)
 
 ```bash
-npm run lint && npm run typecheck && npm run test && npm run build
+pnpm lint && pnpm typecheck && pnpm test && pnpm build
 ```
 
 ```bash
-npm run e2e
+pnpm e2e
 ```
 
 ## Unit tests (Vitest)

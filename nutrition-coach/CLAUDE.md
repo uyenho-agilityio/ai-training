@@ -10,19 +10,21 @@ Nutrition Coach is a fat-loss web app for one user at a time. It computes a dail
 
 ## Commands
 
-- `npm run dev`: local server on port 3000
-- `npm run build`
-- `npm run lint`: ESLint (`eslint-config-next` core web vitals and TypeScript)
-- `npm run typecheck`: `tsc --noEmit`
-- `npm run test`: Vitest, one run (`vitest run`)
-- `npm run e2e`: Playwright. Starts `npm run dev` itself, or reuses a server already on port 3000
+The package manager is pnpm, pinned in `package.json` (`packageManager`). Install with `pnpm install`; never use npm or commit a `package-lock.json`. `pnpm-workspace.yaml` only holds pnpm settings: `unrs-resolver` is in `ignoredBuiltDependencies`, since its install script only downloads a fallback binary.
+
+- `pnpm dev`: local server on port 3000
+- `pnpm build`
+- `pnpm lint`: ESLint (`eslint-config-next` core web vitals and TypeScript)
+- `pnpm typecheck`: `tsc --noEmit`
+- `pnpm test`: Vitest, one run (`vitest run`)
+- `pnpm e2e`: Playwright. Starts `pnpm dev` itself, or reuses a server already on port 3000
 
 One test:
 
-- `npx vitest run src/utils/__tests__/<name>.test.ts`, or add `-t "<test name>"`
-- `npx vitest` for watch mode
-- `npx playwright test e2e/<file>.spec.ts`
-- After a Playwright upgrade: `npx playwright install chromium`
+- `pnpm vitest run src/utils/__tests__/<name>.test.ts`, or add `-t "<test name>"`
+- `pnpm vitest` for watch mode
+- `pnpm exec playwright test e2e/<file>.spec.ts`
+- After a Playwright upgrade: `pnpm exec playwright install chromium`
 
 Every ticket must pass `lint`, `typecheck`, `test` and `build` before merge.
 
@@ -36,7 +38,7 @@ Every ticket must pass `lint`, `typecheck`, `test` and `build` before merge.
 
 Spec "Architectural decisions" and `docs/design/architecture.md` are the source.
 
-- Next.js 16.4.3, App Router, TypeScript, npm
+- Next.js 16.4.3, App Router, TypeScript, pnpm
 - React
 - Tailwind CSS 4.3 with `@tailwindcss/postcss`
 - Supabase Auth (Google sign-in only) and Supabase PostgreSQL with Row Level Security

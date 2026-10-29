@@ -14,7 +14,7 @@ This skill reports. It never merges, pushes or changes the PR.
 
 1. **Branch state**: the branch is based on `github/feat/nutrition-coach` (`git merge-base --is-ancestor`), and is in sync with it. Say what is behind.
 2. **PR**: open PR into `feat/nutrition-coach` (GitHub MCP). List its review comments and mark which are resolved.
-3. **Checks**: `npm ci`, then `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build`. Report each result. Report the failing output if any fails.
+3. **Checks**: `pnpm install --frozen-lockfile`, then `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`. Report each result. Report the failing output if any fails.
 4. **Vercel preview**: report **not checked** until the Vercel project exists (A4).
 5. **Docs match code**:
    - env vars in `README.md`, `CLAUDE.md` and `.env.example` agree
