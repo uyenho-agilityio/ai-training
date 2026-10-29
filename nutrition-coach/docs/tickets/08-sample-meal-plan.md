@@ -9,7 +9,8 @@
 **Status:** todo
 
 - [ ] A "Sample meal plan" block shows seven days to choose from
-- [ ] Each day shows breakfast, lunch and dinner from the built-in list
+- [ ] Each day shows breakfast, lunch and dinner from the built-in list, with no dish twice in the same day
+- [ ] Each day shows its total calories next to the target
 - [ ] Each day's calories are within ±10% of target, or the closest result is kept after 5 tries
 - [ ] Choosing a plan day does not log anything
 - [ ] Demo: open a plan day, see three meals and their calories

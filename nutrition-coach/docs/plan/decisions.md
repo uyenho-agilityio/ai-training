@@ -1,0 +1,55 @@
+# Risks and decisions: Nutrition Coach
+
+Part of `docs/plan/plan.md`.
+
+## Risks
+
+| # | Risk | Affects | Mitigation / decision needed |
+|---|---|---|---|
+| R1 | Most intake answers (Q01–Q05, Q07–Q12) are "answered (team), needs client confirmation". A change to the formula, deficit, macro split, plan rule or water formula would change results | T03, T08, T10 / US 3, 8, 10 | The rules live only in `constants/nutrition.ts`, `utils/targets.ts`, `utils/samplePlan.ts` and `utils/waterTarget.ts`, with tests. A client change touches one file and its tests |
+| R2 | **The ±10% rule cannot be met for higher targets.** With no dish twice in a day (D1), the largest day from breakfast/lunch/dinner dishes is 678.8 (Bánh mì thập cẩm) + 623 (Cơm rang thập cẩm) + 616 (Cơm sườn) ≈ 1,918 kcal. Any target above ≈ 2,131 kcal never reaches 90%. Example: male, 30 y, 180 cm, 80 kg, moderate → target ≈ 2,259 kcal | T08 / US 8 | The "keep closest after 5 tries" rule still returns a plan, so nothing breaks, but those days miss the target. Each plan day shows its total next to the target, so the gap is visible. Adding snacks or more dishes is a later decision, not in this plan |
+| R3 | Food values have known gaps: carb for Thịt gà luộc (0) and Gà xào sả (4) are BA estimates; Bánh bao chay at 33 kcal looks low for one bun; the source has no license terms; serving weight is not given | T04, T08 / US 4, 8 | Copy values exactly from `food-list.md` into `constants/foods.ts`, mark the two estimates with `isEstimate` (T04 checklist). A catalog test checks 20 dishes and that VPF-000019 is absent. Flag Bánh bao chay for the BA to recheck; not a blocker |
+| R4 | Vercel runs in UTC. Using `new Date()` for "today" would put 00:00–06:59 Vietnam time on the previous day | T04 / US 4 | All dates go through `todayInVietnam(now)`, both on read and in `logFood`. Unit tests at 16:59:59 UTC and 17:00:00 UTC |
+| R5 | The spec says "no separate API routes", but Supabase Google OAuth needs one Route Handler to exchange the code for a session | T01 / US 1 | Add only `src/app/auth/callback/route.ts`. It is auth plumbing, not an app API. All app reads and writes stay in Server Components / Actions. Needs your OK as an exception |
+| R6 | Next.js 16 renamed `middleware.ts` to `proxy.ts`, and Supabase SSR examples may still use the old name. The pinned version 16.4.3 must exist on npm when we install | T01 / US 1 | Check `npm view next version` in 00b; follow the current `@supabase/ssr` docs for Next.js 16 |
+| R7 | Google OAuth client and Supabase project are owned by the product team. Without them T01 cannot be demoed | T01 → all | Ask for the project URL, anon key and the Google provider setup (redirect URL `/auth/callback`) before T01. The pure parts of T03, T04 and T10 (waves 2–4) can start before that |
+| R8 | Data leak between users: a crafted `logFood` with another user's `custom_food_id`, or `deleteMealEntry` with another user's id | T04, T05, T06 / US 4, 5, 6 | Each action calls `requireUser()`; every query filters by `user_id`; RLS `using` and `with check` on `user_id = auth.uid()`; `logFood` reads the custom food through the user-scoped query before copying; check constraint "exactly one of `food_code` / `custom_food_id`". Never use the service role key in the app |
+| R9 | Theme flash or React hydration warnings, because the head script and the Zustand `persist` store read the same localStorage key at different times | T09 / US 9 | One shared key and value format; `suppressHydrationWarning` on `<html>`; the switch renders its selected state only after the store has rehydrated |
+| R10 | The spec does not match the decisions yet: it has no user story for the water target, lists "Only the water target is shown" under Out of Scope, does not say "no dish twice in a day" or Tailwind, and names the design files with a number prefix they do not have. Q09 in the intake file has an older water rule (body weight × 35 ml + 500 ml per hour of exercise) | Docs, T08, T10 | Update `spec.md` and Q07/Q09 in `intake-questions.md` in 00a, with your OK on the wording, before T08 and T10 start |
+| R11 | Dark palette is "proposed, to be reviewed". Contrast is not yet checked | T09 / US 9 | Check text, primary and warning contrast against WCAG AA in T09; report any failing pair instead of changing colours silently |
+| R12 | E2E sign-in state is saved by hand and expires; the file holds a live session | T01–T10 e2e | `playwright/.auth/` in `.gitignore` before the first run; README explains how to refresh it. CI login with a Supabase test user is out of scope (spec) |
+| R13 | The Claude config lives in `nutrition-coach/`. If Claude Code is started from the repo root, none of the hooks run (push, database, secrets, migrations, docs), and the skills and agents are not found | All | `CLAUDE.md` and `README.md` say to start Claude from `nutrition-coach/`. Branch protection on `feat/nutrition-coach` in GitHub (require a PR) guards the branch even when hooks do not run; setting it is your call in GitHub settings |
+| R14 | There is no Vercel project yet | 0a, all PRs | Vercel checks are marked **not checked** until the project exists. (The default branch is already `feat/nutrition-coach`, so `Closes #n` closes issues on merge.) |
+| R15 | Both GitHub workflows need a Claude credential. An `ANTHROPIC_API_KEY` is paid per use (at least $5 of credit); a `CLAUDE_CODE_OAUTH_TOKEN` from `claude setup-token` uses your Claude subscription instead. GitHub MCP needs `GITHUB_PERSONAL_ACCESS_TOKEN` in your shell with access to issues, pull requests and contents | 0a | Both workflows use `CLAUDE_CODE_OAUTH_TOKEN` (00a changes `claude.yml` from `anthropic_api_key` to `claude_code_oauth_token`), so no API key is bought. Their runs count against your subscription limits. Without the secret only the workflows fail; local review still works |
+| R16 | Tailwind CSS 4 is configured in CSS (`@theme`), not in `tailwind.config.js`, and many examples online are for v3. Dark mode must follow the `data-theme` switch, not only the OS setting | T09 and all UI | Tokens live only in `src/theme/`; `@custom-variant dark` is bound to `data-theme`; the version (4.3.3 on npm today) is checked again in 00b and APIs are confirmed in `node_modules/tailwindcss` before use |
+| R17 | A hook matches command text, so a destructive command written another way (a script file, an alias, `npx supabase`, a Node script) can get past it | All, mostly data | Hooks match the common forms (`supabase`, `npx supabase`, `psql`, files passed with `-f`, piped SQL) and the test cases in `test-hooks.sh` cover them. No database password or service role key is kept in local env files, so a missed command still cannot reach the remote database with admin rights. Every migration goes through a PR |
+| R18 | Parallel sessions can still conflict on shared files, or a branch can fall behind after another PR merges | Waves 2–5 | File ownership in the wave table, one shared-file owner per wave, sync before PR, merge one PR at a time in the listed order |
+| R19 | `do-tdd` is a skill, so Claude could still skip a step of it. The `require-test-first.sh` hook only checks that a test file exists, not that it failed first | All tickets | `do-tdd` runs each new test and records the red result before writing code; `spec-checker` checks that each criterion has a test at an agreed seam; the PR history shows test and code committed together per slice |
+| R20 | Component tests need Testing Library and `jsdom` (new dev dependencies), and an async Server Component page cannot be rendered by Vitest | All UI tickets | The dev dependencies are added once in 00b. Pages stay thin: they read data and pass it to components, and the components hold what is unit tested. Async pages are covered by Playwright |
+
+## Decisions
+
+| # | Decision | Status | From |
+|---|---|---|---|
+| D1 | Sample plan | **Decided:** no dish twice in one day; each plan day shows its total vs target; no snacks | R2 |
+| D2 | Route for the Google sign-in callback (explained below) | **Decided:** `src/app/auth/callback/route.ts` is the only route file; it reads and writes no app data | R5 |
+| D3 | Water target | **In scope (US 10, T10).** Formula decided: body weight (kg) × 35 ml (from `team-decisions.md`), plus an add-on by the profile's activity level. The team's "+500 ml per hour of exercise" is dropped, because it needs exercise minutes entered every day and nothing is stored per day. Add-ons decided: sedentary and light +0 ml; moderate +300 ml; active and very active +500 ml. Examples: 70 kg, light → 2,450 ml; 70 kg, moderate → 2,750 ml; 80 kg, active → 3,300 ml | R10 |
+| D4 | Styling | **Decided:** Tailwind CSS 4 (latest, 4.3.3); utility classes in `className`; `globals.css` holds only the shared base; fonts, colors, radius, shadows and breakpoints are set up in `src/theme/` | R16 |
+| D5 | TDD seams per ticket | **Decided:** the "TDD seams" table in `test-strategy.md`, with unit seams and flow seams for every ticket | `test-strategy.md` |
+| D6 | Source layout | **Decided:** no `src/lib/`; same folders as `todo-app-copilotkit`; each component in its own folder; `require-test-first.sh` stays and checks every tested folder | `code-structure.md` |
+| D7 | Tests | **Decided:** every folder with code that can run is unit tested with Vitest: `__tests__/<file>.test.ts` for functions, constants, schemas, stores and hooks; `<Name>/index.test.tsx` for components (Testing Library); client pages too. Playwright tests the whole user flow | R20 |
+
+**D2 explained:** "Continue with Google" sends the user to Google. After they agree, Google sends them back to one address in our app (`/auth/callback`) with a one-time code. That page swaps the code for a signed-in session and redirects to Profile or Today. In Next.js that page has to be a route file, which goes against the spec line "no separate API routes". It reads and writes no app data; all app reads and writes still go through Server Components and Server Actions. The question is whether you accept this one exception.
+
+## Actions
+
+| # | Action | Needed before | From |
+|---|---|---|---|
+| A1 | Supabase project, Google OAuth client, env values | T01 | R7 |
+| A2 | Branch protection on `feat/nutrition-coach` (require a PR) | 00b | R13 |
+| A3 | **Done.** `CLAUDE_CODE_OAUTH_TOKEN` repo secret (confirmed by the first workflow run); fine-grained `GITHUB_PERSONAL_ACCESS_TOKEN` in `~/.zshrc`, checked 2026-10-29: reads the repo, issues, PRs and labels. Write access is confirmed when `/publish-tickets` creates the first issues. No `ANTHROPIC_API_KEY` | 00a | R15 |
+| A4 | Vercel project | `/check-release` deploy check | R14 |
+| A5 | Client confirmation of the intake answers (Q01–Q05, Q07–Q12) | Any change lands in `constants/nutrition.ts` and the `src/utils/` file for that rule | R1 |
+| A6 | BA recheck of the two carb estimates and Bánh bao chay | T04 (not a blocker) | R3 |
+| A7 | Review of the proposed dark palette | T09 | R11 |
+| A8 | ~~Change the GitHub default branch to `feat/nutrition-coach`~~ **Done** (checked 2026-10-29) | – | R14 |
