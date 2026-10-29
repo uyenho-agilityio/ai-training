@@ -1,4 +1,6 @@
-# CLAUDE.md: Nutrition Coach
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 Start Claude Code from this folder (`cd nutrition-coach && claude`). The hooks, skills and agents in `.claude/` only run from here.
 
@@ -8,16 +10,27 @@ Nutrition Coach is a fat-loss web app for one user at a time. It computes a dail
 
 ## Commands
 
-The project is not scaffolded yet (ticket 00b). Once it is, these are the commands:
-
-- `npm run dev`: local server
+- `npm run dev`: local server on port 3000
 - `npm run build`
-- `npm run lint`
-- `npm run typecheck`
-- `npm run test`: Vitest unit tests
-- `npm run e2e`: Playwright end-to-end tests (needs saved sign-in, see README)
+- `npm run lint`: ESLint (`eslint-config-next` core web vitals and TypeScript)
+- `npm run typecheck`: `tsc --noEmit`
+- `npm run test`: Vitest, one run (`vitest run`)
+- `npm run e2e`: Playwright. Starts `npm run dev` itself, or reuses a server already on port 3000
+
+One test:
+
+- `npx vitest run src/utils/__tests__/<name>.test.ts`, or add `-t "<test name>"`
+- `npx vitest` for watch mode
+- `npx playwright test e2e/<file>.spec.ts`
+- After a Playwright upgrade: `npx playwright install chromium`
 
 Every ticket must pass `lint`, `typecheck`, `test` and `build` before merge.
+
+### Test setup
+
+- `vitest.config.mts`: `jsdom` for every test; picks up only `src/**/__tests__/*.test.{ts,tsx}` and `src/components/**/index.test.tsx`, so `e2e/` is never run by Vitest. `@/` resolves through `resolve.tsconfigPaths`.
+- `vitest.setup.ts`: loads the jest-dom matchers and runs Testing Library `cleanup` after each test. Globals are off: import `describe`, `it`, `expect` from `vitest`.
+- `playwright.config.ts`: the `setup` project runs `e2e/*.setup.ts` and saves the browser state to `playwright/.auth/user.json`; the `chromium` project depends on it and reuses that state. In 00b the setup only saves an empty state; T01 adds the manual Google sign-in.
 
 ## Stack
 
@@ -60,6 +73,7 @@ src/
 
 - Tailwind utility classes in `className`.
 - Tokens (colors, font, radius, shadows, breakpoints) only in `src/theme/`. `globals.css` holds only the shared base.
+- How it is wired: `postcss.config.mjs` runs `@tailwindcss/postcss`. `src/app/globals.css` imports `tailwindcss` and `src/theme/index.css`, whose `@theme` block defines the tokens, so they become utilities (`bg-background`, `text-primary`, `text-text`). `src/theme/fonts.ts` loads Be Vietnam Pro with `next/font` as `--font-be-vietnam-pro`; the root layout puts that variable on `<html>`, and `@theme` maps `--font-sans` to it.
 - No `style` prop, no CSS modules.
 - Dark mode follows the `data-theme` switch, not only the OS setting.
 
@@ -71,6 +85,8 @@ src/
 - Every Server Action calls `requireUser()` first. RLS is the second guard. Each policy checks `user_id = auth.uid()` with `using` and `with check`.
 - Never use the service role key in app code. Only `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are needed.
 - Next.js 16 uses `src/proxy.ts`, not `middleware.ts`.
+- `next.config.ts` turns on `cacheComponents` and `partialPrefetching`. Data fetching is dynamic by default and is cached only with `use cache`; pages get a static shell and dynamic parts stream in. Do not add a `runtime` route segment export. Docs: `node_modules/next/dist/docs/01-app/03-api-reference/05-config/01-next-config-js/cacheComponents.md`.
+- The schema is in `supabase/migrations/0001_init.sql`. `user_id` defaults to `auth.uid()`. `meal_entries` points at a custom food through `(custom_food_id, user_id)`, so an entry can only use the same user's food. Known conflict: deleting a custom food that an entry uses fails, because `on delete set null` breaks the "exactly one source" check. MVP has no custom food delete.
 - Food values come from `docs/requirements/food-list.md`. Two carb values are estimates and carry `isEstimate` (R3).
 - The sample plan never repeats a dish within one day (D1). A target above about 2,131 kcal cannot reach ±10% and the plan shows the gap.
 - Water target: body weight × 35 ml, plus 0 / 300 / 500 ml by activity level (D3).

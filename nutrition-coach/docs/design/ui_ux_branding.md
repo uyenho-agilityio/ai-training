@@ -19,6 +19,7 @@ Light theme (matches the agreed palette):
 | `--color-surface` | `#FFFFFF` | Cards |
 | `--color-text` | `#1F2A22` | Body text |
 | `--color-warning` | `#D97706` | Over-target warning |
+| `--color-on-primary` | `#FFFFFF` | Label on primary buttons (contrast about 5:1 on `#15803D`) |
 
 Dark theme (proposed by the team, to be reviewed):
 
@@ -29,11 +30,45 @@ Dark theme (proposed by the team, to be reviewed):
 | `--color-surface` | `#17241D` | Cards |
 | `--color-text` | `#E6F2EA` | Body text |
 | `--color-warning` | `#FBBF24` | Over-target warning |
-| Text on primary | `#0F1A14` | Label on primary buttons |
+| `--color-on-primary` | `#0F1A14` | Label on primary buttons |
+
+## Radius
+
+Soft, rounded shapes. Pills use Tailwind's `rounded-full`.
+
+| Token | Value | Use |
+|---|---|---|
+| `--radius-card` | `1.5rem` (24 px) | Cards and sections |
+| `--radius-button` | `1rem` (16 px) | Buttons, list rows that act as buttons |
+| `--radius-field` | `0.75rem` (12 px) | Inputs, tiles inside a card |
+| `--radius-chip` | `0.5rem` (8 px) | Chips, badges, small buttons |
+
+## Shadows
+
+Light and warm, never hard. Same values in both themes.
+
+| Token | Value | Use |
+|---|---|---|
+| `--shadow-subtle` | `0 1px 3px rgb(30 28 24 / 0.03)` | Chips, inputs |
+| `--shadow-card` | `0 2px 8px rgb(30 28 24 / 0.04)` | Cards at rest |
+| `--shadow-raised` | `0 4px 24px rgb(30 28 24 / 0.06)` | Hovered buttons, menus |
+
+## Breakpoints
+
+Mobile first. The base layout is for a 375 px phone.
+
+| Token | Value | Use |
+|---|---|---|
+| `--breakpoint-xs` | `26.25rem` (420 px) | Large phones |
+| `--breakpoint-sm` | `40rem` (640 px) | Small tablets |
+| `--breakpoint-md` | `48rem` (768 px) | Tablets |
+| `--breakpoint-lg` | `64rem` (1024 px) | Desktop |
+| `--breakpoint-xl` | `80rem` (1280 px) | Wide desktop |
 
 ## Typography
 
 - Font: Be Vietnam Pro. It supports Vietnamese diacritics well.
+- Weights: 400 for body text, 600 for headings and numbers.
 
 ## Theme switch
 

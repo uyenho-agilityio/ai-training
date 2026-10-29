@@ -22,11 +22,11 @@ The UX/UI follows the Mijo App: modern, smooth, minimal and refined. The app has
 
 ## Project status
 
-The project is in the planning stage.
+The project is scaffolded (ticket 00b). Feature tickets are in `docs/tickets/`.
 
 - Intent: `docs/intent/intent.md`
 - Requirements: `docs/requirements/`
 - Design: `docs/design/`
 - Spec: `docs/spec/spec.md`
 
-The application code is not written yet.
+Commands, test setup and conventions: `CLAUDE.md`. Copy `.env.example` to `.env.local` and fill in the Supabase URL and anon key.
