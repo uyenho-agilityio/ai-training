@@ -14,6 +14,9 @@ jobs:
       run:
         working-directory: nutrition-coach
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
       - name: Check that the app is scaffolded
         id: scaffold
         working-directory: .
@@ -24,10 +27,6 @@ jobs:
             echo "ready=false" >> "$GITHUB_OUTPUT"
             echo "nutrition-coach/package.json not found yet (ticket 00b). Skipping checks."
           fi
-
-      - name: Checkout
-        if: steps.scaffold.outputs.ready == 'true'
-        uses: actions/checkout@v6
 
       - name: Set up Node
         if: steps.scaffold.outputs.ready == 'true'
