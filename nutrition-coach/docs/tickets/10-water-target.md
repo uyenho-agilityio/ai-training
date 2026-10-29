@@ -1,5 +1,7 @@
 # 10: Daily water target
 
+**Issue:** #18
+
 **Spec:** `docs/spec/spec.md` · **User story:** 10 (to be added to the spec in 00a)
 
 **What to build:** The Today screen shows a daily water target: body weight (kg) × 35 ml, plus an add-on by the profile's activity level. There is no water intake tracking and no daily exercise input.

@@ -1,5 +1,7 @@
 # 05: Delete a logged food
 
+**Issue:** #13
+
 **Spec:** `docs/spec/spec.md` · **User story:** 5
 
 **What to build:** The user deletes a food logged today by mistake. The totals update.
