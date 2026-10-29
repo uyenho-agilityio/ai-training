@@ -3,7 +3,7 @@
 - Status: draft, pending product owner review
 - Date: 2026-10-28
 - Source intent: `docs/intent/intent.md`
-- Design files: `docs/design/01_ui_ux_branding.md`, `docs/design/02_architecture.md`, `docs/design/03_database_schema.md`
+- Design files: `docs/design/ui_ux_branding.md`, `docs/design/architecture.md`, `docs/design/database_schema.md`
 - Requirement inputs: `docs/requirements/client-brief.md`, `docs/requirements/team-decisions.md`, `docs/requirements/food-list.md`, `docs/requirements/intake-questions.md`
 
 ## Problem Statement
@@ -12,7 +12,7 @@ A user who wants to lose fat does not know how many calories and macros they nee
 
 ## Solution
 
-A web app called Nutrition Coach. The user signs in with Google and enters a few personal details. The app shows a daily calorie and macro target for fat loss. On the Today screen, the user logs the foods they eat, and the app shows what is left for the day. The app also shows a sample 7-day meal plan as a suggestion. The user can switch between light, dark and system themes.
+A web app called Nutrition Coach. The user signs in with Google and enters a few personal details. The app shows a daily calorie and macro target for fat loss. On the Today screen, the user logs the foods they eat, and the app shows what is left for the day. The app also shows a sample 7-day meal plan as a suggestion and a daily water target. The user can switch between light, dark and system themes.
 
 ## User Stories
 
@@ -32,10 +32,13 @@ Each user story maps to one ticket with the same number in `docs/tickets/`.
 7. As a user, I want to see a negative remaining value with a soft warning when I go over my target, so that I know I am over without being blocked from logging.
 
 ### Sample meal plan
-8. As a user, I want to see a sample 7-day meal plan on the Today screen, with breakfast, lunch and dinner close to my calorie target, so that I get ideas for the rest of the day. The plan is a suggestion only and never logs anything.
+8. As a user, I want to see a sample 7-day meal plan on the Today screen, with breakfast, lunch and dinner close to my calorie target, so that I get ideas for the rest of the day. The plan never repeats a dish within one day, and each day shows its total next to the target. The plan is a suggestion only and never logs anything.
 
 ### Theme
 9. As a user, I want to switch between light, dark and system themes, and have my choice remembered on this device, so that the app is comfortable to use.
+
+### Water target
+10. As a user, I want to see my daily water target on the Today screen, based on my weight and activity level, and see it update when I change either in Profile, so that I know how much to drink.
 
 ## Implementation Decisions
 
@@ -43,7 +46,8 @@ Each user story maps to one ticket with the same number in `docs/tickets/`.
 - **Target calculator** (pure): takes a profile and returns the daily calorie target and the protein, carb and fat targets. Uses Mifflin-St Jeor by default and Katch-McArdle when body fat % is set. Applies the activity factor, the 500 kcal deficit, protein at 2 g per kg, fat at 25% of calories, and carbs for the rest. Results are rounded to whole numbers.
 - **Daily totals** (pure): takes the target and a list of logged entries for one day, and returns eaten totals and remaining totals for calories and macros. Remaining can be negative.
 - **Food catalog** (constant): the 20 built-in dishes, each with a code, name in Vietnamese and English, meal type, and calories and macros for one serving. Duplicate entries are resolved before the constant is built.
-- **Sample plan generator** (pure): takes the catalog and a calorie target, and returns seven days of breakfast, lunch and dinner. The random source is passed in, so the result can be tested. Each day is accepted when its calories are within ±10% of the target. Otherwise the day is picked again, up to 5 tries, and the closest result is kept.
+- **Sample plan generator** (pure): takes the catalog and a calorie target, and returns seven days of breakfast, lunch and dinner. The random source is passed in, so the result can be tested. Each day is accepted when its calories are within ±10% of the target. Otherwise the day is picked again, up to 5 tries, and the closest result is kept. No dish appears twice in one day (D1).
+- **Water target** (pure): takes the profile's weight in kg and activity level, and returns the daily water target in ml: body weight × 35 ml, plus 0 ml for sedentary and light, 300 ml for moderate, or 500 ml for active and very active (D3). The team's per-hour exercise add-on is dropped, because exercise minutes are not stored per day.
 - **Profile, custom food and meal log data access** (server side): reads and writes the three tables, always scoped to the signed-in user.
 - **Session guard** (server side): checks that the user is signed in before any page or write.
 - **Theme store** (client): a Zustand store with a persist middleware. Holds the theme choice (light, dark or system) under its own localStorage key.
@@ -53,6 +57,7 @@ Each user story maps to one ticket with the same number in `docs/tickets/`.
 - `calculateTargets(profile) -> { kcal, proteinG, carbG, fatG }`
 - `calculateDailyTotals(target, entries) -> { eaten, remaining }`, where each value has kcal, protein, carb and fat.
 - `generateSamplePlan(catalog, kcalTarget, random) -> Day[7]`, where each Day has breakfast, lunch and dinner.
+- `calculateWaterTarget(profile) -> ml`
 
 ### Server actions (writes)
 - `saveProfile(input)`: validates the input with Zod, then inserts or updates the user's profile row.
@@ -63,7 +68,7 @@ Each user story maps to one ticket with the same number in `docs/tickets/`.
 Each action re-checks the signed-in user. RLS is the second check.
 
 ### Schema changes
-- New tables: `profiles`, `custom_foods`, `meal_entries`, as described in `docs/design/03_database_schema.md`.
+- New tables: `profiles`, `custom_foods`, `meal_entries`, as described in `docs/design/database_schema.md`.
 - Row Level Security is enabled on all three tables. Each policy allows access only when `user_id` matches the signed-in user.
 - Meal entries copy the food values at logging time. Changing a food later does not change past entries.
 
@@ -71,9 +76,10 @@ Each action re-checks the signed-in user. RLS is the second check.
 - Next.js 16.4.3 with the App Router and TypeScript.
 - Supabase Auth with Google sign-in only. There is no sign-up form and no email and password.
 - Supabase PostgreSQL for data. Vercel for hosting the frontend.
-- Server Components read data. Server Actions write data. No separate API routes.
+- Server Components read data. Server Actions write data. No separate API routes, except one route for the Google sign-in callback (`/auth/callback`), which reads and writes no app data (D2).
 - Zustand holds only UI state and the theme preference. User data is not kept in local storage.
 - Targets are calculated from the profile when shown. They are not saved per day.
+- Styling: Tailwind CSS 4.3 utility classes in `className`; design tokens set up once in `src/theme/` (D4).
 
 ### Technical clarifications
 - Dates use Asia/Ho_Chi_Minh.
@@ -93,7 +99,7 @@ Each action re-checks the signed-in user. RLS is the second check.
 - **Full user flow** (end-to-end, Playwright): sign-in, save profile, see target, log a built-in dish, create and log a custom food, delete an entry, see remaining update, switch theme, reload and confirm the theme and the day's entries are kept.
 
 ### Prior art
-- The `claude-training` folder uses the Node test runner. This project uses Vitest and Playwright, as decided in `docs/design/02_architecture.md`. No existing test in `nutrition-coach` yet.
+- The `claude-training` folder uses the Node test runner. This project uses Vitest and Playwright, as decided in `docs/design/architecture.md`. No existing test in `nutrition-coach` yet.
 
 ### Google sign-in in end-to-end tests
 - Google blocks automated browsers on its sign-in screen. The tests do not automate that screen. They check what the app does after sign-in.

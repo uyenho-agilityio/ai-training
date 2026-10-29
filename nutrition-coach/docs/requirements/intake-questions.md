@@ -54,7 +54,7 @@ Tickets (`tickets.md`) must not be handed to dev while any question they depend 
 
 ### Q07 - Sample meal plan rule
 - Source: team-decisions.md, "Sample 7-day meal plan"
-- Question: Is a random pick from the food list, accepted when within ±10% of target and retried up to 5 times, acceptable?
+- Question: Is a random pick from the food list, with no dish twice in one day, accepted when each day is within ±10% of target (retry up to 5 times, keep the closest)?
 - Options: A) This rule  B) Another rule
 - Recommended: A.
 - Status: answered (team), needs client confirmation
@@ -68,7 +68,7 @@ Tickets (`tickets.md`) must not be handed to dev while any question they depend 
 
 ### Q09 - Water target
 - Source: team-decisions.md, "Daily water target"
-- Question: Is the water target body weight × 35 ml plus 500 ml per hour of exercise on that day correct? Exercise is entered as minutes per day on the Today screen.
+- Question: Is the water target body weight × 35 ml plus 0, 300 or 500 ml by activity level (sedentary and light 0; moderate 300; active and very active 500) correct? The per-hour exercise add-on is dropped, because exercise minutes are not stored per day (D3).
 - Options: A) This rule  B) Another rule
 - Recommended: A.
 - Status: answered (team), needs client confirmation
