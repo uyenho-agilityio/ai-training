@@ -1,5 +1,7 @@
 # 00a: Claude Code setup
 
+**Issue:** #7
+
 **Spec:** `docs/spec/spec.md` · **Plan:** `docs/plan/plan.md` step 1, details in `docs/plan/claude-setup.md` · **User story:** none (setup)
 
 **What to build:** The Claude Code setup for this project, before any feature work: instructions, guardrail hooks, skills for the build and release stages, read-only review agents, and the GitHub workflows. Guardrails are hooks.
