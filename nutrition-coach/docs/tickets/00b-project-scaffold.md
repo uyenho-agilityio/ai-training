@@ -1,5 +1,7 @@
 # 00b: Project scaffold
 
+**Issue:** #8
+
 **Spec:** `docs/spec/spec.md` · **Plan:** `docs/plan/plan.md` step 2, details in `docs/plan/code-structure.md` · **User story:** none (setup)
 
 **What to build:** An empty Next.js app with the agreed stack, the test setup, and the database schema with Row Level Security, so feature tickets can start. This is the first ticket run with `/do-task`.

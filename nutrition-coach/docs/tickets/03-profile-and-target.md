@@ -1,5 +1,7 @@
 # 03: Profile and daily target
 
+**Issue:** #11
+
 **Spec:** `docs/spec/spec.md` · **User story:** 3
 
 **What to build:** The user enters personal details and sees the daily calorie and macro target. Changing the details updates the target.
