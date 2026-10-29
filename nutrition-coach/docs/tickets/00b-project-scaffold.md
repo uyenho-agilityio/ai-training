@@ -22,4 +22,4 @@
 - [x] `supabase/migrations/0001_init.sql` creates `profiles`, `custom_foods` and `meal_entries` as in `docs/design/database_schema.md`, with RLS enabled and policies on `user_id = auth.uid()`
 - [x] `rls-auditor` reports no gaps in the migration
 - [x] `CLAUDE.md` is updated after running `/init` on the scaffold
-- [ ] Demo: open the PR made by `/do-task`, see base `feat/nutrition-coach` and CI passing
+- [x] Demo: open the PR made by `/do-task`, see base `feat/nutrition-coach` and CI passing
