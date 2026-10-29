@@ -1,0 +1,58 @@
+name: Nutrition Coach CI
+
+on:
+  pull_request:
+    branches: [feat/nutrition-coach]
+    paths:
+      - "nutrition-coach/**"
+      - ".github/workflows/nutrition-coach-ci.yml"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nutrition-coach
+    steps:
+      - name: Check that the app is scaffolded
+        id: scaffold
+        working-directory: .
+        run: |
+          if [ -f nutrition-coach/package.json ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "nutrition-coach/package.json not found yet (ticket 00b). Skipping checks."
+          fi
+
+      - name: Checkout
+        if: steps.scaffold.outputs.ready == 'true'
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        if: steps.scaffold.outputs.ready == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: nutrition-coach/package-lock.json
+
+      - name: Install
+        if: steps.scaffold.outputs.ready == 'true'
+        run: npm ci
+
+      - name: Lint
+        if: steps.scaffold.outputs.ready == 'true'
+        run: npm run lint
+
+      - name: Typecheck
+        if: steps.scaffold.outputs.ready == 'true'
+        run: npm run typecheck
+
+      - name: Unit tests
+        if: steps.scaffold.outputs.ready == 'true'
+        run: npm run test
+
+      - name: Build
+        if: steps.scaffold.outputs.ready == 'true'
+        run: npm run build
