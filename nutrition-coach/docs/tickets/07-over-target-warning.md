@@ -1,5 +1,7 @@
 # 07: Over-target warning
 
+**Issue:** #15
+
 **Spec:** `docs/spec/spec.md` · **User story:** 7
 
 **What to build:** When eaten is above target, the remaining value turns negative and a soft warning appears. Logging is never blocked.

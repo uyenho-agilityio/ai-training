@@ -1,5 +1,7 @@
 # 04: Log a built-in food and see what is left
 
+**Issue:** #12
+
 **Spec:** `docs/spec/spec.md` · **User story:** 4
 
 **What to build:** The user logs one of the 20 built-in dishes for today. The Today screen shows the target, the amount eaten and the amount left, and the list of today's foods.

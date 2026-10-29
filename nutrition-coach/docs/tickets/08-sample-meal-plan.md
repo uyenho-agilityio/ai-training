@@ -1,5 +1,7 @@
 # 08: Sample 7-day meal plan on the Today screen
 
+**Issue:** #16
+
 **Spec:** `docs/spec/spec.md` · **User story:** 8
 
 **What to build:** The Today screen shows a sample 7-day meal plan below the logged foods. Each day has breakfast, lunch and dinner from the built-in dishes, close to the calorie target. The plan is a suggestion only.

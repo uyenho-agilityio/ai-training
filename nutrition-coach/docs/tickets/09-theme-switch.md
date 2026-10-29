@@ -1,5 +1,7 @@
 # 09: Light, dark and system theme
 
+**Issue:** #17
+
 **Spec:** `docs/spec/spec.md` · **User story:** 9
 
 **What to build:** A theme switch in the header lets the user choose light, dark or system. The choice is remembered on this device.

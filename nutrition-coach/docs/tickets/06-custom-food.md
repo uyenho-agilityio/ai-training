@@ -1,5 +1,7 @@
 # 06: Create a custom food and log it
 
+**Issue:** #14
+
 **Spec:** `docs/spec/spec.md` · **User story:** 6
 
 **What to build:** The user creates their own food for one serving, saves it to their account, and logs it. Saved custom foods can be logged again later.

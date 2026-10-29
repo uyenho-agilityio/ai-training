@@ -1,5 +1,7 @@
 # 01: Sign in with Google
 
+**Issue:** #9
+
 **Spec:** `docs/spec/spec.md` · **User story:** 1
 
 **What to build:** The user signs in with a Google account. The first sign-in goes to Profile; later sign-ins go to Today. There is no sign-up form and no password.
