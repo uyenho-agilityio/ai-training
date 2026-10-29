@@ -29,4 +29,13 @@ The project is scaffolded (ticket 00b). Feature tickets are in `docs/tickets/`.
 - Design: `docs/design/`
 - Spec: `docs/spec/spec.md`
 
-Commands, test setup and conventions: `CLAUDE.md`. Copy `.env.example` to `.env.local` and fill in the Supabase URL and anon key.
+Commands, test setup and conventions: `CLAUDE.md`.
+
+## Environment variables
+
+Copy `.env.example` to `.env.local` and fill in:
+
+- `NEXT_PUBLIC_SUPABASE_URL`: the Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: the Supabase anon key
+
+Never add the service role key.
