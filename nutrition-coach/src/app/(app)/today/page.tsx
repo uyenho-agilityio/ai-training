@@ -1,11 +1,13 @@
-import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 
 import { hasProfile } from "@/utils/supabase/queries/profile";
+import { Heading } from "@/components";
 import { requireUser } from "@/utils/supabase/requireUser";
 
-async function TodayGate() {
+export const instant = false;
+
+export default async function TodayPage() {
   await connection();
   const user = await requireUser();
 
@@ -15,15 +17,7 @@ async function TodayGate() {
 
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
-      <h1 className="text-3xl font-semibold text-primary">Today</h1>
+      <Heading tone="primary">Today</Heading>
     </main>
-  );
-}
-
-export default function TodayPage() {
-  return (
-    <Suspense>
-      <TodayGate />
-    </Suspense>
   );
 }
