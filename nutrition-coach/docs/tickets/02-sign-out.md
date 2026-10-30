@@ -8,7 +8,7 @@
 
 **Blocked by:** 01
 
-**Status:** todo
+**Status:** in progress
 
 - [ ] Sign out is available from the header on every signed-in screen
 - [ ] After sign-out the session ends and the Login screen shows
