@@ -5,3 +5,6 @@ export { Heading } from "./Heading";
 export { ProfileForm } from "./ProfileForm";
 export { SignOutButton } from "./SignOutButton";
 export { Text } from "./Text";
+export { EntryList } from "./EntryList";
+export { FoodPicker } from "./FoodPicker";
+export { TotalsCards } from "./TotalsCards";
