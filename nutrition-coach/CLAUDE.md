@@ -95,6 +95,7 @@ src/
 - Food values come from `docs/requirements/food-list.md`. Two carb values are estimates and carry `isEstimate` (R3).
 - The sample plan never repeats a dish within one day (D1). A target above about 2,131 kcal cannot reach ±10% and the plan shows the gap.
 - Water target: body weight × 35 ml, plus 0 / 300 / 500 ml by activity level (D3).
+- Delete (`deleteMealEntry` in `src/app/actions/mealEntries.ts`): only today's entries, only the user's own, filtered by `user_id` and `entry_date` (Asia/Ho_Chi_Minh). `EntryList` shows a Delete button per row and refreshes the day after the delete.
 - Built-in foods: `src/constants/foods.ts`, 20 dishes from `docs/requirements/food-list.md`. The two estimated carb values carry `isEstimate`. `logFood` copies the dish name (English) and values into `meal_entries` for today (Asia/Ho_Chi_Minh).
 - Daily target: `calculateTargets` in `src/utils/targets.ts`, rules and numbers in `src/constants/nutrition.ts`. Mifflin-St Jeor, or Katch-McArdle when body fat % is set. Carbs are clamped to 0 when protein and fat already use all the kcal. Each value is rounded to a whole number after the calculation. `saveProfile` (Server Action) validates with `src/schemas/profile.ts` and returns the target.
 
