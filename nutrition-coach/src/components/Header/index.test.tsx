@@ -7,6 +7,10 @@ vi.mock("@/app/actions/auth", () => ({
   signOut: vi.fn(),
 }));
 
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/today",
+}));
+
 describe("Header", () => {
   it("shows the sign-out button in the page header", () => {
     render(<Header />);

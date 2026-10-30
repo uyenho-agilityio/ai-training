@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+import { ProfileLink } from "@/components/ProfileLink";
 import { SignOutButton } from "@/components/SignOutButton";
 import { Text } from "@/components/Text";
 
@@ -10,9 +9,7 @@ export function Header() {
         Nutrition Coach
       </Text>
       <div className="flex items-center gap-4">
-        <Link href="/profile" className="text-primary font-semibold">
-          Profile
-        </Link>
+        <ProfileLink />
         <SignOutButton />
       </div>
     </header>
