@@ -7,6 +7,10 @@ vi.mock("@/app/actions/auth", () => ({
   signOut: vi.fn(),
 }));
 
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/today",
+}));
+
 describe("Header", () => {
   it("shows the sign-out button in the page header", () => {
     render(<Header />);
@@ -16,5 +20,15 @@ describe("Header", () => {
         name: "Sign out",
       }),
     ).toBeInTheDocument();
+  });
+
+  it("links to the Profile page from the page header", () => {
+    render(<Header />);
+
+    expect(
+      within(screen.getByRole("banner")).getByRole("link", {
+        name: "Profile",
+      }),
+    ).toHaveAttribute("href", "/profile");
   });
 });

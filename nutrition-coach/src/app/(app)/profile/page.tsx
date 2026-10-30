@@ -1,22 +1,22 @@
 import { connection } from "next/server";
 
-import { Heading, Text } from "@/components";
+import { Heading, ProfileForm } from "@/components";
+import { getProfile } from "@/utils/supabase/queries/profile";
 import { requireUser } from "@/utils/supabase/requireUser";
+import { calculateTargets } from "@/utils/targets";
 
 export const instant = false;
 
 export default async function ProfilePage() {
   await connection();
   const user = await requireUser();
-  const name: string = user.user_metadata.full_name ?? user.email ?? "";
+  const profile = await getProfile(user.id);
+  const target = profile === null ? null : calculateTargets(profile);
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-2 p-6">
+    <main className="flex min-h-screen flex-col items-center gap-6 p-6">
       <Heading tone="primary">Profile</Heading>
-      <Text size="lg" weight="semibold">
-        {name}
-      </Text>
-      <Text>{user.email}</Text>
+      <ProfileForm profile={profile} target={target} />
     </main>
   );
 }
