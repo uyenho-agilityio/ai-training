@@ -84,7 +84,9 @@ src/
 - All "today" dates use Asia/Ho_Chi_Minh, computed with `todayInVietnam(now)`. Server time is UTC.
 - Meal entries copy calories and macros at logging time. Changing a food later does not change past entries.
 - Targets are computed from the profile when shown. They are not saved per day.
-- Every Server Action calls `requireUser()` first. RLS is the second guard. Each policy checks `user_id = auth.uid()` with `using` and `with check`.
+- Every Server Action calls `requireUser()` first, except `signInWithGoogle`, which runs before a user exists. RLS is the second guard. Each policy checks `user_id = auth.uid()` with `using` and `with check`.
+- Sign-in: `signInWithGoogle` (Server Action) starts OAuth. `/auth/callback` exchanges the code and sends everyone to `/today`. `/today` sends a user with no profile on to `/profile`. `src/proxy.ts` refreshes the session and redirects a signed-out visit to `/today` or `/profile` to `/login`. Pages still call `requireUser()`.
+- Signed-in e2e tests use `playwright/.auth/user.json`. Run `E2E_SIGN_IN=manual pnpm e2e` once to sign in by hand with a test Google account. Delete that file to sign in again.
 - Never use the service role key in app code. Only `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are needed.
 - Next.js 16 uses `src/proxy.ts`, not `middleware.ts`.
 - `next.config.ts` turns on `cacheComponents` and `partialPrefetching`. Data fetching is dynamic by default and is cached only with `use cache`; pages get a static shell and dynamic parts stream in. Do not add a `runtime` route segment export. Docs: `node_modules/next/dist/docs/01-app/03-api-reference/05-config/01-next-config-js/cacheComponents.md`.
