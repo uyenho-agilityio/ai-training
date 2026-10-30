@@ -8,10 +8,10 @@
 
 **Blocked by:** 00b
 
-**Status:** todo
+**Status:** in progress
 
-- [ ] The Login screen has one button, "Continue with Google"
+- [x] The Login screen has one button, "Continue with Google"
 - [ ] A first sign-in with no profile goes to Profile
 - [ ] A later sign-in with a profile goes to Today
-- [ ] A user who is not signed in is sent to the Login screen when opening a private page
+- [x] A user who is not signed in is sent to the Login screen when opening a private page
 - [ ] Demo: sign in with a new account, land on Profile
