@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { Header } from "@/components/Header";
@@ -12,7 +12,9 @@ describe("Header", () => {
     render(<Header />);
 
     expect(
-      screen.getByRole("banner").querySelector("button"),
-    ).toHaveTextContent("Sign out");
+      within(screen.getByRole("banner")).getByRole("button", {
+        name: "Sign out",
+      }),
+    ).toBeInTheDocument();
   });
 });
