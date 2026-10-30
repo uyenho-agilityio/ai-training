@@ -86,6 +86,7 @@ src/
 - Targets are computed from the profile when shown. They are not saved per day.
 - Every Server Action calls `requireUser()` first, except `signInWithGoogle`, which runs before a user exists. RLS is the second guard. Each policy checks `user_id = auth.uid()` with `using` and `with check`.
 - Sign-in: `signInWithGoogle` (Server Action) starts OAuth. `/auth/callback` exchanges the code and sends everyone to `/today`. `/today` sends a user with no profile on to `/profile`. `src/proxy.ts` refreshes the session and redirects a signed-out visit to `/today` or `/profile` to `/login`. Pages still call `requireUser()`. Today and Profile live in the `(app)` route group, whose layout shows the header with `SignOutButton`. `signOut` (Server Action) signs out and goes to `/login`.
+- `/today` and `/profile` export `instant = false`, so they block on the server and their redirects are real 307s. A redirect inside a streamed Suspense boundary would show the page first and then jump.
 - Signed-in e2e tests use `playwright/.auth/user.json`. Run `E2E_SIGN_IN=manual pnpm e2e` once to sign in by hand with a test Google account. Delete that file to sign in again. `E2E_SIGN_OUT=1 pnpm e2e` runs the sign-out test, which ends the saved session. Delete the file after that.
 - Never use the service role key in app code. Only `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are needed.
 - Next.js 16 uses `src/proxy.ts`, not `middleware.ts`.
@@ -173,7 +174,11 @@ GitHub work (issues, labels, PRs, reviews, merges) goes through the GitHub MCP. 
 
 ## UI
 
-Read `docs/design/ui_ux_branding.md` before any UI work, and follow it. When a ticket adds a new visual rule, update that file in the same PR.
+Read `docs/design/ui_ux_branding.md` before any UI work, and follow it.
+
+All buttons use `src/components/Button`. Focus lowers the button to 80% opacity, so do not style buttons one by one.
+
+Headings use `Heading` (`level` 1 to 3, `tone`). Body text uses `Text` (`as`, `size`, `weight`, `tone`). Do not write `h1` to `h3` or styled `p` and `span` by hand. When a ticket adds a new visual rule, update that file in the same PR.
 
 ## Keeping this file current
 
