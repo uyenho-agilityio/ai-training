@@ -1,10 +1,12 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 
 import { hasProfile } from "@/utils/supabase/queries/profile";
 import { requireUser } from "@/utils/supabase/requireUser";
 
 async function TodayGate() {
+  await connection();
   const user = await requireUser();
 
   if (!(await hasProfile(user.id))) {

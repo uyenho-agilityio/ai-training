@@ -7,7 +7,7 @@ export function GoogleSignInButton() {
     <button
       type="button"
       onClick={() => signInWithGoogle()}
-      className="rounded-button bg-primary px-6 py-3 font-semibold text-on-primary shadow-card hover:shadow-raised"
+      className="cursor-pointer rounded-button bg-primary px-6 py-3 font-semibold text-on-primary shadow-card hover:shadow-raised"
     >
       Continue with Google
     </button>

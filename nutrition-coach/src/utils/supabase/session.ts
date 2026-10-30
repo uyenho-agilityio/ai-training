@@ -34,14 +34,22 @@ export async function updateSession(request: NextRequest) {
 
   // Reading the claims refreshes an expiring session and writes the new cookies.
   const { data } = await supabase.auth.getClaims();
+  const { pathname } = request.nextUrl;
 
-  if (!data && isPrivatePath(request.nextUrl.pathname)) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/login";
-    const redirect = NextResponse.redirect(loginUrl);
-    response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
-    return redirect;
+  let target: string | null = null;
+  if (pathname === "/") {
+    target = data ? "/today" : "/login";
+  } else if (!data && isPrivatePath(pathname)) {
+    target = "/login";
   }
 
-  return response;
+  if (!target) {
+    return response;
+  }
+
+  const targetUrl = request.nextUrl.clone();
+  targetUrl.pathname = target;
+  const redirect = NextResponse.redirect(targetUrl);
+  response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
+  return redirect;
 }
