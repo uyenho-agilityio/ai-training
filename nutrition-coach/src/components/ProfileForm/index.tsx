@@ -56,7 +56,14 @@ export function ProfileForm({ profile, target }: ProfileFormProps) {
     }
 
     setPending(true);
-    const result = await saveProfile(parsed.data);
+    let result;
+    try {
+      result = await saveProfile(parsed.data);
+    } catch {
+      setPending(false);
+      setError("Could not save your profile. Try again.");
+      return;
+    }
     setPending(false);
 
     if (result.ok) {

@@ -71,6 +71,21 @@ describe("calculateTargets", () => {
     ).toBe(kcal);
   });
 
+  it("sets the kcal and fat targets to 0 when the deficit makes them negative", () => {
+    // Female, 120 years, 100 cm, 20 kg, sedentary: BMR 64 × 1.2 = 76.8 − 500
+    // = −423.2 kcal, so kcal and fat show 0; protein stays 2 g per kg
+    expect(
+      calculateTargets({
+        sex: "female",
+        age: 120,
+        heightCm: 100,
+        weightKg: 20,
+        activityLevel: "sedentary",
+        bodyFatPercent: null,
+      }),
+    ).toEqual({ kcal: 0, proteinG: 40, carbG: 0, fatG: 0 });
+  });
+
   it("sets carbs to 0 when protein and fat already use all the kcal", () => {
     // Female, 100 years, 140 cm, 150 kg, sedentary: BMR 1714 × 1.2 = 2056.8 − 500
     // = 1556.8 kcal; protein 1200 kcal and fat 389.2 kcal leave −32.4 kcal for carbs

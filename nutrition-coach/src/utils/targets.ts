@@ -37,9 +37,11 @@ function basalMetabolicRate(profile: TargetProfile) {
 }
 
 export function calculateTargets(profile: TargetProfile): Targets {
-  const kcal =
+  const kcal = Math.max(
+    0,
     basalMetabolicRate(profile) * ACTIVITY_FACTORS[profile.activityLevel] -
-    DEFICIT_KCAL;
+      DEFICIT_KCAL,
+  );
   const proteinG = PROTEIN_G_PER_KG * profile.weightKg;
   const fatKcal = kcal * FAT_SHARE_OF_KCAL;
   const fatG = fatKcal / FAT_KCAL_PER_G;

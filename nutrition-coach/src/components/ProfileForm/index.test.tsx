@@ -68,6 +68,20 @@ describe("ProfileForm", () => {
     expect(saveProfile).not.toHaveBeenCalled();
   });
 
+  it("shows an error and enables Save again when the save fails", async () => {
+    const user = userEvent.setup();
+    vi.mocked(saveProfile).mockRejectedValue(new Error("network down"));
+    render(<ProfileForm />);
+
+    await fillValidProfile(user);
+    await user.click(screen.getByRole("button", { name: "Save profile" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not save your profile. Try again.",
+    );
+    expect(screen.getByRole("button", { name: "Save profile" })).toBeEnabled();
+  });
+
   it("shows the daily target after a successful save", async () => {
     const user = userEvent.setup();
     vi.mocked(saveProfile).mockResolvedValue({
