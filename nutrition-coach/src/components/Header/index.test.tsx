@@ -17,4 +17,14 @@ describe("Header", () => {
       }),
     ).toBeInTheDocument();
   });
+
+  it("links to the Profile page from the page header", () => {
+    render(<Header />);
+
+    expect(
+      within(screen.getByRole("banner")).getByRole("link", {
+        name: "Profile",
+      }),
+    ).toHaveAttribute("href", "/profile");
+  });
 });
