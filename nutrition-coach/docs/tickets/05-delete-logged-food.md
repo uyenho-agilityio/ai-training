@@ -10,8 +10,8 @@
 
 **Status:** todo
 
-- [ ] Each entry in today's list has a delete action
-- [ ] Deleting removes the entry
+- [x] Each entry in today's list has a delete action
+- [x] Deleting removes the entry
 - [ ] Eaten and remaining update right after deleting
 - [ ] A user cannot delete another user's entry
 - [ ] Demo: log a dish, delete it, totals return
