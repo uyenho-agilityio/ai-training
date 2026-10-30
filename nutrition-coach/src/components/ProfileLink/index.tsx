@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 export function ProfileLink() {
   const pathname = usePathname();
 
-  if (pathname === "/profile") {
+  if (pathname !== "/today") {
     return null;
   }
 
