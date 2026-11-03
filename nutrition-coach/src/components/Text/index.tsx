@@ -4,7 +4,7 @@ type TextProps = {
   as?: "p" | "span";
   size?: "sm" | "base" | "lg";
   weight?: "normal" | "semibold";
-  tone?: "default" | "primary" | "muted";
+  tone?: "default" | "primary" | "muted" | "warning";
   children: ReactNode;
 };
 
@@ -23,6 +23,7 @@ const tones = {
   default: "text-text",
   primary: "text-primary",
   muted: "text-text/70",
+  warning: "text-warning",
 };
 
 export function Text({
