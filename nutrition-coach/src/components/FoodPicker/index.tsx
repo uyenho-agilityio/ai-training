@@ -39,17 +39,29 @@ export function FoodPicker() {
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
       <label className="flex flex-col gap-1">
         <span className="text-sm font-semibold">Dish</span>
-        <select
-          value={foodCode}
-          onChange={(event) => setFoodCode(event.target.value)}
-          className="cursor-pointer rounded-field border border-primary/30 py-2 pr-7 pl-3"
-        >
-          {FOODS.map((food) => (
-            <option key={food.code} value={food.code}>
-              {food.nameEn}
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <select
+            value={foodCode}
+            onChange={(event) => setFoodCode(event.target.value)}
+            className="w-full cursor-pointer appearance-none rounded-field border border-primary/30 py-2 pr-10 pl-3"
+          >
+            {FOODS.map((food) => (
+              <option key={food.code} value={food.code}>
+                {food.nameEn}
+              </option>
+            ))}
+          </select>
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className="pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </div>
       </label>
       {error ? (
         <div role="alert">
