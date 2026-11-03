@@ -8,7 +8,7 @@
 
 **Blocked by:** 03 (the UI part also waits for 08's change to the Today screen)
 
-**Status:** todo
+**Status:** in progress
 
 - [x] Add-ons by activity level (plan decision D3): sedentary and light +0 ml, moderate +300 ml, active and very active +500 ml
 - [x] Water target = weight (kg) × 35 ml + add-on, in whole ml
