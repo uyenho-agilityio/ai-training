@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { useThemeStore } from "@/stores/useThemeStore";
 import { resolveTheme, type ThemeChoice } from "@/utils/resolveTheme";
@@ -15,11 +15,24 @@ export function ThemeSwitch() {
   const theme = useThemeStore((state) => state.theme);
   const setTheme = useThemeStore((state) => state.setTheme);
 
+  const [loaded, setLoaded] = useState(false);
+
   useEffect(() => {
-    void useThemeStore.persist.rehydrate();
+    let active = true;
+    const load = async () => {
+      await useThemeStore.persist.rehydrate();
+      if (active) setLoaded(true);
+    };
+    void load();
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
+    // Wait for the saved choice, so the default 'system' never overwrites a saved dark theme.
+    if (!loaded) return;
+
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const apply = () => {
       document.documentElement.dataset.theme = resolveTheme(
@@ -33,7 +46,7 @@ export function ThemeSwitch() {
 
     media.addEventListener("change", apply);
     return () => media.removeEventListener("change", apply);
-  }, [theme]);
+  }, [loaded, theme]);
 
   return (
     <fieldset className="flex items-center gap-1 rounded-chip border border-primary p-1">
