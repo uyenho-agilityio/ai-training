@@ -8,3 +8,5 @@ export { Text } from "./Text";
 export { EntryList } from "./EntryList";
 export { FoodPicker } from "./FoodPicker";
 export { TotalsCards } from "./TotalsCards";
+export { CustomFoodForm } from "./CustomFoodForm";
+export { CustomFoodList } from "./CustomFoodList";
