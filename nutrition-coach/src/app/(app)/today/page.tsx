@@ -1,8 +1,15 @@
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 
-import { EntryList, FoodPicker, Heading, TotalsCards } from "@/components";
+import {
+  EntryList,
+  FoodPicker,
+  Heading,
+  SamplePlan,
+  TotalsCards,
+} from "@/components";
 import { calculateDailyTotals } from "@/utils/dailyTotals";
+import { generateSamplePlan } from "@/utils/samplePlan";
 import { getProfile, hasProfile } from "@/utils/supabase/queries/profile";
 import { listEntries } from "@/utils/supabase/queries/meals";
 import { requireUser } from "@/utils/supabase/requireUser";
@@ -27,6 +34,7 @@ export default async function TodayPage() {
   const target = calculateTargets(profile);
   const entries = await listEntries(user.id, todayInVietnam(new Date()));
   const { eaten, remaining } = calculateDailyTotals(target, entries);
+  const samplePlan = generateSamplePlan(target.kcal, Math.random);
 
   return (
     <main className="flex min-h-screen flex-col items-center gap-6 p-6">
@@ -35,6 +43,7 @@ export default async function TodayPage() {
         <TotalsCards target={target} eaten={eaten} remaining={remaining} />
         <FoodPicker />
         <EntryList entries={entries} />
+        <SamplePlan target={target.kcal} plan={samplePlan} />
       </div>
     </main>
   );
