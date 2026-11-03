@@ -20,3 +20,13 @@ export const KCAL_PER_G = {
 export const FAT_KCAL_PER_G = 9;
 
 export const BODY_FAT_PERCENT_RANGE = { min: 3, max: 60 } as const;
+
+export const WATER_ML_PER_KG = 35;
+
+export const WATER_ADD_ON_ML = {
+  sedentary: 0,
+  light: 0,
+  moderate: 300,
+  active: 500,
+  very_active: 500,
+} as const;

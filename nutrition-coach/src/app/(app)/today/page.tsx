@@ -7,6 +7,7 @@ import {
   Heading,
   SamplePlan,
   TotalsCards,
+  WaterTargetCard,
 } from "@/components";
 import { calculateDailyTotals } from "@/utils/dailyTotals";
 import { generateSamplePlan } from "@/utils/samplePlan";
@@ -15,6 +16,7 @@ import { listEntries } from "@/utils/supabase/queries/meals";
 import { requireUser } from "@/utils/supabase/requireUser";
 import { calculateTargets } from "@/utils/targets";
 import { todayInVietnam } from "@/utils/todayInVietnam";
+import { calculateWaterTarget } from "@/utils/waterTarget";
 
 export const instant = false;
 
@@ -41,6 +43,7 @@ export default async function TodayPage() {
       <Heading tone="primary">Today</Heading>
       <div className="flex w-full max-w-md flex-col gap-6">
         <TotalsCards target={target} eaten={eaten} remaining={remaining} />
+        <WaterTargetCard targetMl={calculateWaterTarget(profile)} />
         <FoodPicker />
         <EntryList entries={entries} />
         <SamplePlan target={target.kcal} plan={samplePlan} />

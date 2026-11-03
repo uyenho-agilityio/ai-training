@@ -10,9 +10,9 @@
 
 **Status:** todo
 
-- [ ] Add-ons by activity level (plan decision D3): sedentary and light +0 ml, moderate +300 ml, active and very active +500 ml
-- [ ] Water target = weight (kg) × 35 ml + add-on, in whole ml
-- [ ] 35 ml per kg and the add-ons live in one place, with the other nutrition rules
+- [x] Add-ons by activity level (plan decision D3): sedentary and light +0 ml, moderate +300 ml, active and very active +500 ml
+- [x] Water target = weight (kg) × 35 ml + add-on, in whole ml
+- [x] 35 ml per kg and the add-ons live in one place, with the other nutrition rules
 - [ ] The Today screen shows the water target in ml for the signed-in user's activity level
 - [ ] Changing the weight or the activity level in Profile changes the water target
 - [ ] No water intake is logged or stored

@@ -8,6 +8,8 @@ import {
   FAT_SHARE_OF_KCAL,
   KCAL_PER_G,
   PROTEIN_G_PER_KG,
+  WATER_ADD_ON_ML,
+  WATER_ML_PER_KG,
 } from "@/constants/nutrition";
 
 describe("nutrition constants", () => {
@@ -40,5 +42,19 @@ describe("nutrition constants", () => {
 
   it("accepts body fat from 3% to 60%", () => {
     expect(BODY_FAT_PERCENT_RANGE).toEqual({ min: 3, max: 60 });
+  });
+
+  it("sets water to 35 ml per kg of body weight", () => {
+    expect(WATER_ML_PER_KG).toBe(35);
+  });
+
+  it("adds 0, 0, 300, 500 and 500 ml by activity level", () => {
+    expect(WATER_ADD_ON_ML).toEqual({
+      sedentary: 0,
+      light: 0,
+      moderate: 300,
+      active: 500,
+      very_active: 500,
+    });
   });
 });
