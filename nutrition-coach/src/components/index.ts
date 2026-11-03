@@ -9,5 +9,6 @@ export { EntryList } from "./EntryList";
 export { FoodPicker } from "./FoodPicker";
 export { SamplePlan } from "./SamplePlan";
 export { TotalsCards } from "./TotalsCards";
+export { WaterTargetCard } from "./WaterTargetCard";
 export { CustomFoodForm } from "./CustomFoodForm";
 export { CustomFoodList } from "./CustomFoodList";
