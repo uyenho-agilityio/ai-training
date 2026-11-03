@@ -1,0 +1,12 @@
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-primary: #34d399;
+  --color-on-primary: #0f1a14;
+  --color-background: #0f1a14;
+  --color-surface: #17241d;
+  --color-text: #e6f2ea;
+  --color-warning: #fbbf24;
+}
