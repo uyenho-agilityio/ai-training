@@ -51,6 +51,18 @@ describe("TotalsCards", () => {
     expect(screen.getByText("Over target")).toHaveClass("text-warning");
   });
 
+  it("shows no warning when the rounded remaining calories are zero", () => {
+    render(
+      <TotalsCards
+        target={target}
+        eaten={{ kcal: 2211.3, proteinG: 160, carbG: 254, fatG: 61 }}
+        remaining={{ kcal: -0.3, proteinG: 0, carbG: 0, fatG: 0 }}
+      />,
+    );
+
+    expect(screen.queryByText("Over target")).not.toBeInTheDocument();
+  });
+
   it("shows no warning when calories are still left", () => {
     render(<TotalsCards target={target} eaten={eaten} remaining={remaining} />);
 
