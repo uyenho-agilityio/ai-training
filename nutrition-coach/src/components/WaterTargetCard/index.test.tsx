@@ -8,6 +8,6 @@ describe("WaterTargetCard", () => {
     render(<WaterTargetCard targetMl={2750} />);
 
     expect(screen.getByText("Water target")).toBeInTheDocument();
-    expect(screen.getByText("2750 ml")).toBeInTheDocument();
+    expect(screen.getByText("2,750 ml")).toBeInTheDocument();
   });
 });

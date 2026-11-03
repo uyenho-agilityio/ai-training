@@ -10,7 +10,7 @@ export function WaterTargetCard({ targetMl }: WaterTargetCardProps) {
       <Text size="sm" tone="muted">
         Water target
       </Text>
-      <Text weight="semibold">{targetMl} ml</Text>
+      <Text weight="semibold">{`${targetMl.toLocaleString("en-US")} ml`}</Text>
     </section>
   );
 }
