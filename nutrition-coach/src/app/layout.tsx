@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { beVietnamPro } from "@/theme";
+import { themeScript } from "@/theme/themeScript";
 
 import "./globals.css";
 
@@ -15,7 +16,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={beVietnamPro.variable}>
+    <html lang="en" className={beVietnamPro.variable} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body>{children}</body>
     </html>
   );

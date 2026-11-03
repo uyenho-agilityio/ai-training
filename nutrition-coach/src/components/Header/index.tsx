@@ -1,6 +1,7 @@
 import { ProfileLink } from "@/components/ProfileLink";
 import { SignOutButton } from "@/components/SignOutButton";
 import { Text } from "@/components/Text";
+import { ThemeSwitch } from "@/components/ThemeSwitch";
 
 export function Header() {
   return (
@@ -9,6 +10,7 @@ export function Header() {
         Nutrition Coach
       </Text>
       <div className="flex items-center gap-4">
+        <ThemeSwitch />
         <ProfileLink />
         <SignOutButton />
       </div>

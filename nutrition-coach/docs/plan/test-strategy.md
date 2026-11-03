@@ -39,7 +39,7 @@ Each ticket starts with its seams agreed (the `/do-task` plan stop), and `/do-td
 | T06 | Custom food schema; `CustomFoodForm`: rejects an empty name and negative numbers, submits a valid food | Create and log a custom food → row added and saved for later |
 | T07 | `calculateDailyTotals` over target → negative remaining; `TotalsCards`: negative value shows the warning | Go over target, warning shows, one more dish can still be logged |
 | T08 | `generateSamplePlan` with a fixed random source (7 days, 3 meals, no dish twice in a day, ±10% or closest of 5); `SamplePlan`: switching days shows three meals and the day's total, with no log action | Open a plan day → today's list is unchanged |
-| T09 | `useThemeStore`: default `system`, choice is persisted; `ThemeSwitch`: choosing dark sets `data-theme="dark"` | Choose dark, reload → still dark before first paint |
+| T09 | `useThemeStore`: no choice by default, choice is persisted; `ThemeSwitch`: choosing dark sets `data-theme="dark"` | Choose dark, reload → still dark before first paint |
 | T10 | `calculateWaterTarget` with the D3 examples; `WaterTargetCard`: shows the amount in ml | Change weight or activity in Profile → Today's water target changes |
 
 ## Commands (all must pass before a ticket is marked `done`)
@@ -64,7 +64,7 @@ pnpm e2e
 | `utils/samplePlan.ts` | With a fixed random source: 7 days, each has breakfast, lunch and dinner from the right meal types and no dish twice; a reachable target gives days within ±10%; an unreachable target (e.g. 2,500 kcal) returns the closest of 5 tries; output is the same for the same seed | T08 / US 8 |
 | `utils/waterTarget.ts` | 70 kg, light → 2,450 ml; 70 kg, moderate → 2,750 ml; 80 kg, active → 3,300 ml; 80 kg, very active → 3,300 ml; sedentary gets no add-on | T10 / US 10 |
 | `constants/nutrition.ts` | Activity factors 1.2, 1.375, 1.55, 1.725, 1.9; deficit 500; water 35 ml per kg and add-ons +0 / +300 / +500 | T03, T10 / US 3, 10 |
-| `stores/useThemeStore.ts` | Default `system`; a choice survives a new store instance (persisted) | T09 / US 9 |
+| `stores/useThemeStore.ts` | No choice by default; a choice survives a new store instance (persisted) | T09 / US 9 |
 | `components/*/index.test.tsx` | Each component's seam in the "TDD seams" table, checked through what the user sees (text, roles) and does (click, type) | T01–T10 |
 
 ## End-to-end (Playwright, `e2e/<ticket>-*.spec.ts`)
