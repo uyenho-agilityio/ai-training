@@ -42,7 +42,7 @@ export function FoodPicker() {
         <select
           value={foodCode}
           onChange={(event) => setFoodCode(event.target.value)}
-          className="cursor-pointer rounded-field border border-primary/30 py-2 pr-3 pl-3"
+          className="cursor-pointer rounded-field border border-primary/30 py-2 pr-7 pl-3"
         >
           {FOODS.map((food) => (
             <option key={food.code} value={food.code}>
