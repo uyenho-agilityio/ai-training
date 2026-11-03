@@ -10,7 +10,7 @@ let systemPrefersDark = false;
 describe("ThemeSwitch", () => {
   beforeEach(() => {
     localStorage.clear();
-    useThemeStore.setState({ theme: "system" });
+    useThemeStore.setState({ theme: null });
     delete document.documentElement.dataset.theme;
     systemPrefersDark = false;
     vi.stubGlobal(
@@ -29,7 +29,62 @@ describe("ThemeSwitch", () => {
     vi.unstubAllGlobals();
   });
 
-  it("never shows the OS theme while a saved dark choice loads", async () => {
+  it("offers only light and dark", () => {
+    render(<ThemeSwitch />);
+
+    expect(screen.getByRole("radio", { name: "Light" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Dark" })).toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: "System" })).toBeNull();
+  });
+
+  it("shows dark as selected when the device is dark and nothing is saved", async () => {
+    systemPrefersDark = true;
+    render(<ThemeSwitch />);
+
+    await waitFor(() =>
+      expect(screen.getByRole("radio", { name: "Dark" })).toBeChecked(),
+    );
+    expect(screen.getByRole("radio", { name: "Light" })).not.toBeChecked();
+  });
+
+  it("shows light as selected when the device is light and nothing is saved", async () => {
+    systemPrefersDark = false;
+    render(<ThemeSwitch />);
+
+    await waitFor(() =>
+      expect(screen.getByRole("radio", { name: "Light" })).toBeChecked(),
+    );
+    expect(screen.getByRole("radio", { name: "Dark" })).not.toBeChecked();
+  });
+
+  it("sets data-theme to dark when dark is chosen", async () => {
+    const user = userEvent.setup();
+    render(<ThemeSwitch />);
+
+    await user.click(screen.getByRole("radio", { name: "Dark" }));
+
+    expect(document.documentElement.dataset.theme).toBe("dark");
+  });
+
+  it("sets data-theme to light when light is chosen", async () => {
+    const user = userEvent.setup();
+    render(<ThemeSwitch />);
+
+    await user.click(screen.getByRole("radio", { name: "Light" }));
+
+    expect(document.documentElement.dataset.theme).toBe("light");
+  });
+
+  it("follows the device setting until the user picks a theme", async () => {
+    systemPrefersDark = true;
+    render(<ThemeSwitch />);
+
+    await waitFor(() =>
+      expect(document.documentElement.dataset.theme).toBe("dark"),
+    );
+  });
+
+  it("never shows the device theme while a saved dark choice loads", async () => {
     localStorage.setItem(
       themeStorageKey,
       JSON.stringify({ state: { theme: "dark" }, version: 0 }),
@@ -52,40 +107,5 @@ describe("ThemeSwitch", () => {
 
     // A light value written and then replaced by dark shows up as the oldValue of the later write.
     expect(records.map((record) => record.oldValue)).not.toContain("light");
-  });
-
-  it("offers light, dark and system, with system selected by default", () => {
-    render(<ThemeSwitch />);
-
-    expect(screen.getByRole("radio", { name: "Light" })).not.toBeChecked();
-    expect(screen.getByRole("radio", { name: "Dark" })).not.toBeChecked();
-    expect(screen.getByRole("radio", { name: "System" })).toBeChecked();
-  });
-
-  it("sets data-theme to dark when dark is chosen", async () => {
-    const user = userEvent.setup();
-    render(<ThemeSwitch />);
-
-    await user.click(screen.getByRole("radio", { name: "Dark" }));
-
-    expect(document.documentElement.dataset.theme).toBe("dark");
-  });
-
-  it("sets data-theme to light when light is chosen", async () => {
-    const user = userEvent.setup();
-    render(<ThemeSwitch />);
-
-    await user.click(screen.getByRole("radio", { name: "Light" }));
-
-    expect(document.documentElement.dataset.theme).toBe("light");
-  });
-
-  it("follows the OS setting while system is chosen", async () => {
-    systemPrefersDark = true;
-    render(<ThemeSwitch />);
-
-    await waitFor(() =>
-      expect(document.documentElement.dataset.theme).toBe("dark"),
-    );
   });
 });

@@ -72,7 +72,7 @@ Mobile first. The base layout is for a 375 px phone.
 
 ## Theme switch
 
-- Three options: light, dark, and system. The default is system.
+- Two options: light and dark. Until the user picks one, the theme follows the device setting (dark if the device is dark, light otherwise).
 - The choice is stored in localStorage through a Zustand store with the `persist` middleware. It is a device preference, not user data.
 - A small inline script in `<head>` reads the stored value and sets `data-theme` before first paint, so the page does not flash the wrong theme.
 - Colors are CSS variables, so switching theme does not reload the page.

@@ -3,19 +3,18 @@
 import { useEffect, useState } from "react";
 
 import { useThemeStore } from "@/stores/useThemeStore";
-import { resolveTheme, type ThemeChoice } from "@/utils/resolveTheme";
+import { resolveTheme, type Theme } from "@/utils/resolveTheme";
 
-const options: { value: ThemeChoice; label: string }[] = [
+const options: { value: Theme; label: string }[] = [
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
-  { value: "system", label: "System" },
 ];
 
 export function ThemeSwitch() {
   const theme = useThemeStore((state) => state.theme);
   const setTheme = useThemeStore((state) => state.setTheme);
-
   const [loaded, setLoaded] = useState(false);
+  const [systemPrefersDark, setSystemPrefersDark] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -30,23 +29,21 @@ export function ThemeSwitch() {
   }, []);
 
   useEffect(() => {
-    // Wait for the saved choice, so the default 'system' never overwrites a saved dark theme.
-    if (!loaded) return;
-
     const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const apply = () => {
-      document.documentElement.dataset.theme = resolveTheme(
-        theme,
-        media.matches,
-      );
-    };
+    const update = () => setSystemPrefersDark(media.matches);
 
-    apply();
-    if (theme !== "system") return;
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
 
-    media.addEventListener("change", apply);
-    return () => media.removeEventListener("change", apply);
-  }, [loaded, theme]);
+  const resolved = resolveTheme(theme, systemPrefersDark);
+
+  useEffect(() => {
+    // Wait for the saved choice, so the device setting never overwrites a saved theme.
+    if (!loaded) return;
+    document.documentElement.dataset.theme = resolved;
+  }, [loaded, resolved]);
 
   return (
     <fieldset className="flex items-center gap-1 rounded-chip border border-primary p-1">
@@ -60,7 +57,7 @@ export function ThemeSwitch() {
             type="radio"
             name="theme"
             value={value}
-            checked={theme === value}
+            checked={resolved === value}
             onChange={() => setTheme(value)}
             className="sr-only"
           />

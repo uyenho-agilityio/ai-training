@@ -1,10 +1,8 @@
-export type ThemeChoice = "light" | "dark" | "system";
+export type Theme = "light" | "dark";
 
-export function resolveTheme(
-  theme: ThemeChoice,
-  systemPrefersDark: boolean,
-): "light" | "dark" {
-  if (theme === "system") {
+// null means the user has not picked a theme yet, so the device setting decides.
+export function resolveTheme(theme: Theme | null, systemPrefersDark: boolean): Theme {
+  if (theme === null) {
     return systemPrefersDark ? "dark" : "light";
   }
   return theme;

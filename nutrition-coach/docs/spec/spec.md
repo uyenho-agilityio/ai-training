@@ -12,7 +12,7 @@ A user who wants to lose fat does not know how many calories and macros they nee
 
 ## Solution
 
-A web app called Nutrition Coach. The user signs in with Google and enters a few personal details. The app shows a daily calorie and macro target for fat loss. On the Today screen, the user logs the foods they eat, and the app shows what is left for the day. The app also shows a sample 7-day meal plan as a suggestion and a daily water target. The user can switch between light, dark and system themes.
+A web app called Nutrition Coach. The user signs in with Google and enters a few personal details. The app shows a daily calorie and macro target for fat loss. On the Today screen, the user logs the foods they eat, and the app shows what is left for the day. The app also shows a sample 7-day meal plan as a suggestion and a daily water target. The user can switch between light and dark themes.
 
 ## User Stories
 
@@ -35,7 +35,7 @@ Each user story maps to one ticket with the same number in `docs/tickets/`.
 8. As a user, I want to see a sample 7-day meal plan on the Today screen, with breakfast, lunch and dinner close to my calorie target, so that I get ideas for the rest of the day. The plan never repeats a dish within one day, and each day shows its total next to the target. The plan is a suggestion only and never logs anything.
 
 ### Theme
-9. As a user, I want to switch between light, dark and system themes, and have my choice remembered on this device, so that the app is comfortable to use.
+9. As a user, I want to switch between light and dark themes, and have my choice remembered on this device, so that the app is comfortable to use. The first visit follows the device's light or dark setting.
 
 ### Water target
 10. As a user, I want to see my daily water target on the Today screen, based on my weight and activity level, and see it update when I change either in Profile, so that I know how much to drink.
@@ -50,7 +50,7 @@ Each user story maps to one ticket with the same number in `docs/tickets/`.
 - **Water target** (pure): takes the profile's weight in kg and activity level, and returns the daily water target in ml: body weight × 35 ml, plus 0 ml for sedentary and light, 300 ml for moderate, or 500 ml for active and very active (D3). The team's per-hour exercise add-on is dropped, because exercise minutes are not stored per day.
 - **Profile, custom food and meal log data access** (server side): reads and writes the three tables, always scoped to the signed-in user.
 - **Session guard** (server side): checks that the user is signed in before any page or write.
-- **Theme store** (client): a Zustand store with a persist middleware. Holds the theme choice (light, dark or system) under its own localStorage key.
+- **Theme store** (client): a Zustand store with a persist middleware. Holds the theme choice (light or dark, empty until the user picks one) under its own localStorage key.
 - **Theme script** (client, in the page head): applies the stored theme before the first paint.
 
 ### Interfaces

@@ -1,6 +1,6 @@
 import { themeStorageKey } from "@/stores/useThemeStore";
 
-// Runs before first paint: sets data-theme from the saved choice, or from the OS when the choice is system.
+// Runs before first paint: sets data-theme from the saved choice, or from the OS when the user has not picked one.
 export const themeScript = `(function () {
   try {
     var theme = JSON.parse(localStorage.getItem(${JSON.stringify(themeStorageKey)}) || "{}").state.theme;

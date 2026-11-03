@@ -5,11 +5,11 @@ import { themeStorageKey, useThemeStore } from "@/stores/useThemeStore";
 describe("useThemeStore", () => {
   beforeEach(() => {
     localStorage.clear();
-    useThemeStore.setState({ theme: "system" });
+    useThemeStore.setState({ theme: null });
   });
 
-  it("defaults to system", () => {
-    expect(useThemeStore.getState().theme).toBe("system");
+  it("has no choice until the user picks one", () => {
+    expect(useThemeStore.getState().theme).toBeNull();
   });
 
   it("saves the chosen theme on this device", () => {
