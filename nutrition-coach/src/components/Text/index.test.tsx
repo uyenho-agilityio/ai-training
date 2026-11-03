@@ -15,4 +15,10 @@ describe("Text", () => {
 
     expect(screen.getByText("Nutrition Coach").tagName).toBe("SPAN");
   });
+
+  it("uses the warning colour for the warning tone", () => {
+    render(<Text tone="warning">Over target</Text>);
+
+    expect(screen.getByText("Over target")).toHaveClass("text-warning");
+  });
 });

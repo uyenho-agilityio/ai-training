@@ -28,6 +28,11 @@ export function TotalsCards({ target, eaten, remaining }: TotalsCardsProps) {
             Remaining
           </Text>
           <Text weight="semibold">{Math.round(remaining.kcal)} kcal</Text>
+          {Math.round(remaining.kcal) < 0 && (
+            <Text size="sm" tone="warning">
+              Over target
+            </Text>
+          )}
         </div>
       </div>
       <Text size="sm">{Math.round(remaining.proteinG)} g protein left</Text>

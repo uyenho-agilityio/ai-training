@@ -26,4 +26,46 @@ describe("TotalsCards", () => {
     expect(screen.getByText("214 g carbs left")).toBeInTheDocument();
     expect(screen.getByText("55 g fat left")).toBeInTheDocument();
   });
+
+  it("shows a negative remaining calorie value when over target", () => {
+    render(
+      <TotalsCards
+        target={target}
+        eaten={{ kcal: 2323, proteinG: 170, carbG: 260, fatG: 70 }}
+        remaining={{ kcal: -112, proteinG: -10, carbG: -6, fatG: -9 }}
+      />,
+    );
+
+    expect(screen.getByText("-112 kcal")).toBeInTheDocument();
+  });
+
+  it("shows a warning in the warning colour when over target", () => {
+    render(
+      <TotalsCards
+        target={target}
+        eaten={{ kcal: 2323, proteinG: 170, carbG: 260, fatG: 70 }}
+        remaining={{ kcal: -112, proteinG: -10, carbG: -6, fatG: -9 }}
+      />,
+    );
+
+    expect(screen.getByText("Over target")).toHaveClass("text-warning");
+  });
+
+  it("shows no warning when the rounded remaining calories are zero", () => {
+    render(
+      <TotalsCards
+        target={target}
+        eaten={{ kcal: 2211.3, proteinG: 160, carbG: 254, fatG: 61 }}
+        remaining={{ kcal: -0.3, proteinG: 0, carbG: 0, fatG: 0 }}
+      />,
+    );
+
+    expect(screen.queryByText("Over target")).not.toBeInTheDocument();
+  });
+
+  it("shows no warning when calories are still left", () => {
+    render(<TotalsCards target={target} eaten={eaten} remaining={remaining} />);
+
+    expect(screen.queryByText("Over target")).not.toBeInTheDocument();
+  });
 });

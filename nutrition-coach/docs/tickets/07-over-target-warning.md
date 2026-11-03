@@ -8,9 +8,9 @@
 
 **Blocked by:** 04
 
-**Status:** todo
+**Status:** done
 
-- [ ] Remaining shows a negative number when eaten is above target
-- [ ] A soft warning in the warning colour appears next to the negative value
-- [ ] The user can still log foods when over target
+- [x] Remaining shows a negative number when eaten is above target
+- [x] A soft warning in the warning colour appears next to the negative value
+- [x] The user can still log foods when over target
 - [ ] Demo: go over target, see the warning, log one more food
