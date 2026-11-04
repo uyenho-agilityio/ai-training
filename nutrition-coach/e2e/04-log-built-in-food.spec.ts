@@ -1,16 +1,6 @@
-import { existsSync, readFileSync } from "node:fs";
-
 import { expect, test } from "@playwright/test";
 
-const authFile = "playwright/.auth/user.json";
-
-const hasSavedSignIn = (): boolean => {
-  if (!existsSync(authFile)) return false;
-  const state = JSON.parse(readFileSync(authFile, "utf8")) as {
-    cookies: { name: string }[];
-  };
-  return state.cookies.some((cookie) => cookie.name.startsWith("sb-"));
-};
+import { hasSavedSignIn } from "./savedSignIn";
 
 // Needs a saved sign-in and a saved profile: run E2E_SIGN_IN=manual pnpm e2e once first.
 test.describe("log a built-in food", () => {
