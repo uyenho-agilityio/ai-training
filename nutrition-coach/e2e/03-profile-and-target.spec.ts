@@ -1,16 +1,6 @@
-import { existsSync, readFileSync } from "node:fs";
-
 import { expect, test } from "@playwright/test";
 
-const authFile = "playwright/.auth/user.json";
-
-const hasSavedSignIn = (): boolean => {
-  if (!existsSync(authFile)) return false;
-  const state = JSON.parse(readFileSync(authFile, "utf8")) as {
-    cookies: { name: string }[];
-  };
-  return state.cookies.some((cookie) => cookie.name.startsWith("sb-"));
-};
+import { hasSavedSignIn } from "./savedSignIn";
 
 // Needs a saved sign-in: run E2E_SIGN_IN=manual pnpm e2e once first.
 test.describe("profile and daily target", () => {
@@ -24,7 +14,7 @@ test.describe("profile and daily target", () => {
   }) => {
     await page.goto("/profile");
 
-    await page.getByRole("radio", { name: "Male" }).check();
+    await page.getByRole("radio", { name: "Male", exact: true }).check();
     await page.getByLabel("Age").fill("30");
     await page.getByLabel("Height (cm)").fill("175");
     await page.getByLabel("Weight (kg)").fill("80");

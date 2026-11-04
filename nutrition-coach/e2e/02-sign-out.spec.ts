@@ -1,16 +1,6 @@
-import { existsSync, readFileSync } from "node:fs";
-
 import { expect, test } from "@playwright/test";
 
-const authFile = "playwright/.auth/user.json";
-
-const hasSavedSignIn = (): boolean => {
-  if (!existsSync(authFile)) return false;
-  const state = JSON.parse(readFileSync(authFile, "utf8")) as {
-    cookies: { name: string }[];
-  };
-  return state.cookies.some((cookie) => cookie.name.startsWith("sb-"));
-};
+import { hasSavedSignIn } from "./savedSignIn";
 
 // Signing out ends the saved session on Supabase, so later signed-in tests
 // need a new sign-in. Run this on purpose with E2E_SIGN_OUT=1, then delete

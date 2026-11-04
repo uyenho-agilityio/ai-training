@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+test.use({ storageState: { cookies: [], origins: [] } });
+
 test("the home page sends a signed-out user to the Login screen", async ({
   page,
 }) => {
