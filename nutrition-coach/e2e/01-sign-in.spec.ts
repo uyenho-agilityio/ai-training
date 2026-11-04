@@ -4,6 +4,7 @@ import { hasSavedSignIn } from "./savedSignIn";
 
 // The signed-in tests need the saved sign-in state from auth.setup.ts.
 // With E2E_EMAIL and E2E_PASSWORD set, auth.setup.ts refreshes that state on every run.
+// The no-profile test is in 11-no-profile.spec.ts, which uses a second account.
 
 test.describe("signed out", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
@@ -26,19 +27,6 @@ test.describe("signed in", () => {
     !hasSavedSignIn(),
     "No saved sign-in: run `E2E_SIGN_IN=manual pnpm e2e` once with a test Google account",
   );
-
-  test("a signed-in user with no profile lands on Profile", async ({
-    page,
-  }) => {
-    test.skip(
-      process.env.E2E_ACCOUNT !== "new",
-      "Set E2E_ACCOUNT=new when the saved account has no profile",
-    );
-
-    await page.goto("/today");
-
-    await expect(page).toHaveURL(/\/profile$/);
-  });
 
   test("a signed-in user with a profile lands on Today", async ({ page }) => {
     await page.goto("/today");

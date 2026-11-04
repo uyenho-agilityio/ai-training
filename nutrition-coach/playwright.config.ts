@@ -27,9 +27,20 @@ export default defineConfig({
     { name: "setup", testMatch: /.*\.setup\.ts/ },
     {
       name: "chromium",
+      testIgnore: /11-no-profile\.spec\.ts/,
       use: {
         ...devices["Desktop Chrome"],
         storageState: "playwright/.auth/user.json",
+      },
+      dependencies: ["setup"],
+    },
+    {
+      // The second account has no profile, so it has its own project and session.
+      name: "no-profile",
+      testMatch: /11-no-profile\.spec\.ts/,
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: "playwright/.auth/new-account.json",
       },
       dependencies: ["setup"],
     },
