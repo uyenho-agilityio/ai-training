@@ -41,11 +41,6 @@ test.describe("signed in", () => {
   });
 
   test("a signed-in user with a profile lands on Today", async ({ page }) => {
-    test.skip(
-      process.env.E2E_ACCOUNT !== "with-profile",
-      "Set E2E_ACCOUNT=with-profile when the saved account has a profile",
-    );
-
     await page.goto("/today");
 
     await expect(page).toHaveURL(/\/today$/);
