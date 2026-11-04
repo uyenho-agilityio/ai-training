@@ -62,6 +62,11 @@ setup("save sign-in state", async ({ page }) => {
   const url = process.env.E2E_SUPABASE_URL;
   const key = process.env.E2E_SUPABASE_ANON_KEY;
 
+  // The main account must not be the no-profile account, or the profile step would save one there.
+  if (email && email === process.env.E2E_NEW_EMAIL) {
+    throw new Error("E2E_EMAIL must be the main account, not E2E_NEW_EMAIL.");
+  }
+
   if (email && password && url && key) {
     await signInWithPassword(page, { email, password, url, key });
 
