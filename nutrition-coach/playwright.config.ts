@@ -26,21 +26,22 @@ export default defineConfig({
   projects: [
     { name: "setup", testMatch: /.*\.setup\.ts/ },
     {
-      name: "chromium",
-      testIgnore: /11-no-profile\.spec\.ts/,
-      use: {
-        ...devices["Desktop Chrome"],
-        storageState: "playwright/.auth/user.json",
-      },
-      dependencies: ["setup"],
-    },
-    {
       // The second account has no profile, so it has its own project and session.
+      // It runs before chromium: the sign-out test (10) ends every session of the main account.
       name: "no-profile",
       testMatch: /11-no-profile\.spec\.ts/,
       use: {
         ...devices["Desktop Chrome"],
         storageState: "playwright/.auth/new-account.json",
+      },
+      dependencies: ["setup"],
+    },
+    {
+      name: "chromium",
+      testIgnore: /11-no-profile\.spec\.ts/,
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: "playwright/.auth/user.json",
       },
       dependencies: ["setup"],
     },
