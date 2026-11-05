@@ -39,6 +39,18 @@ describe("calculateWaterTarget", () => {
     ).toBe(2450);
   });
 
+  it("accepts the lowest weight: 20 kg sedentary is 700 ml", () => {
+    expect(
+      calculateWaterTarget({ weightKg: 20, activityLevel: "sedentary" }),
+    ).toBe(700);
+  });
+
+  it("accepts the highest weight: 300 kg very active is 11,000 ml", () => {
+    expect(
+      calculateWaterTarget({ weightKg: 300, activityLevel: "very_active" }),
+    ).toBe(11000);
+  });
+
   it("rounds to whole ml: 70.5 kg light is 2,468 ml", () => {
     expect(
       calculateWaterTarget({ weightKg: 70.5, activityLevel: "light" }),
