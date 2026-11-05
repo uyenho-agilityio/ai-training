@@ -8,8 +8,8 @@
 
 **Blocked by:** 01
 
-**Status:** in progress
+**Status:** done
 
-- [ ] Sign out is available from the header on every signed-in screen
-- [ ] After sign-out the session ends and the Login screen shows
-- [ ] Demo: sign out, see the Login screen
+- [x] Sign out is available from the header on every signed-in screen
+- [x] After sign-out the session ends and the Login screen shows
+- [x] Demo: sign out, see the Login screen

@@ -13,7 +13,8 @@ pass=0; fail=0; skip=0
 OUT=""; CODE=0
 
 run() { # hook json dir
-  OUT=$(cd "$3" && "$HOOKS_DIR/$1" 2>&1 <<< "$2"); CODE=$?
+  # Unset CLAUDE_PROJECT_DIR so hooks resolve paths from the case's dir, not the real project.
+  OUT=$(cd "$3" && env -u CLAUDE_PROJECT_DIR "$HOOKS_DIR/$1" 2>&1 <<< "$2"); CODE=$?
 }
 
 check() { # name expected hook json dir
@@ -140,7 +141,22 @@ if [ "$(cat "$TMP/sample.ts")" = 'const a = {b:1}' ]; then
 else
   fail=$((fail + 1)); printf 'FAIL  %-24s %-6s .ts file changed without Prettier\n' "$H" "untouched"
 fi
-skipped "Prettier runs on a .ts edit" "$H" "needs node_modules/.bin/prettier, installed in ticket 00b"
+PRETTIER="$(cd "$HOOKS_DIR/../.." && pwd)/node_modules/.bin/prettier"
+if [ -x "$PRETTIER" ]; then
+  mkdir -p "$TMP/formatted/node_modules/.bin"
+  # A wrapper, not a symlink: the pnpm shim finds Prettier relative to its own folder.
+  printf '#!/usr/bin/env bash\nexec "%s" "$@"\n' "$PRETTIER" > "$TMP/formatted/node_modules/.bin/prettier"
+  chmod +x "$TMP/formatted/node_modules/.bin/prettier"
+  printf 'const a = {b:1}\n' > "$TMP/formatted/sample.ts"
+  check "Edit a .ts file, with Prettier"         allow $H "$(file_json Edit "$TMP/formatted/sample.ts")" "$TMP/formatted"
+  if [ "$(cat "$TMP/formatted/sample.ts")" = 'const a = { b: 1 };' ]; then
+    pass=$((pass + 1)); printf 'PASS  %-24s %-6s %s\n' "$H" "format" ".ts file formatted by Prettier"
+  else
+    fail=$((fail + 1)); printf 'FAIL  %-24s %-6s .ts file not formatted: %s\n' "$H" "format" "$(cat "$TMP/formatted/sample.ts")"
+  fi
+else
+  skipped "Prettier runs on a .ts edit" "$H" "needs node_modules/.bin/prettier (run pnpm install)"
+fi
 
 echo
 echo "Result: $pass passed, $fail failed, $skip skipped"

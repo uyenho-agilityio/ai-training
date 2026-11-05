@@ -8,11 +8,11 @@
 
 **Blocked by:** 04
 
-**Status:** in progress
+**Status:** done
 
 - [x] A "Sample meal plan" block shows seven days to choose from
 - [x] Each day shows breakfast, lunch and dinner from the built-in list, with no dish twice in the same day
 - [x] Each day shows its total calories next to the target
 - [x] Each day's calories are within ±10% of target, or the closest result is kept after 5 tries
 - [x] Choosing a plan day does not log anything
-- [ ] Demo: open a plan day, see three meals and their calories
+- [x] Demo: open a plan day, see three meals and their calories

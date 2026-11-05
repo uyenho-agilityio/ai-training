@@ -3,6 +3,8 @@ import { existsSync } from "node:fs";
 import { expect, test as setup, type Page } from "@playwright/test";
 import { createServerClient } from "@supabase/ssr";
 
+import { E2E_FOOD_PREFIX, saveProfile } from "./helpers";
+
 const authFile = "playwright/.auth/user.json";
 const newAccountFile = "playwright/.auth/new-account.json";
 
@@ -24,8 +26,9 @@ async function signInWithPassword(
   >();
   const supabase = createServerClient(url, key, {
     cookies: {
+      // Hands the new session back, so the same client can clean up test data.
       getAll() {
-        return [];
+        return [...cookies].map(([name, { value }]) => ({ name, value }));
       },
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value, options }) =>
@@ -50,6 +53,37 @@ async function signInWithPassword(
       sameSite: "Lax" as const,
     })),
   );
+
+  return supabase;
+}
+
+// Removes the custom foods e2e made in earlier runs (names start with E2E_FOOD_PREFIX).
+// Their entries go first: deleting a used custom food fails (see CLAUDE.md).
+// RLS limits both deletes to the signed-in test account.
+async function removeE2eCustomFoods(
+  supabase: Awaited<ReturnType<typeof signInWithPassword>>,
+) {
+  const { data: foods, error } = await supabase
+    .from("custom_foods")
+    .select("id")
+    .like("name", `${E2E_FOOD_PREFIX}%`);
+  if (error) throw new Error(`Could not list e2e foods: ${error.message}`);
+
+  const ids = foods.map((food) => food.id as string);
+  if (ids.length === 0) return;
+
+  const entries = await supabase
+    .from("meal_entries")
+    .delete()
+    .in("custom_food_id", ids);
+  if (entries.error) {
+    throw new Error(`Could not remove e2e entries: ${entries.error.message}`);
+  }
+
+  const removed = await supabase.from("custom_foods").delete().in("id", ids);
+  if (removed.error) {
+    throw new Error(`Could not remove e2e foods: ${removed.error.message}`);
+  }
 }
 
 // Saves the sign-in state for the main test account. It refreshes on every run.
@@ -68,16 +102,16 @@ setup("save sign-in state", async ({ page }) => {
   }
 
   if (email && password && url && key) {
-    await signInWithPassword(page, { email, password, url, key });
+    const supabase = await signInWithPassword(page, {
+      email,
+      password,
+      url,
+      key,
+    });
+    await removeE2eCustomFoods(supabase);
 
     // Save a fixed profile so Today has a target. Same values as the first save in 03.
-    await page.goto("/profile");
-    await page.getByRole("radio", { name: "Male", exact: true }).check();
-    await page.getByLabel("Age").fill("30");
-    await page.getByLabel("Height (cm)").fill("175");
-    await page.getByLabel("Weight (kg)").fill("80");
-    await page.getByLabel("Activity level").selectOption("moderate");
-    await page.getByRole("button", { name: "Save profile" }).click();
+    await saveProfile(page, { weightKg: "80", activity: "moderate" });
     await expect(page.getByText("2211 kcal")).toBeVisible();
 
     // Start each run with an empty day: remove entries left by earlier runs.

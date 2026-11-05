@@ -27,7 +27,6 @@ export default defineConfig({
     { name: "setup", testMatch: /.*\.setup\.ts/ },
     {
       // The second account has no profile, so it has its own project and session.
-      // It runs before chromium: the sign-out test (10) ends every session of the main account.
       name: "no-profile",
       testMatch: /11-no-profile\.spec\.ts/,
       use: {
@@ -38,12 +37,23 @@ export default defineConfig({
     },
     {
       name: "chromium",
-      testIgnore: /11-no-profile\.spec\.ts/,
+      testIgnore: [/11-no-profile\.spec\.ts/, /10-sign-out\.spec\.ts/],
       use: {
         ...devices["Desktop Chrome"],
         storageState: "playwright/.auth/user.json",
       },
       dependencies: ["setup"],
+    },
+    {
+      // Signing out ends every session of the main account (scope global),
+      // so it waits for every other signed-in project, whatever the file names.
+      name: "sign-out",
+      testMatch: /10-sign-out\.spec\.ts/,
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: "playwright/.auth/user.json",
+      },
+      dependencies: ["chromium", "no-profile"],
     },
   ],
   webServer: {

@@ -21,6 +21,12 @@ describe("calculateWaterTarget", () => {
     ).toBe(3300);
   });
 
+  it("adds 500 ml for active: 70 kg is 2,950 ml (ticket 10 demo)", () => {
+    expect(
+      calculateWaterTarget({ weightKg: 70, activityLevel: "active" }),
+    ).toBe(2950);
+  });
+
   it("adds 500 ml for very active: 80 kg is 3,300 ml", () => {
     expect(
       calculateWaterTarget({ weightKg: 80, activityLevel: "very_active" }),
