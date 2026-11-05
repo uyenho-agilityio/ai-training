@@ -13,7 +13,8 @@ pass=0; fail=0; skip=0
 OUT=""; CODE=0
 
 run() { # hook json dir
-  OUT=$(cd "$3" && "$HOOKS_DIR/$1" 2>&1 <<< "$2"); CODE=$?
+  # Unset CLAUDE_PROJECT_DIR so hooks resolve paths from the case's dir, not the real project.
+  OUT=$(cd "$3" && env -u CLAUDE_PROJECT_DIR "$HOOKS_DIR/$1" 2>&1 <<< "$2"); CODE=$?
 }
 
 check() { # name expected hook json dir

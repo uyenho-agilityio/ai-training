@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { saveProfile } from "./helpers";
 import { hasSavedSignIn } from "./savedSignIn";
 
 // Needs a saved sign-in: run E2E_SIGN_IN=manual pnpm e2e once first.
@@ -12,14 +13,7 @@ test.describe("profile and daily target", () => {
   test("save profile shows the target, and changing weight updates it", async ({
     page,
   }) => {
-    await page.goto("/profile");
-
-    await page.getByRole("radio", { name: "Male", exact: true }).check();
-    await page.getByLabel("Age").fill("30");
-    await page.getByLabel("Height (cm)").fill("175");
-    await page.getByLabel("Weight (kg)").fill("80");
-    await page.getByLabel("Activity level").selectOption("moderate");
-    await page.getByRole("button", { name: "Save profile" }).click();
+    await saveProfile(page, { weightKg: "80", activity: "moderate" });
 
     // Mifflin-St Jeor: 1748.75 × 1.55 − 500 = 2210.56 → 2211 kcal
     await expect(page.getByText("2211 kcal")).toBeVisible();

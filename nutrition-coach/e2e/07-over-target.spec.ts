@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { addAndLogCustomFood } from "./helpers";
 import { hasSavedSignIn } from "./savedSignIn";
 
 // Ticket 07 demo: go over target, see the warning, log one more food.
@@ -12,23 +13,14 @@ test.describe("over-target warning", () => {
   test("going over target shows the warning and logging still works", async ({
     page,
   }) => {
-    // One custom food above the whole 2211 kcal target puts the day over in one log.
-    const name = `E2E feast ${Date.now()}`;
-
-    await page.goto("/add-food");
-    await page.getByLabel("Name").fill(name);
-    await page.getByLabel("Calories (kcal)").fill("3000");
-    await page.getByLabel("Protein (g)").fill("0");
-    await page.getByLabel("Carbs (g)").fill("0");
-    await page.getByLabel("Fat (g)").fill("0");
-    await page.getByRole("button", { name: "Save food" }).click();
-    // Wait for the logCustomFood Server Action to finish before leaving the page.
-    await Promise.all([
-      page.waitForResponse(
-        (response) => response.request().method() === "POST",
-      ),
-      page.getByRole("button", { name: `Log ${name}` }).click(),
-    ]);
+    // 3000 kcal is above any target the test profile reaches (2211 kcal at 80 kg,
+    // 2288 kcal after 03 saves 85 kg), so one log puts the day over.
+    await addAndLogCustomFood(page, "feast", {
+      kcal: "3000",
+      proteinG: "0",
+      carbG: "0",
+      fatG: "0",
+    });
 
     await page.goto("/today");
 

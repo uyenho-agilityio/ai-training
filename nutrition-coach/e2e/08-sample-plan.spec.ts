@@ -24,6 +24,7 @@ test.describe("sample meal plan", () => {
       .locator("..")
       .getByText(/kcal$/)
       .textContent();
+    expect(eatenBefore).toMatch(/^\d+ kcal$/);
 
     await plan.getByRole("button", { name: "Day 3" }).click();
     await expect(plan.getByRole("button", { name: "Day 3" })).toHaveAttribute(
@@ -50,6 +51,6 @@ test.describe("sample meal plan", () => {
     // Choosing a plan day does not log anything.
     await expect(
       page.getByText("Eaten", { exact: true }).locator("..").getByText(/kcal$/),
-    ).toHaveText(eatenBefore ?? "");
+    ).toHaveText(eatenBefore!);
   });
 });
