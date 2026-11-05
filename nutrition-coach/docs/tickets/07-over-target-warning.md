@@ -13,4 +13,4 @@
 - [x] Remaining shows a negative number when eaten is above target
 - [x] A soft warning in the warning colour appears next to the negative value
 - [x] The user can still log foods when over target
-- [ ] Demo: go over target, see the warning, log one more food
+- [x] Demo: go over target, see the warning, log one more food

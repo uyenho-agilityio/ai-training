@@ -16,4 +16,4 @@
 - [x] Dark values are added to the Tailwind theme in `src/theme/` (set up in 00b), and `dark:` styles follow the switch, not only the OS setting
 - [x] The choice is kept after reload, using a Zustand store with persist
 - [x] No flash of the wrong theme on first paint
-- [ ] Demo: switch themes, reload, the choice stays
+- [x] Demo: switch themes, reload, the choice stays

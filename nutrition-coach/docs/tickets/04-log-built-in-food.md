@@ -8,13 +8,13 @@
 
 **Blocked by:** 03
 
-**Status:** in progress
+**Status:** done
 
 - [x] The 20 built-in dishes are available as one fixed list, from `docs/requirements/food-list.md`
 - [x] Canh bí đao nấu sườn lợn is not in the list
 - [x] Thịt gà luộc carb = 0 and Gà xào sả carb = 4 are flagged as estimates
-- [ ] Logging a dish adds one entry for today, with its name and values copied at logging time
-- [ ] Target, eaten and remaining update right after logging
-- [ ] Only the signed-in user's entries are shown
+- [x] Logging a dish adds one entry for today, with its name and values copied at logging time
+- [x] Target, eaten and remaining update right after logging
+- [x] Only the signed-in user's entries are shown
 - [x] The day is computed in Asia/Ho_Chi_Minh time, so an entry logged just after midnight in Vietnam counts toward the new day
-- [ ] Demo: log a dish, see remaining go down
+- [x] Demo: log a dish, see remaining go down
