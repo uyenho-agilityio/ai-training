@@ -8,10 +8,10 @@
 
 **Blocked by:** 04
 
-**Status:** todo
+**Status:** done
 
 - [x] Each entry in today's list has a delete action
 - [x] Deleting removes the entry
-- [ ] Eaten and remaining update right after deleting
-- [ ] A user cannot delete another user's entry
-- [ ] Demo: log a dish, delete it, totals return
+- [x] Eaten and remaining update right after deleting
+- [x] A user cannot delete another user's entry
+- [x] Demo: log a dish, delete it, totals return
