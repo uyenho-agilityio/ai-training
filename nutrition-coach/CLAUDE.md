@@ -125,6 +125,7 @@ Skills in `.claude/skills/`. Run by the user only, except `do-tdd`:
 
 - `/do-task <ticket>`: one ticket from start to merge. Stops at three gates: ticket plan, before push, before merge.
 - `/do-tdd <seam>`: red-green-refactor at an agreed seam. Used by `do-task`.
+- `/task-status <ticket>`: reads the ticket's `## Log` and branch, and reports the last logged step and the next one. Read only.
 - `/check-release [branch]`: checks a ticket branch is ready to merge. Reports only.
 - `/publish-tickets`: creates one GitHub issue per ticket that has none, and writes `**Issue:** #n` into the ticket.
 
