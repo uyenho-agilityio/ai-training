@@ -116,6 +116,8 @@ One ticket = one GitHub issue = one branch = one PR. Claude does every step exce
 
 A new push after gate 2 that only fixes CI or review findings inside the ticket does not stop again; anything outside the ticket goes to Follow-up and asks you first.
 
+Every step of `/do-task` writes one line to the ticket's `## Log` (`- <date> <step>: <what finished>`). A new `/do-task` run resumes after the last line. `/task-status <ticket>` reads the same log and reports the next step without changing anything.
+
 ## Parallel sessions
 
 A **session** owns one ticket at a time and ends in a PR. Each session runs in its own git worktree and branch, cut from `github/feat/nutrition-coach` (for example `claude --worktree nc-01-sign-in`). **At most two sessions run at once**, and only when their tickets do not depend on each other, to keep the machine load and token use down. A **subagent** works inside a session, only reads and reports, and never gets a ticket of its own (see "Subagents" above).
