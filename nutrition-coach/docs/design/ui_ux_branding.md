@@ -93,3 +93,4 @@ Mobile first. The base layout is for a 375 px phone.
 
 - First login goes to Profile if no profile exists yet. Later logins go to Today.
 - Theme switch is available from every screen, in the header.
+- The header has a main nav next to the app name: Today and Profile. The link to the page you are on is hidden. Today is shown only when the user has a profile.
