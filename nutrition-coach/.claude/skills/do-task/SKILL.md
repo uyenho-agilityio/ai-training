@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # do-task
 
-Usage: `/do-task [--auto] <docs/tickets/<ticket>-*.md or issue link>`
+Usage: `/do-task [--auto] <ticket file name or issue link>`
 
 Run from `nutrition-coach/`. Follow `CLAUDE.md` and the ticket's "Ticket lifecycle" in `docs/plan/claude-setup.md`.
 
