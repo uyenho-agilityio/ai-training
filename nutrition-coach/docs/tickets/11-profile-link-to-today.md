@@ -33,3 +33,4 @@
 - 2026-11-09 checks: unit 137 pass, lint, typecheck, build, full e2e 17 pass (after stopping the dev server on port 3000)
 - 2026-11-09 slice 5b: nav links use the text colour token (no 70% opacity), per review of the screenshot
 - 2026-11-09 gate2: approved. Commits: test (e2e 11 and 13), feat (header nav), docs (design doc and ticket status)
+- 2026-11-09 pr: PR #44 opened into feat/nutrition-coach (Closes #43), issue labelled status: in review
