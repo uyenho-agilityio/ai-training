@@ -20,11 +20,11 @@ The line is written when the step finishes, not when it starts. Lines are never 
 
 ## 1. Start (no gate)
 
-0. Resume check: if the ticket has a `## Log`, read its last line and continue from the step after it (skip finished steps). If the last line is missing, unclear, or the worktree or branch from it is gone, stop and ask the user. Do not guess.
+0. Resume check: if the ticket has a `## Log`, read its last line and continue from the step after it (skip finished steps). If the last line is missing or unclear, or the branch named in the ticket's log is gone, stop and ask the user. A missing worktree is not a reason to stop: tickets may be built in the main checkout on their branch. Do not guess.
 1. Read the ticket file: spec, user story, "Blocked by", acceptance checklist, demo line. If "Blocked by" names a ticket that is not merged, stop and say so.
 2. Find the issue number (`**Issue:** #n` in the ticket). If there is none, stop and ask the user to run `/publish-tickets` first.
 3. Set the issue label `status: in progress` (GitHub MCP). Remove `status: todo`.
-4. Create the worktree and branch from `github/feat/nutrition-coach`: branch `feat/nc-<ticket>-<short>` for tickets, `chore/` or `docs/` for setup and docs. Run `git fetch github` first. The `check-branch-base` hook blocks any other base.
+4. Create the branch from `github/feat/nutrition-coach`: branch `feat/nc-<ticket>-<short>` for tickets, `chore/` or `docs/` for setup and docs. Run `git fetch github` first. Build in the main checkout on that branch by default; use a worktree only if the user asks for one. Log `start` with the branch name and "no worktree" or the worktree path. The `check-branch-base` hook blocks any other base.
 5. Log `start`.
 
 ## 2. Gate 1: ticket plan (plan mode)
@@ -37,6 +37,8 @@ The line is written when the step finishes, not when it starts. Lines are never 
 ## 3. Build (no gate)
 
 Build with `/do-tdd` for each seam, in order. Test commit and code commit go together per slice. Log `slice <n>` after each seam passes.
+
+If the approved plan has no seams (nothing to build), write no `slice` line. Stop, say so, and ask the user whether to close the ticket or add seams. Do not run the review and checks on an empty diff.
 
 ## 4. Review (no gate)
 
@@ -86,7 +88,7 @@ Fixes for CI or review findings inside the ticket are pushed without a new gate.
 ## 9. After merge
 
 - The issue closes through `Closes #n`. Confirm it is closed.
-- Delete the branch, remove the worktree, sync the base branch in the main checkout.
+- Delete the branch, remove the worktree if one was made, sync the base branch in the main checkout.
 - Stop the `/loop` (its own stop rule covers it).
 - Report: PR link, merge commit, what was not tested.
 - Log `merged` after the merge succeeds. The log line goes on `feat/nutrition-coach` only with the ticket's next commit, so say in the report if it is still pending.

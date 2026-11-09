@@ -165,7 +165,7 @@ GitHub work (issues, labels, PRs, reviews, merges) goes through the GitHub MCP. 
 
 ## Parallel sessions
 
-- A session owns one ticket and ends in one PR. It runs in its own worktree and branch.
+- A session owns one ticket and ends in one PR. It works on its own branch, in the main checkout by default. It uses its own worktree only when another session runs at the same time.
 - At most two sessions at once, and only when their tickets do not depend on each other.
 - Two sessions never change the same file. The wave table in `docs/plan/claude-setup.md` says who owns what.
 - Shared files (`CLAUDE.md`, `globals.css`, `src/theme/*`, `package.json`, `(app)/today/page.tsx`, `src/components/index.ts`) change in one session per wave.
