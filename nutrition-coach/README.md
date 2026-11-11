@@ -19,6 +19,7 @@ The UX/UI follows the Mijo App: modern, smooth, minimal and refined. The app has
 - Zustand for client state
 - Vercel for hosting
 - Vitest for unit tests, Playwright for end-to-end tests
+- Workflow plugin test ran (ticket 12)
 
 ## Project status
 
